@@ -28,7 +28,25 @@
 
 	setContext('dnd', dragController)
 
+	let dragCursorStyle: HTMLStyleElement | null = null
+
+	$effect(() => {
+		if (dragController.dragging) {
+			if (!dragCursorStyle) {
+				dragCursorStyle = document.createElement('style')
+				dragCursorStyle.textContent = '* { cursor: grabbing !important; }'
+				document.head.appendChild(dragCursorStyle)
+			}
+		} else {
+			if (dragCursorStyle) {
+				dragCursorStyle.remove()
+				dragCursorStyle = null
+			}
+		}
+	})
+
 	onDestroy(() => {
+		dragCursorStyle?.remove()
 		if (ownsController) dragController.destroy()
 	})
 </script>
