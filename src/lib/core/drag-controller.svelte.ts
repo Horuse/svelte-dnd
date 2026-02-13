@@ -132,6 +132,7 @@ export class DragController {
 			y: rect.top
 		})
 
+		this.state.setSkipDropPreviewAnimation(true)
 		this.notifyDragStart(itemId)
 	}
 

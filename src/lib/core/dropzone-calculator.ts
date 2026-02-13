@@ -295,6 +295,12 @@ export class DropZoneCalculator {
 				draggedElementWidth: this.state.size?.width
 			}
 			this.state.setDropPreview(preview)
+
+			if (this.state.skipDropPreviewAnimation) {
+				requestAnimationFrame(() => {
+					this.state.setSkipDropPreviewAnimation(false)
+				})
+			}
 		} else {
 			this.state.setDropPreview(null)
 		}
