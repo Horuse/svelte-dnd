@@ -88,7 +88,7 @@ export class AnimationController {
 		}
 
 		const placeholderElement = containerElement.querySelector(
-			'[data-dnd-preview]'
+			`[data-dnd-preview-position="${targetZone.position}"]`
 		) as HTMLElement | null
 
 		if (placeholderElement) {

@@ -88,6 +88,7 @@
 	<div use:speedUpOnDrop={shouldSpeedUp}
 		bind:offsetHeight={previewHeight}
 		data-dnd-preview
+		data-dnd-preview-position={position}
 		transition:conditionalSlide|global={{ duration: 400, axis }}
 		style="height: {height}px; width: {width}px"
 		class="dnd-preview {className}"
