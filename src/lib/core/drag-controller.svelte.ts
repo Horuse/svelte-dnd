@@ -142,9 +142,22 @@ export class DragController {
 
 	updateMousePosition(mouseX: number, mouseY: number) {
 		if (this.state.dragging) {
-			this.dropZoneCalculator.updateDropPreview({ x: mouseX, y: mouseY })
+			const ghostCenter = this.getGhostCenter()
+			this.dropZoneCalculator.updateDropPreview(ghostCenter)
 			this.scrollController.handleAutoScroll(mouseX, mouseY)
 		}
+	}
+
+	private getGhostCenter(): { x: number; y: number } {
+		const transform = this.state.transform
+		const size = this.state.elementSize
+		if (transform && size) {
+			return {
+				x: transform.x + size.width / 2,
+				y: transform.y + size.height / 2
+			}
+		}
+		return this.state.transform ?? { x: 0, y: 0 }
 	}
 
 	performDrop(
