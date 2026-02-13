@@ -69,7 +69,6 @@
             // 1. Near bottom of scroll container → last heading
             const distToBottom = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
 
-            console.log(scrollEl.scrollHeight, scrollEl.scrollTop, scrollEl.clientHeight)
             if (distToBottom < 100 && headings.length > 0) {
                 activeId = headings[headings.length - 1].id;
                 return;

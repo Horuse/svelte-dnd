@@ -1,17 +1,17 @@
 <script>
     import { sidebarOpen, themeStore } from "$docs/stores.js";
+    import { blur } from "svelte/transition";
 </script>
 
 <header class="flex h-14 items-center p-2 gap-3 text-white bg-foreground border-b-2 border-primary">
     {#if !$sidebarOpen}
         <button
+                transition:blur
                 onclick={() => ($sidebarOpen = true)}
                 class="black-button size-9"
                 aria-label="Open sidebar"
         >
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
-            </svg>
+            <svg class="size-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M15.707 4.293a1 1 0 0 1 0 1.414L9.414 12l6.293 6.293a1 1 0 0 1-1.414 1.414l-7-7a1 1 0 0 1 0-1.414l7-7a1 1 0 0 1 1.414 0Z"/></svg>
         </button>
     {/if}
 

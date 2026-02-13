@@ -24,7 +24,7 @@
 		class: className = ''
 	}: Props = $props()
 
-	const axis = $derived(direction === 'horizontal' ? 'x' : 'y')
+	const axis = direction === 'horizontal' ? 'x' : 'y'
 
 	const dndManager = getContext<DragController>('dnd')
 	const conditionalSlide = createConditionalSlide(dndManager)

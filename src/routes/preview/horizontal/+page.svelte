@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { DndProvider, DndDroppable, DndDraggable, DndPreview, DragController } from '$lib/index.js';
+	import { onDestroy } from 'svelte';
 
 	let items = $state([
 		{ id: '1', label: 'Card 1' },
@@ -12,40 +13,65 @@
 	const controller = new DragController();
 	const dropPreview = $derived(controller.dropPreview);
 
+	let hiddenId = $state<string | null>(null);
+	const visibleItems = $derived(items.filter((item) => item.id !== hiddenId));
+
+	const unsubStart = controller.onDragStart((id: string) => {
+		hiddenId = id;
+	});
+	const unsubEnd = controller.onDragEnd(() => {
+		hiddenId = null;
+	});
+
 	controller.onDrop((sourceId: string, _sourceData: any, _targetContainerId: string, position: number) => {
 		const fromIndex = items.findIndex((item) => item.id === sourceId);
 		if (fromIndex === -1) return;
 
 		const updated = [...items];
 		const [moved] = updated.splice(fromIndex, 1);
-		const targetIndex = position > fromIndex ? position - 1 : position;
-		updated.splice(targetIndex, 0, moved);
+		updated.splice(position, 0, moved);
 		items = updated;
+	});
+
+	onDestroy(() => {
+		unsubStart();
+		unsubEnd();
 	});
 </script>
 
-<div>
-	<h1 class="text-2xl font-bold mb-2">Horizontal List</h1>
-	<p class="text-gray-600 mb-6">Drag items to reorder them horizontally.</p>
+<div class="h-full flex flex-col">
+	<h1 class="text-2xl text-black dark:text-white font-bold mb-2">Horizontal List</h1>
+	<p class="text-neutral-500 mb-6">Drag items to reorder them horizontally.</p>
 
 	<DndProvider {controller}>
-		<DndDroppable id="horizontal-list" direction="horizontal" class="flex flex-row gap-2">
-			{#each items as item, index (item.id)}
+		<DndDroppable id="horizontal-list" direction="horizontal" class="flex space-x-2  p-4 bg-foreground border-2 border-second rounded-xl">
+			{#each visibleItems as item, index (item.id)}
 				<DndPreview
 					containerId="horizontal-list"
 					position={index}
+					direction="horizontal"
 					show={dropPreview?.containerId === 'horizontal-list' && dropPreview?.position === index}
 				/>
+
 				<DndDraggable id={item.id}>
-					<div class="w-32 h-24 flex items-center justify-center bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+					<div class="drag-item p-5 text-xl">
 						{item.label}
 					</div>
 				</DndDraggable>
+
+				<DndPreview
+					containerId="horizontal-list"
+					position={index+ 1}
+					direction="horizontal"
+					show={dropPreview?.containerId === 'horizontal-list' && dropPreview?.position === index}
+				/>
 			{/each}
+
 			<DndPreview
 				containerId="horizontal-list"
-				position={items.length}
-				show={dropPreview?.containerId === 'horizontal-list' && dropPreview?.position === items.length}
+				position={visibleItems.length}
+				direction="horizontal"
+				show={dropPreview?.containerId === 'horizontal-list' && dropPreview?.position === visibleItems.length}
 			/>
 		</DndDroppable>
 	</DndProvider>

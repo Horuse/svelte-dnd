@@ -32,6 +32,13 @@
     --color-second-hover-border: oklch(0.83 0 0);
     --color-second-active-border: oklch(0.80 0 0);
 
+    /* Second */
+
+    --color-third: oklch(0.91 0 0);
+    --color-third-hover: oklch(0.88 0 0);
+    --color-third-border: oklch(0.96 0 0);
+    --color-third-hover-border: oklch(0.81 0 0);
+
     /* Custom opacity values */
     --opacity-9: 9%;
     --opacity-8: 8%;
@@ -71,6 +78,15 @@
     --color-second-border: oklch(0.39 0 0);
     --color-second-hover-border: oklch(0.44 0 0);
     --color-second-active-border: oklch(0.47 0 0);
+
+    /* Third */
+    --color-third: oklch(0.34 0 0);
+    --color-third-hover: oklch(0.37 0 0);
+    --color-third-active: oklch(0.40 0 0);
+
+    --color-third-border: oklch(0.29 0 0);
+    --color-third-hover-border: oklch(0.44 0 0);
+    --color-third-active-border: oklch(0.47 0 0);
 
     /* Custom opacity values */
     --opacity-9: 9%;
@@ -129,7 +145,17 @@
         }
     }
 
+    .drag-item {
+        @apply p-4 flex whitespace-nowrap items-center text-lg justify-center bg-primary border-dashed border-2 text-neutral-500 rounded-xl border-primary-border shadow-sm transition-all;
 
+        @variant hover {
+            @apply bg-primary-hover border-primary-hover-border
+        }
+    }
+
+    .dnd-preview__inner {
+        @apply bg-third! rounded-xl! border-second-active!
+    }
 }
 
 .prose {

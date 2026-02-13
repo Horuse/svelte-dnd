@@ -7,7 +7,6 @@
 	const previewLinks = [
 		{ href: '/preview/vertical', label: 'Vertical List' },
 		{ href: '/preview/horizontal', label: 'Horizontal List' },
-		{ href: '/preview/grid', label: 'Grid' },
 		{ href: '/preview/multi-container', label: 'Multi Container' }
 	];
 
@@ -25,7 +24,7 @@
 </script>
 
 {#if $sidebarOpen}
-	<aside transition:slide|local={{ duration: 300, easing: quintInOut, axis: 'x' }} class="flex flex-col w-64 divide-y-2 divide-primary shrink-0 bg-foreground text-white border-r-2 border-primary overflow-y-auto">
+	<aside transition:slide|local={{ duration: 300, easing: quintInOut, axis: 'x' }} class="flex flex-col whitespace-nowrap w-64 divide-y-2 divide-primary shrink-0 bg-foreground text-white border-r-2 border-primary overflow-y-auto">
 		<div class="flex h-14 items-center justify-between p-2 pl-5">
 			<a href="/" class="text-theme font-bold">@horuse/svelte-dnd</a>
 			<button
@@ -74,5 +73,7 @@
 				</ul>
 			</div>
 		</nav>
+
+
 	</aside>
 {/if}

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { DndProvider, DndDroppable, DndDraggable, DndPreview, DragController } from '$lib/index.js';
+	import { onDestroy } from 'svelte';
 
 	let columns = $state<Record<string, { id: string; label: string }[]>>({
 		todo: [
@@ -26,6 +27,19 @@
 	const controller = new DragController();
 	const dropPreview = $derived(controller.dropPreview);
 
+	let hiddenId = $state<string | null>(null);
+
+	function getVisibleItems(items: { id: string; label: string }[]) {
+		return items.filter((item) => item.id !== hiddenId);
+	}
+
+	const unsubStart = controller.onDragStart((id: string) => {
+		hiddenId = id;
+	});
+	const unsubEnd = controller.onDragEnd(() => {
+		hiddenId = null;
+	});
+
 	controller.onDrop((sourceId: string, _sourceData: any, targetContainerId: string, position: number) => {
 		let sourceColumn = '';
 		let sourceIndex = -1;
@@ -48,43 +62,43 @@
 			: [...updated[targetContainerId]];
 
 		const [moved] = updated[sourceColumn].splice(sourceIndex, 1);
-
-		let targetIndex = position;
-		if (sourceColumn === targetContainerId && sourceIndex < position) {
-			targetIndex = position - 1;
-		}
-
-		updated[targetContainerId].splice(targetIndex, 0, moved);
+		updated[targetContainerId].splice(position, 0, moved);
 		columns = updated;
+	});
+
+	onDestroy(() => {
+		unsubStart();
+		unsubEnd();
 	});
 </script>
 
-<div>
-	<h1 class="text-2xl font-bold mb-2">Multi Container</h1>
-	<p class="text-gray-600 mb-6">Drag items between columns in a kanban-style board.</p>
+<div class="h-full flex flex-col">
+	<h1 class="text-2xl text-black dark:text-white font-bold mb-2">Multi Container</h1>
+	<p class="text-neutral-500 mb-6">Drag items between columns in a kanban-style board.</p>
 
 	<DndProvider {controller}>
-		<div class="flex flex-row gap-4">
+		<div class="flex flex-row gap-4 h-full">
 			{#each Object.entries(columns) as [columnId, columnItems] (columnId)}
-				<div class="flex flex-col w-64 bg-gray-50 rounded-lg p-3">
-					<h2 class="text-sm font-semibold uppercase text-gray-500 mb-3">{columnMeta[columnId]}</h2>
-					<DndDroppable id={columnId} direction="vertical" class="flex-1">
-						{#each columnItems as item, index (item.id)}
+				{@const visible = getVisibleItems(columnItems)}
+				<div class="flex flex-col w-72 h-full bg-foreground border-2 border-primary rounded-2xl">
+					<h2 class="text-xl p-6 font-semibold text-neutral-500">{columnMeta[columnId]}</h2>
+					<DndDroppable id={columnId} direction="vertical" class="space-y-3 p-3 border-t-2 border-primary pt-4 h-full">
+						{#each visible as item, index (item.id)}
 							<DndPreview
 								containerId={columnId}
 								position={index}
 								show={dropPreview?.containerId === columnId && dropPreview?.position === index}
 							/>
 							<DndDraggable id={item.id}>
-								<div class="p-3 mb-2 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow text-sm">
+								<div class="drag-item">
 									{item.label}
 								</div>
 							</DndDraggable>
 						{/each}
 						<DndPreview
 							containerId={columnId}
-							position={columnItems.length}
-							show={dropPreview?.containerId === columnId && dropPreview?.position === columnItems.length}
+							position={visible.length}
+							show={dropPreview?.containerId === columnId && dropPreview?.position === visible.length}
 						/>
 					</DndDroppable>
 				</div>
