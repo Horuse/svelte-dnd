@@ -1,5 +1,6 @@
 {
 	"useTabs": true,
+	"tabWidth": 4,
 	"singleQuote": true,
 	"trailingComma": "none",
 	"printWidth": 100,
@@ -12,5 +13,5 @@
 			}
 		}
 	],
-	"tailwindStylesheet": "./src/routes/layout.css"
+	"tailwindStylesheet": "./src/routes/app.css"
 }

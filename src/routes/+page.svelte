@@ -6,10 +6,10 @@
 
 	<div class="flex flex-col gap-4">
 		<div class="rounded-lg border border-gray-200 p-4">
-			<h2 class="text-xl font-semibold text-gray-800 mb-2">Preview</h2>
+			<h2 class="text-xl font-semibold text-gray-800 mb-2">Examples</h2>
 			<p class="text-gray-600 mb-3">See interactive demos of drag-and-drop in action.</p>
-			<a href="/preview/vertical" class="text-blue-600 hover:underline font-medium">
-				View Demos &rarr;
+			<a href="/examples/vertical" class="text-blue-600 hover:underline font-medium">
+				View Examples &rarr;
 			</a>
 		</div>
 

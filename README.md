@@ -1,65 +1,69 @@
-# Svelte library
+# @horuse/svelte-dnd
 
-Everything you need to build a Svelte library, powered by [`sv`](https://npmjs.com/package/sv).
+A drag-and-drop library for Svelte 5 with animated drop previews, auto-scroll, and multi-container support.
 
-Read more about creating a library [in the docs](https://svelte.dev/docs/kit/packaging).
+## Features
 
-## Creating a project
+- Vertical, horizontal layouts
+- Animated drop previews that follow the dragged item
+- Auto-scroll when dragging near container edges
+- Move items between multiple containers (kanban-style)
+- Custom ghost element via Svelte snippets
+- Zero dependencies beyond Svelte 5
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Installation
 
-```sh
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
+```bash
+npm install @horuse/svelte-dnd
 ```
 
-To recreate this project with the same configuration:
+## Quick Start
 
-```sh
-# recreate this project
-bun x sv create --template library --types ts --add prettier eslint tailwindcss="plugins:none" --install bun ./
+```svelte
+<script lang="ts">
+  import { DndProvider, DndDroppable, DndDraggable, DndPreview, DragController } from '@horuse/svelte-dnd';
+
+  let items = $state([
+    { id: '1', label: 'Item 1' },
+    { id: '2', label: 'Item 2' },
+    { id: '3', label: 'Item 3' }
+  ]);
+
+  const controller = new DragController();
+  const dropPreview = $derived(controller.dropPreview);
+
+  controller.onDrop((sourceId, _data, _containerId, position) => {
+    const fromIndex = items.findIndex((item) => item.id === sourceId);
+    if (fromIndex === -1) return;
+
+    const updated = [...items];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.splice(position, 0, moved);
+    items = updated;
+  });
+</script>
+
+<DndProvider {controller}>
+  <DndDroppable id="list" direction="vertical">
+    {#each items as item, index (item.id)}
+      <DndPreview
+        containerId="list"
+        position={index}
+        show={dropPreview?.containerId === 'list' && dropPreview?.position === index}
+      />
+      <DndDraggable id={item.id}>
+        <div>{item.label}</div>
+      </DndDraggable>
+    {/each}
+    <DndPreview
+      containerId="list"
+      position={items.length}
+      show={dropPreview?.containerId === 'list' && dropPreview?.position === items.length}
+    />
+  </DndDroppable>
+</DndProvider>
 ```
 
-## Developing
+## Documentation
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-Everything inside `src/lib` is part of your library, everything inside `src/routes` can be used as a showcase or preview app.
-
-## Building
-
-To build your library:
-
-```sh
-npm pack
-```
-
-To create a production version of your showcase app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
-
-## Publishing
-
-Go into the `package.json` and give your package the desired name through the `"name"` option. Also consider adding a `"license"` field and point it to a `LICENSE` file which you can create from a template (one popular option is the [MIT license](https://opensource.org/license/mit/)).
-
-To publish your library to [npm](https://www.npmjs.com):
-
-```sh
-npm publish
-```
+Full docs and live examples are available at the [documentation site](https://svelte-dnd.vercel.app).

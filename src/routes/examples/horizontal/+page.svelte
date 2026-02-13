@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { DndProvider, DndDroppable, DndDraggable, DndPreview, DragController } from '$lib/index.js';
 	import { onDestroy } from 'svelte';
+	import Description from './description.md';
 
 	let items = $state([
 		{ id: '1', label: 'Card 1' },
@@ -39,9 +40,10 @@
 	});
 </script>
 
-<div class="h-full flex flex-col">
-	<h1 class="text-2xl text-black dark:text-white font-bold mb-2">Horizontal List</h1>
-	<p class="text-neutral-500 mb-6">Drag items to reorder them horizontally.</p>
+<div class="h-full mx-auto max-w-5xl gap-6 flex flex-col">
+	<div class="prose max-w-3xl">
+		<Description />
+	</div>
 
 	<DndProvider {controller}>
 		<DndDroppable id="horizontal-list" direction="horizontal" class="flex space-x-2  p-4 bg-foreground border-2 border-second rounded-xl">

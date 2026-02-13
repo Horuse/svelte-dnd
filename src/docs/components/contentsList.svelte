@@ -123,11 +123,21 @@
     function extractHeadings(container: Element) {
         const els = container.querySelectorAll('h1, h2, h3, h4, h5, h6');
         const items: TocItem[] = [];
+        const seenIds = new Map<string, number>();
 
         els.forEach((el, i) => {
             if (!el.id) {
                 el.id = slugify(el.textContent || '') || `heading-${i}`;
             }
+
+            // Deduplicate IDs (e.g. multiple "### Props" sections)
+            const base = el.id;
+            const count = seenIds.get(base) ?? 0;
+            if (count > 0) {
+                el.id = `${base}-${count}`;
+            }
+            seenIds.set(base, count + 1);
+
             items.push({
                 id: el.id,
                 text: el.textContent?.trim() || '',
@@ -178,7 +188,7 @@
                         {indentClass(heading.level)}
                         {activeId === heading.id
                         ? 'text-indigo-400 border-indigo-400 font-medium'
-                        : 'text-neutral-500 border-transparent hover:text-neutral-900'}"
+                        : 'text-neutral-500 border-transparent hover:text-neutral-900 dark:hover:text-neutral-300'}"
                         onclick={() => scrollTo(heading.id)}
                 >
                     {heading.text}

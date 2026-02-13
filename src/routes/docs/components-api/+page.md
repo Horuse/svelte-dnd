@@ -102,7 +102,9 @@ Renders a placeholder at a specific position within a container to indicate wher
 | `containerId` | `string` | **required** | Which container this preview belongs to |
 | `position` | `number` | **required** | Position index within the container |
 | `show` | `boolean` | `true` | Whether the preview should be visible |
+| `direction` | `DndDirection` | `'vertical'` | Layout direction — must match the parent `DndDroppable` |
 | `fallbackHeight` | `number` | `48` | Default height in pixels if element height is unknown |
+| `fallbackWidth` | `number` | `48` | Default width in pixels if element width is unknown |
 | `class` | `string` | — | Additional CSS class names |
 
 ### Usage Pattern
@@ -116,4 +118,25 @@ Place a `DndPreview` before each `DndDraggable` and one after the last item:
 {/each}
 
 <DndPreview containerId="list" position={items.length} />
+```
+
+---
+
+## DndDropEvent
+
+Exported type describing a drop event (available from `@horuse/svelte-dnd`).
+
+```ts
+interface DndDropEvent {
+    source: {
+        id: string;
+        element: HTMLElement;
+        data?: Record<string, any>;
+    };
+    target: {
+        id: string;
+        element: HTMLElement;
+        data?: Record<string, any>;
+    } | null;
+}
 ```

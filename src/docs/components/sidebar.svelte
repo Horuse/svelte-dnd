@@ -4,10 +4,11 @@
 	import {slide} from "svelte/transition";
 	import {quintInOut} from "svelte/easing";
 
-	const previewLinks = [
-		{ href: '/preview/vertical', label: 'Vertical List' },
-		{ href: '/preview/horizontal', label: 'Horizontal List' },
-		{ href: '/preview/multi-container', label: 'Multi Container' }
+	const exampleLinks = [
+		{ href: '/examples/vertical', label: 'Vertical List' },
+		{ href: '/examples/horizontal', label: 'Horizontal List' },
+		{ href: '/examples/multi-container', label: 'Multi Container' },
+		{ href: '/examples/custom-ghost', label: 'Custom Ghost' }
 	];
 
 	const docsLinks = [
@@ -24,7 +25,7 @@
 </script>
 
 {#if $sidebarOpen}
-	<aside transition:slide|local={{ duration: 300, easing: quintInOut, axis: 'x' }} class="flex flex-col whitespace-nowrap w-64 divide-y-2 divide-primary shrink-0 bg-foreground text-white border-r-2 border-primary overflow-y-auto">
+	<aside transition:slide|local={{ duration: 300, easing: quintInOut, axis: 'x' }} class="flex absolute lg:relative h-screen flex-col whitespace-nowrap w-64 divide-y-2 divide-primary shrink-0 bg-foreground text-white border-r-2 border-primary overflow-y-auto">
 		<div class="flex h-14 items-center justify-between p-2 pl-5">
 			<a href="/" class="text-theme font-bold">@horuse/svelte-dnd</a>
 			<button
@@ -40,9 +41,9 @@
 
 		<nav class="flex flex-col gap-6 p-2 py-3">
 			<div>
-				<h3 class="text-sm font-semibold ml-3 uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-2">Preview</h3>
+				<h3 class="text-sm font-semibold ml-3 uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-2">Examples</h3>
 				<ul class="flex flex-col gap-1">
-					{#each previewLinks as link}
+					{#each exampleLinks as link}
 						<li>
 							<a
 								href={link.href}

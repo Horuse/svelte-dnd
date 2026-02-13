@@ -128,6 +128,14 @@ controller.endDrag(shouldAnimate?: boolean): void
 
 Ends the drag. When `shouldAnimate` is `true` (default), the ghost animates back to its origin.
 
+### setSkipDropPreviewAnimation
+
+```ts
+controller.setSkipDropPreviewAnimation(value: boolean): void
+```
+
+Controls whether `DndPreview` open/close animations are skipped. Useful when you need previews to appear or disappear instantly (e.g. during rapid container switches).
+
 ### toggleDebugZones
 
 ```ts
@@ -165,6 +173,7 @@ interface DropPreview {
     position: number;
     visible: boolean;
     draggedElementHeight?: number;
+    draggedElementWidth?: number;
 }
 
 interface DropZone {

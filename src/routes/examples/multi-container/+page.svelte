@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { DndProvider, DndDroppable, DndDraggable, DndPreview, DragController } from '$lib/index.js';
 	import { onDestroy } from 'svelte';
+	import Description from './description.md';
 
 	let columns = $state<Record<string, { id: string; label: string }[]>>({
 		todo: [
@@ -72,9 +73,10 @@
 	});
 </script>
 
-<div class="h-full flex flex-col">
-	<h1 class="text-2xl text-black dark:text-white font-bold mb-2">Multi Container</h1>
-	<p class="text-neutral-500 mb-6">Drag items between columns in a kanban-style board.</p>
+<div class="h-full mx-auto max-w-5xl flex gap-6 flex-col">
+	<div class="prose max-w-3xl">
+		<Description />
+	</div>
 
 	<DndProvider {controller}>
 		<div class="flex flex-row gap-4 h-full">

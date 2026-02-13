@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { DndProvider, DndDroppable, DndDraggable, DndPreview, DragController } from '$lib/index.js';
 	import { onDestroy } from 'svelte';
+	import Description from './description.md';
 
 	let items = $state(
 		Array.from({ length: 50 }, (_, i) => ({
@@ -39,9 +40,10 @@
 	});
 </script>
 
-<div class="h-full flex flex-col">
-	<h1 class="text-2xl text-black dark:text-white font-bold mb-2">Vertical List</h1>
-	<p class="text-neutral-500 mb-6">Drag items to reorder them vertically.</p>
+<div class="h-full mx-auto max-w-5xl flex gap-6 flex-col">
+	<div class="prose max-w-3xl">
+		<Description />
+	</div>
 
 	<DndProvider {controller}>
 		<DndDroppable class="flex flex-col h-full overflow-y-auto space-y-2 max-w-xl p-4 bg-foreground border-2 border-second rounded-xl" id="vertical-list" direction="vertical">
@@ -57,12 +59,6 @@
 						{item.label}
 					</div>
 				</DndDraggable>
-
-				<DndPreview
-						containerId="vertical-list"
-						position={index+1}
-						show={dropPreview?.containerId === 'vertical-list' && dropPreview?.position === index}
-				/>
 			{/each}
 
 			<DndPreview

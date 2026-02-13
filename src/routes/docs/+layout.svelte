@@ -5,7 +5,7 @@
 </script>
 
 <div class="flex justify-center gap-8 max-w-7xl mx-auto px-4 py-8">
-	<article class="prose prose-theme max-w-3xl min-w-0 flex-1">
+	<article class="prose max-w-3xl min-w-0 flex-1">
 		{@render children()}
 	</article>
 
