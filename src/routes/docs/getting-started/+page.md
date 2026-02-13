@@ -93,7 +93,7 @@ A minimal working drag-and-drop setup requires four components: `DndProvider`, `
 ## How It Works
 
 1. **DndProvider** wraps your app and creates a `DragController` context.
-2. **DndDroppable** defines a container where items can be dropped. Set `direction` to `"vertical"`, `"horizontal"`, or `"grid"`.
+2. **DndDroppable** defines a container where items can be dropped. Set `direction` to `"vertical"` or `"horizontal"`.
 3. **DndDraggable** wraps each draggable item. Each must have a unique `id`.
 4. **DndPreview** renders a placeholder at each potential drop position. Place one before each item and one after the last item.
 5. **Hide the dragged item** — subscribe to `onDragStart` / `onDragEnd` and filter out the dragged item from the rendered list. This removes the original element from the DOM flow so only the ghost follows the cursor.

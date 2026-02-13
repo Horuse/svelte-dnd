@@ -77,7 +77,7 @@ Defines a container that accepts draggable items. Automatically registers and ca
 | `id` | `string` | **required** | Unique container identifier |
 | `data` | `Record<string, any>` | `{}` | Container data (supports `type` or `accepts` for filtering) |
 | `disabled` | `boolean` | `false` | Disables dropping when `true` |
-| `direction` | `DndDirection` | `'vertical'` | Layout direction: `'vertical'`, `'horizontal'`, or `'grid'` |
+| `direction` | `DndDirection` | `'vertical'` | Layout direction: `'vertical'`, `'horizontal'` |
 | `class` | `string` | — | Additional CSS class names |
 
 ### Type Filtering

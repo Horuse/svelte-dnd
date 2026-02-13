@@ -184,5 +184,5 @@ interface DropZone {
     rect: { x: number; y: number; width: number; height: number };
 }
 
-type DndDirection = 'vertical' | 'horizontal' | 'grid';
+type DndDirection = 'vertical' | 'horizontal';
 ```
