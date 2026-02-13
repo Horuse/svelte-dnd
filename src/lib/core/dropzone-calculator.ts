@@ -291,7 +291,8 @@ export class DropZoneCalculator {
 				containerId: targetZone.containerId,
 				position: targetZone.position,
 				visible: true,
-				draggedElementHeight: this.state.size?.height
+				draggedElementHeight: this.state.size?.height,
+				draggedElementWidth: this.state.size?.width
 			}
 			this.state.setDropPreview(preview)
 		} else {

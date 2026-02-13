@@ -71,14 +71,18 @@
 			parent = parent.parentElement
 		}
 
-		window.addEventListener('scroll', handleScroll, { passive: true })
+		if (typeof window !== 'undefined') {
+			window.addEventListener('scroll', handleScroll, { passive: true })
+		}
 	}
 
 	const cleanupScrollListeners = () => {
 		scrollListeners.forEach((parent) => {
 			parent.removeEventListener('scroll', handleScroll)
 		})
-		window.removeEventListener('scroll', handleScroll)
+		if (typeof window !== 'undefined') {
+			window.removeEventListener('scroll', handleScroll)
+		}
 		scrollListeners = []
 		if (scrollTimeout) {
 			clearTimeout(scrollTimeout)

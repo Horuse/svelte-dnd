@@ -179,7 +179,8 @@ export class DragController {
 				containerId: this.state.originContainerId,
 				position: this.state.originPosition,
 				visible: true,
-				draggedElementHeight: this.state.elementSize?.height
+				draggedElementHeight: this.state.elementSize?.height,
+				draggedElementWidth: this.state.elementSize?.width
 			})
 		}
 

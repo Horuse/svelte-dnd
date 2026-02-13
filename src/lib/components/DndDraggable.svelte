@@ -54,12 +54,31 @@
 		element.setPointerCapture(e.pointerId)
 	}
 
+	const addWindowListeners = () => {
+		window.addEventListener('pointermove', handleWindowPointerMove)
+		window.addEventListener('pointerup', handleWindowPointerUp)
+		window.addEventListener('pointercancel', handleWindowPointerCancel)
+	}
+
+	const removeWindowListeners = () => {
+		window.removeEventListener('pointermove', handleWindowPointerMove)
+		window.removeEventListener('pointerup', handleWindowPointerUp)
+		window.removeEventListener('pointercancel', handleWindowPointerCancel)
+	}
+
 	const startActualDrag = (e: PointerEvent) => {
 		if (isDragging) return
 
 		isDragging = true
 		isPotentialDrag = false
 		dragOccurred = true
+
+		// Release pointer capture and switch to window-level listeners
+		// so drag continues even if the element is removed from DOM
+		if (element.hasPointerCapture(e.pointerId)) {
+			element.releasePointerCapture(e.pointerId)
+		}
+		addWindowListeners()
 
 		const initialTransform = {
 			x: e.clientX - dragOffset.x,
@@ -79,17 +98,18 @@
 	}
 
 	const handlePointerMove = (e: PointerEvent) => {
-		if (isPotentialDrag) {
-			const deltaX = Math.abs(e.clientX - dragStartPosition.x)
-			const deltaY = Math.abs(e.clientY - dragStartPosition.y)
-			const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+		if (!isPotentialDrag) return
 
-			if (distance >= DRAG_THRESHOLD) {
-				startActualDrag(e)
-			}
-			return
+		const deltaX = Math.abs(e.clientX - dragStartPosition.x)
+		const deltaY = Math.abs(e.clientY - dragStartPosition.y)
+		const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+
+		if (distance >= DRAG_THRESHOLD) {
+			startActualDrag(e)
 		}
+	}
 
+	const handleWindowPointerMove = (e: PointerEvent) => {
 		if (!isDragging) return
 
 		const transform = {
@@ -114,10 +134,13 @@
 			isPotentialDrag = false
 			return
 		}
+	}
 
+	const handleWindowPointerUp = (e: PointerEvent) => {
 		if (!isDragging) return
 
 		isDragging = false
+		removeWindowListeners()
 
 		const dropPreview = dndController?.dropPreview
 		if (dropPreview && dropPreview.visible) {
@@ -137,11 +160,15 @@
 	}
 
 	const handlePointerCancel = () => {
+		isPotentialDrag = false
+	}
+
+	const handleWindowPointerCancel = () => {
 		if (isDragging) {
 			isDragging = false
+			removeWindowListeners()
 			dndController?.endDrag(false)
 		}
-		isPotentialDrag = false
 	}
 
 	const handleClick = (e: MouseEvent) => {
