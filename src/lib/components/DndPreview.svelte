@@ -42,10 +42,50 @@
 	const width = $derived(dndManager?.dropPreview?.draggedElementWidth || fallbackWidth)
 
 	let previewHeight = $state(0)
+
+	const shouldSpeedUp = $derived(
+		!!(dndManager?.performingDrop || dndManager?.animatingReturn)
+	)
+
+	function speedUpOnDrop(node: HTMLElement, speedUp: boolean) {
+		let frameId: number | null = null
+		const RATE = 5
+
+		function apply() {
+			const anims = node.getAnimations({ subtree: true })
+			for (const a of anims) {
+				if (a.playbackRate !== RATE) a.playbackRate = RATE
+			}
+			if (anims.length > 0) {
+				frameId = requestAnimationFrame(apply)
+			} else {
+				frameId = null
+			}
+		}
+
+		function stop() {
+			if (frameId !== null) {
+				cancelAnimationFrame(frameId)
+				frameId = null
+			}
+		}
+
+		if (speedUp) apply()
+
+		return {
+			update(v: boolean) {
+				if (v) apply()
+				else stop()
+			},
+			destroy() {
+				stop()
+			}
+		}
+	}
 </script>
 
 {#if visible}
-	<div
+	<div use:speedUpOnDrop={shouldSpeedUp}
 		bind:offsetHeight={previewHeight}
 		data-dnd-preview
 		transition:conditionalSlide|global={{ duration: 400, axis }}
