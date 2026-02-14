@@ -1,0 +1,29 @@
+name: Publish Package
+on:
+    push:
+        tags:
+            - 'v*'
+
+permissions:
+    id-token: write
+    contents: read
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup Node environment
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '24'
+                  registry-url: 'https://registry.npmjs.org'
+
+            - name: Setup Bun environment
+              uses: oven-sh/setup-bun@v2
+
+            - run: bun ci
+            - run: bun run build --if-present
+            - run: bun test
+            - run: bunx npm publish --provenance

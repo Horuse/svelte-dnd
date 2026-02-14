@@ -12,6 +12,11 @@
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write ."
 	},
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Horuse/svelte-dnd.git"
+	},
 	"publishConfig": {
 		"access": "public"
 	},
