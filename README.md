@@ -2,6 +2,8 @@
 
 A drag-and-drop library for Svelte 5 with animated drop previews, auto-scroll, and multi-container support.
 
+![DND preview](./preview.gif)
+
 ## Features
 
 - Vertical, horizontal layouts
