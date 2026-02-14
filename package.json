@@ -64,12 +64,10 @@
 		"tailwindcss": "^4.1.18",
 		"typescript": "^5.9.3",
 		"typescript-eslint": "^8.54.0",
-		"vite": "^7.3.1"
+		"vite": "^7.3.1",
+		"shiki": "^3.22.0"
 	},
 	"keywords": [
 		"svelte"
-	],
-	"dependencies": {
-		"shiki": "^3.22.0"
-	}
+	]
 }
