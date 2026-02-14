@@ -91,10 +91,8 @@
 	}
 
 	const unsubscribeDragStart = dndController?.onDragStart(() => {
-		setTimeout(() => {
-			updateDropZones()
-			setupScrollListeners()
-		}, 0)
+		updateDropZones()
+		setupScrollListeners()
 	})
 
 	const unsubscribeDragEnd = dndController?.onDragEnd(() => {
