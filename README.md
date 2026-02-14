@@ -10,6 +10,7 @@ A drag-and-drop library for Svelte 5 with animated drop previews, auto-scroll, a
 ## Features
 
 - Vertical, horizontal layouts
+- Pointer & touch support - works seamlessly on mobile devices
 - Animated drop previews that follow the dragged item
 - Auto-scroll when dragging near container edges
 - Move items between multiple containers (kanban-style)
