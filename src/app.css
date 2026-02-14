@@ -152,10 +152,6 @@
             @apply bg-primary-hover border-primary-hover-border
         }
     }
-
-    .dnd-preview__inner {
-        @apply bg-third! rounded-xl! border-second-active!
-    }
 }
 
 .prose {

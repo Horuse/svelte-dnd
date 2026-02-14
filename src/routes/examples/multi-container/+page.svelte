@@ -73,13 +73,13 @@
 	});
 </script>
 
-<div class="h-full mx-auto max-w-5xl flex gap-6 flex-col">
+<div class="mx-auto max-w-5xl flex gap-6 flex-col">
 	<div class="prose max-w-3xl">
 		<Description />
 	</div>
 
 	<DndProvider {controller}>
-		<div class="flex flex-row gap-4 h-full">
+		<div class="flex h-125 flex-row gap-4">
 			{#each Object.entries(columns) as [columnId, columnItems] (columnId)}
 				{@const visible = getVisibleItems(columnItems)}
 				<div class="flex flex-col w-72 h-full bg-foreground border-2 border-primary rounded-2xl">
@@ -108,3 +108,11 @@
 		</div>
 	</DndProvider>
 </div>
+
+<style>
+	:root {
+		--dnd-preview-bg: var(--color-third);
+		--dnd-preview-border: 2px dashed var(--color-second-active);
+		--dnd-preview-border-radius: 12px;
+	}
+</style>

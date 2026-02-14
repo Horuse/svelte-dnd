@@ -18,13 +18,13 @@
 	}
 </script>
 
-<div class="flex h-screen overflow-hidden">
+<div class="flex h-screen w-full overflow-hidden">
 	<Sidebar />
 
-	<div class="flex flex-col flex-1 overflow-hidden">
+	<div class="flex flex-col w-full overflow-hidden">
 		<Header/>
 
-		<main class="flex-1 overflow-y-auto p-6">
+		<main class="overflow-y-auto w-full p-6">
 			{@render children()}
 		</main>
 	</div>

@@ -3,21 +3,32 @@
 	import { onDestroy } from 'svelte';
 	import Description from './description.md';
 
-	const colors = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7'];
+	let columns = $state<Record<string, { id: string; label: string; color: string }[]>>({
+		blue: [
+			{ id: '1', label: 'Design mockups', color: '#3b82f6' },
+			{ id: '2', label: 'Write specs', color: '#3b82f6' },
+			{ id: '3', label: 'Review PRs', color: '#3b82f6' }
+		],
+		green: [
+			{ id: '4', label: 'Run tests', color: '#22c55e' },
+			{ id: '5', label: 'Deploy staging', color: '#22c55e' },
+			{ id: '6', label: 'Update docs', color: '#22c55e' }
+		]
+	});
 
-	let items = $state(
-		colors.map((color, i) => ({
-			id: String(i + 1),
-			label: `Item ${i + 1}`,
-			color
-		}))
-	);
+	const columnMeta: Record<string, string> = {
+		blue: 'Blue Team',
+		green: 'Green Team'
+	};
 
 	const controller = new DragController();
 	const dropPreview = $derived(controller.dropPreview);
 
 	let hiddenId = $state<string | null>(null);
-	const visibleItems = $derived(items.filter((item) => item.id !== hiddenId));
+
+	function getVisibleItems(items: { id: string; label: string; color: string }[]) {
+		return items.filter((item) => item.id !== hiddenId);
+	}
 
 	const unsubStart = controller.onDragStart((id: string) => {
 		hiddenId = id;
@@ -26,14 +37,32 @@
 		hiddenId = null;
 	});
 
-	controller.onDrop((sourceId: string, _sourceData: any, _targetContainerId: string, position: number) => {
-		const fromIndex = items.findIndex((item) => item.id === sourceId);
-		if (fromIndex === -1) return;
+	controller.onDrop((sourceId: string, _sourceData: any, targetContainerId: string, position: number) => {
+		let sourceColumn = '';
+		let sourceIndex = -1;
 
-		const updated = [...items];
-		const [moved] = updated.splice(fromIndex, 1);
-		updated.splice(position, 0, moved);
-		items = updated;
+		for (const [colId, colItems] of Object.entries(columns)) {
+			const idx = colItems.findIndex((item) => item.id === sourceId);
+			if (idx !== -1) {
+				sourceColumn = colId;
+				sourceIndex = idx;
+				break;
+			}
+		}
+
+		if (sourceIndex === -1) return;
+
+		const updated = { ...columns };
+		updated[sourceColumn] = [...updated[sourceColumn]];
+		updated[targetContainerId] = sourceColumn === targetContainerId
+			? updated[targetContainerId]
+			: [...updated[targetContainerId]];
+
+		const [moved] = updated[sourceColumn].splice(sourceIndex, 1);
+		// Update color to match the target column
+		moved.color = targetContainerId === 'blue' ? '#3b82f6' : '#22c55e';
+		updated[targetContainerId].splice(position, 0, moved);
+		columns = updated;
 	});
 
 	onDestroy(() => {
@@ -42,7 +71,7 @@
 	});
 </script>
 
-<div class="h-full mx-auto max-w-5xl gap-6 flex flex-col">
+<div class="mx-auto max-w-5xl flex gap-6 flex-col">
 	<div class="prose max-w-3xl">
 		<Description />
 	</div>
@@ -57,27 +86,37 @@
 			</div>
 		{/snippet}
 
-		<DndDroppable class="flex flex-col space-y-2 max-w-xl p-4 bg-foreground border-2 border-second rounded-xl" id="custom-ghost-list" direction="vertical">
-			{#each visibleItems as item, index (item.id)}
-				<DndPreview
-					containerId="custom-ghost-list"
-					position={index}
-					show={dropPreview?.containerId === 'custom-ghost-list' && dropPreview?.position === index}
-				/>
-
-				<DndDraggable id={item.id} data={{ label: item.label, color: item.color }}>
-					<div class="drag-item" style="border-left: 4px solid {item.color};">
-						{item.label}
-					</div>
-				</DndDraggable>
+		<div class="flex flex-row gap-4 overflow-x-auto h-125">
+			{#each Object.entries(columns) as [columnId, columnItems] (columnId)}
+				{@const visible = getVisibleItems(columnItems)}
+				<div
+					class="column-wrapper flex flex-col w-72 shrink-0 h-full bg-foreground border-2 rounded-2xl"
+					class:column-blue={columnId === 'blue'}
+					class:column-green={columnId === 'green'}
+				>
+					<h2 class="text-xl p-6 font-semibold text-neutral-500">{columnMeta[columnId]}</h2>
+					<DndDroppable id={columnId} direction="vertical" class="space-y-3 p-3 border-t-2 border-primary pt-4 h-full">
+						{#each visible as item, index (item.id)}
+							<DndPreview
+								containerId={columnId}
+								position={index}
+								show={dropPreview?.containerId === columnId && dropPreview?.position === index}
+							/>
+							<DndDraggable id={item.id} data={{ label: item.label, color: item.color }}>
+								<div class="drag-item" style="border-left: 4px solid {item.color};">
+									{item.label}
+								</div>
+							</DndDraggable>
+						{/each}
+						<DndPreview
+							containerId={columnId}
+							position={visible.length}
+							show={dropPreview?.containerId === columnId && dropPreview?.position === visible.length}
+						/>
+					</DndDroppable>
+				</div>
 			{/each}
-
-			<DndPreview
-				containerId="custom-ghost-list"
-				position={visibleItems.length}
-				show={dropPreview?.containerId === 'custom-ghost-list' && dropPreview?.position === visibleItems.length}
-			/>
-		</DndDroppable>
+		</div>
 	</DndProvider>
 </div>
 
@@ -93,5 +132,18 @@
 		height: 100%;
 		display: flex;
 		align-items: center;
+	}
+
+	.column-blue {
+		border-color: rgba(59, 130, 246, 0.4);
+		--dnd-preview-bg: rgba(59, 130, 246, 0.15);
+		--dnd-preview-border: 2px dashed rgba(59, 130, 246, 0.5);
+	}
+
+	.column-green {
+		border-color: rgba(34, 197, 94, 0.4);
+		--dnd-preview-bg: rgba(34, 197, 94, 0.15);
+		--dnd-preview-border: 2px solid rgba(34, 197, 94, 0.5);
+		--dnd-preview-border-radius: 4px;
 	}
 </style>

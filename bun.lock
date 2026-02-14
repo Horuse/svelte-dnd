@@ -4,9 +4,6 @@
   "workspaces": {
     "": {
       "name": "svelte-dnd",
-      "dependencies": {
-        "shiki": "^3.22.0",
-      },
       "devDependencies": {
         "@eslint/compat": "^2.0.2",
         "@eslint/js": "^9.39.2",
@@ -26,6 +23,7 @@
         "prettier-plugin-svelte": "^3.4.1",
         "prettier-plugin-tailwindcss": "^0.7.2",
         "publint": "^0.3.17",
+        "shiki": "^3.22.0",
         "svelte": "^5.51.0",
         "svelte-check": "^4.4.0",
         "tailwindcss": "^4.1.18",

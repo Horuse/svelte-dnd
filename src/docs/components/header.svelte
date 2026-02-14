@@ -3,7 +3,7 @@
     import { blur } from "svelte/transition";
 </script>
 
-<header class="flex h-14 items-center p-2 gap-3 text-white bg-foreground border-b-2 border-primary">
+<header class="flex h-14 shrink-0 items-center p-2 gap-3 text-white bg-foreground border-b-2 border-primary">
     {#if !$sidebarOpen}
         <button
                 transition:blur

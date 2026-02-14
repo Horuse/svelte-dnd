@@ -8,7 +8,8 @@
 		{ href: '/examples/vertical', label: 'Vertical List' },
 		{ href: '/examples/horizontal', label: 'Horizontal List' },
 		{ href: '/examples/multi-container', label: 'Multi Container' },
-		{ href: '/examples/custom-ghost', label: 'Custom Ghost' }
+		{ href: '/examples/custom-ghost', label: 'Custom Ghost' },
+		{ href: '/examples/sortable-containers', label: 'Sortable Containers' }
 	];
 
 	const docsLinks = [

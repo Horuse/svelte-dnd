@@ -40,13 +40,13 @@
 	});
 </script>
 
-<div class="h-full mx-auto max-w-5xl gap-6 flex flex-col">
+<div class="mx-auto max-w-5xl gap-6 flex flex-col">
 	<div class="prose max-w-3xl">
 		<Description />
 	</div>
 
 	<DndProvider {controller}>
-		<DndDroppable id="horizontal-list" direction="horizontal" class="flex space-x-2  p-4 bg-foreground border-2 border-second rounded-xl">
+		<DndDroppable id="horizontal-list" direction="horizontal" class="flex space-x-2 overflow-x-auto  p-4 bg-foreground border-2 border-second rounded-xl">
 			{#each visibleItems as item, index (item.id)}
 				<DndPreview
 					containerId="horizontal-list"
@@ -78,3 +78,11 @@
 		</DndDroppable>
 	</DndProvider>
 </div>
+
+<style>
+	:root {
+		--dnd-preview-bg: var(--color-third);
+		--dnd-preview-border: 2px dashed var(--color-second-active);
+		--dnd-preview-border-radius: 12px;
+	}
+</style>
