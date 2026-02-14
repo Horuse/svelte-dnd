@@ -1,6 +1,7 @@
 # @horuse/svelte-dnd
 
-![npm](https://img.shields.io/npm/v/@horuse/svelte-dnd)
+[![npm](https://img.shields.io/npm/v/@horuse/svelte-dnd.svg?style=flat-square)](https://www.npmjs.com/package/@horuse/svelte-dnd)
+[![GitHub issues](https://img.shields.io/github/issues/Horuse/svelte-dnd.svg?style=flat-square)](https://github.com/Horuse/svelte-dnd/issues)
 
 A drag-and-drop library for Svelte 5 with animated drop previews, auto-scroll, and multi-container support.
 
