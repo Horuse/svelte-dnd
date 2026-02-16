@@ -156,29 +156,58 @@ export class AnimationController {
 		targetScrollTop: number
 		scrollDelta: number
 	} {
+		const direction = (container.dataset.direction as 'vertical' | 'horizontal') || 'vertical'
+		const isHorizontal = direction === 'horizontal'
+
 		const placeholderRect = placeholder.getBoundingClientRect()
 		const containerRect = container.getBoundingClientRect()
-		const containerHeight = container.clientHeight
-		const startScrollTop = container.scrollTop
 
-		const placeholderHeight = placeholder.offsetHeight || expectedHeight
-		const placeholderActualBottom = placeholderRect.top + placeholderHeight
+		if (isHorizontal) {
+			// Horizontal scroll logic
+			const containerWidth = container.clientWidth
+			const startScrollLeft = container.scrollLeft
+			const placeholderWidth = placeholder.offsetWidth || expectedHeight
+			const placeholderActualRight = placeholderRect.left + placeholderWidth
 
-		let targetScrollTop = startScrollTop
+			let targetScrollLeft = startScrollLeft
 
-		if (placeholderRect.top < containerRect.top) {
-			const overflow = containerRect.top - placeholderRect.top
-			targetScrollTop = startScrollTop - overflow
-		} else if (placeholderActualBottom > containerRect.bottom) {
-			const overflow = placeholderActualBottom - containerRect.bottom
-			targetScrollTop = startScrollTop + overflow
-		}
+			if (placeholderRect.left < containerRect.left) {
+				const overflow = containerRect.left - placeholderRect.left
+				targetScrollLeft = startScrollLeft - overflow
+			} else if (placeholderActualRight > containerRect.right) {
+				const overflow = placeholderActualRight - containerRect.right
+				targetScrollLeft = startScrollLeft + overflow
+			}
 
-		const finalScrollTop = Math.max(0, targetScrollTop)
+			const finalScrollLeft = Math.max(0, targetScrollLeft)
 
-		return {
-			targetScrollTop: finalScrollTop,
-			scrollDelta: finalScrollTop - startScrollTop
+			return {
+				targetScrollTop: finalScrollLeft,
+				scrollDelta: finalScrollLeft - startScrollLeft
+			}
+		} else {
+			// Vertical scroll logic
+			const containerHeight = container.clientHeight
+			const startScrollTop = container.scrollTop
+			const placeholderHeight = placeholder.offsetHeight || expectedHeight
+			const placeholderActualBottom = placeholderRect.top + placeholderHeight
+
+			let targetScrollTop = startScrollTop
+
+			if (placeholderRect.top < containerRect.top) {
+				const overflow = containerRect.top - placeholderRect.top
+				targetScrollTop = startScrollTop - overflow
+			} else if (placeholderActualBottom > containerRect.bottom) {
+				const overflow = placeholderActualBottom - containerRect.bottom
+				targetScrollTop = startScrollTop + overflow
+			}
+
+			const finalScrollTop = Math.max(0, targetScrollTop)
+
+			return {
+				targetScrollTop: finalScrollTop,
+				scrollDelta: finalScrollTop - startScrollTop
+			}
 		}
 	}
 
@@ -199,26 +228,36 @@ export class AnimationController {
 	) {
 		this.state.setAnimating(true)
 
-		const startScrollTop = container.scrollTop
+		const direction = (container.dataset.direction as 'vertical' | 'horizontal') || 'vertical'
+		const isHorizontal = direction === 'horizontal'
+
+		const startScrollTop = isHorizontal ? container.scrollLeft : container.scrollTop
 		const startGhostPos = { ...this.state.transform! }
 		const placeholderRect = placeholder.getBoundingClientRect()
 
-		const expectedHeight = this.state.dropPreview?.draggedElementHeight || this.state.elementSize?.height || 0
+		const expectedSize = isHorizontal
+			? this.state.dropPreview?.draggedElementWidth || this.state.elementSize?.width || 0
+			: this.state.dropPreview?.draggedElementHeight || this.state.elementSize?.height || 0
 
 		const { targetScrollTop, scrollDelta } = this.calculateScrollTarget(
 			placeholder,
 			container,
-			expectedHeight
+			expectedSize
 		)
 		const scrollDistance = Math.abs(scrollDelta)
 		const duration = this.calculateAdaptiveDuration(scrollDistance)
 
 		// Calculate where placeholder will be after scroll completes
-		// When container scrolls down by +N, content moves up by -N visually
-		const finalGhostPos = {
-			x: placeholderRect.left,
-			y: placeholderRect.top - scrollDelta
-		}
+		// When container scrolls by +N, content moves by -N visually
+		const finalGhostPos = isHorizontal
+			? {
+					x: placeholderRect.left - scrollDelta,
+					y: placeholderRect.top
+			  }
+			: {
+					x: placeholderRect.left,
+					y: placeholderRect.top - scrollDelta
+			  }
 
 		this.runScrollAnimation({
 			container,
@@ -244,13 +283,19 @@ export class AnimationController {
 		duration: number
 		onComplete?: () => void
 	}) {
+		const direction = (params.container.dataset.direction as 'vertical' | 'horizontal') || 'vertical'
+		const isHorizontal = direction === 'horizontal'
 		const startTime = Date.now()
 
 		const animate = () => {
 			const progress = Math.min((Date.now() - startTime) / params.duration, 1)
 			const easedProgress = easing.outCubic(progress)
 
-			params.container.scrollTop = params.startScrollTop + params.scrollDelta * easedProgress
+			if (isHorizontal) {
+				params.container.scrollLeft = params.startScrollTop + params.scrollDelta * easedProgress
+			} else {
+				params.container.scrollTop = params.startScrollTop + params.scrollDelta * easedProgress
+			}
 
 			this.state.setTransform({
 				x: params.startGhostPos.x + (params.finalGhostPos.x - params.startGhostPos.x) * easedProgress,
@@ -260,7 +305,13 @@ export class AnimationController {
 			if (progress < 1) {
 				requestAnimationFrame(animate)
 			} else {
-				this.finalizeScrollAnimation(params.container, params.placeholder, params.targetScrollTop, params.onComplete)
+				this.finalizeScrollAnimation(
+					params.container,
+					params.placeholder,
+					params.targetScrollTop,
+					isHorizontal,
+					params.onComplete
+				)
 			}
 		}
 
@@ -270,10 +321,15 @@ export class AnimationController {
 	private finalizeScrollAnimation(
 		container: HTMLElement,
 		placeholder: HTMLElement,
-		targetScrollTop: number,
+		targetScroll: number,
+		isHorizontal: boolean,
 		onComplete?: () => void
 	) {
-		container.scrollTop = targetScrollTop
+		if (isHorizontal) {
+			container.scrollLeft = targetScroll
+		} else {
+			container.scrollTop = targetScroll
+		}
 		const finalRect = placeholder.getBoundingClientRect()
 		this.state.setTransform({ x: finalRect.left, y: finalRect.top })
 		this.state.setAnimating(false)

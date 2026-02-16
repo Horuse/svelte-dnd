@@ -112,6 +112,7 @@
 	class="dnd-droppable {className ?? ''}"
 	class:dnd-droppable--disabled={disabled}
 	data-drop-id={id}
+	data-direction={direction}
 >
 	{@render children()}
 </div>
