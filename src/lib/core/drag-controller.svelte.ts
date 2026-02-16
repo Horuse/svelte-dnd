@@ -199,8 +199,11 @@ export class DragController {
 		}
 
 		if (shouldAnimate && this.state.element && this.state.transform) {
-			this.animationController.animateReturn(() => {
-				this.finalizeDragEnd(itemId)
+			// Wait for next frame to ensure placeholder is rendered in DOM
+			requestAnimationFrame(() => {
+				this.animationController.animateReturn(() => {
+					this.finalizeDragEnd(itemId)
+				})
 			})
 		} else {
 			this.finalizeDragEnd(itemId)
