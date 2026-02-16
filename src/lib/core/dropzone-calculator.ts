@@ -316,11 +316,26 @@ export class DropZoneCalculator {
 		)
 
 		for (const zone of filteredZones) {
-			if (this.isPointInZone(mousePos, zone)) {
+			if (this.isPointInZone(mousePos, zone) && this.isPointInContainer(mousePos, zone.containerId)) {
 				return zone
 			}
 		}
 		return null
+	}
+
+	private isPointInContainer(point: { x: number; y: number }, containerId: string): boolean {
+		const containerElement = document.querySelector(
+			`[data-drop-id="${containerId}"]`
+		) as HTMLElement | null
+		if (!containerElement) return true
+
+		const rect = containerElement.getBoundingClientRect()
+		return (
+			point.x >= rect.left &&
+			point.x <= rect.right &&
+			point.y >= rect.top &&
+			point.y <= rect.bottom
+		)
 	}
 
 	filterZonesByDraggedItemType(zones: DropZone[], draggedItemId: string): DropZone[] {
