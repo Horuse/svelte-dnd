@@ -71,7 +71,7 @@
 	});
 </script>
 
-<div class="mx-auto max-w-5xl flex gap-6 flex-col">
+<div class="mx-auto max-w-5xl flex mb-32 gap-6 flex-col">
 	<div class="prose max-w-3xl">
 		<Description />
 	</div>
