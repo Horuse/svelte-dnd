@@ -12,8 +12,10 @@ export class AnimationController {
 
 		this.state.setAnimating(true)
 
+		const originContainerId = this.state.originContainerId
+		const originPosition = this.state.originPosition
+		const fallbackPos = { ...this.state.originalPosition }
 		const startPos = { ...this.state.transform }
-		const endPos = { ...this.state.originalPosition }
 		const duration = 300
 		const startTime = Date.now()
 
@@ -21,6 +23,22 @@ export class AnimationController {
 			const elapsed = Date.now() - startTime
 			const progress = Math.min(elapsed / duration, 1)
 			const easeOut = 1 - Math.pow(1 - progress, 3)
+
+			let endPos = fallbackPos
+			if (originContainerId !== null) {
+				const containerElement = document.querySelector(
+					`[data-drop-id="${originContainerId}"]`
+				) as HTMLElement | null
+				if (containerElement) {
+					const placeholderElement = containerElement.querySelector(
+						`[data-dnd-preview-position="${originPosition}"]`
+					) as HTMLElement | null
+					if (placeholderElement) {
+						const rect = placeholderElement.getBoundingClientRect()
+						endPos = { x: rect.left, y: rect.top }
+					}
+				}
+			}
 
 			this.state.setTransform({
 				x: startPos.x + (endPos.x - startPos.x) * easeOut,
@@ -47,7 +65,6 @@ export class AnimationController {
 		this.state.setAnimating(true)
 
 		const startPos = { ...this.state.transform }
-		const endPos = this.calculatePlaceholderPosition(targetZone)
 		const duration = 250
 		const startTime = Date.now()
 
@@ -55,6 +72,8 @@ export class AnimationController {
 			const elapsed = Date.now() - startTime
 			const progress = Math.min(elapsed / duration, 1)
 			const easeOut = 1 - Math.pow(1 - progress, 2)
+
+			const endPos = this.calculatePlaceholderPosition(targetZone)
 
 			this.state.setTransform({
 				x: startPos.x + (endPos.x - startPos.x) * easeOut,

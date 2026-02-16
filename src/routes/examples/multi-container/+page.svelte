@@ -79,7 +79,7 @@
 	</div>
 
 	<DndProvider {controller}>
-		<div class="flex h-125 flex-row gap-4">
+		<div class="flex h-125 overflow-x-auto flex-row gap-4">
 			{#each Object.entries(columns) as [columnId, columnItems] (columnId)}
 				{@const visible = getVisibleItems(columnItems)}
 				<div class="flex flex-col w-72 shrink-0 h-full bg-foreground border-2 border-primary rounded-2xl">
