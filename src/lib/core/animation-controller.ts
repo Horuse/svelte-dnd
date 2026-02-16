@@ -150,34 +150,35 @@ export class AnimationController {
 
 	private calculateScrollTarget(
 		placeholder: HTMLElement,
-		container: HTMLElement
+		container: HTMLElement,
+		expectedHeight: number
 	): {
 		targetScrollTop: number
 		scrollDelta: number
 	} {
 		const placeholderRect = placeholder.getBoundingClientRect()
 		const containerRect = container.getBoundingClientRect()
-		const placeholderTop = placeholder.offsetTop
-		const placeholderHeight = placeholder.offsetHeight
 		const containerHeight = container.clientHeight
 		const startScrollTop = container.scrollTop
+
+		const placeholderHeight = placeholder.offsetHeight || expectedHeight
+		const placeholderActualBottom = placeholderRect.top + placeholderHeight
 
 		let targetScrollTop = startScrollTop
 
 		if (placeholderRect.top < containerRect.top) {
-			targetScrollTop = placeholderTop
-		} else if (placeholderRect.bottom > containerRect.bottom) {
-			targetScrollTop = placeholderTop - containerHeight + placeholderHeight
+			const overflow = containerRect.top - placeholderRect.top
+			targetScrollTop = startScrollTop - overflow
+		} else if (placeholderActualBottom > containerRect.bottom) {
+			const overflow = placeholderActualBottom - containerRect.bottom
+			targetScrollTop = startScrollTop + overflow
 		}
 
-		targetScrollTop = Math.max(
-			0,
-			Math.min(targetScrollTop, container.scrollHeight - containerHeight)
-		)
+		const finalScrollTop = Math.max(0, targetScrollTop)
 
 		return {
-			targetScrollTop,
-			scrollDelta: targetScrollTop - startScrollTop
+			targetScrollTop: finalScrollTop,
+			scrollDelta: finalScrollTop - startScrollTop
 		}
 	}
 
@@ -202,7 +203,13 @@ export class AnimationController {
 		const startGhostPos = { ...this.state.transform! }
 		const placeholderRect = placeholder.getBoundingClientRect()
 
-		const { targetScrollTop, scrollDelta } = this.calculateScrollTarget(placeholder, container)
+		const expectedHeight = this.state.dropPreview?.draggedElementHeight || this.state.elementSize?.height || 0
+
+		const { targetScrollTop, scrollDelta } = this.calculateScrollTarget(
+			placeholder,
+			container,
+			expectedHeight
+		)
 		const scrollDistance = Math.abs(scrollDelta)
 		const duration = this.calculateAdaptiveDuration(scrollDistance)
 
