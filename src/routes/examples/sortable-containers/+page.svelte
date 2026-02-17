@@ -119,7 +119,7 @@
 	</div>
 
 	<DndProvider {controller}>
-		<DndDroppable id="board" direction="horizontal" data={{ accepts: 'column' }} class="flex flex-row space-x-4 h-125">
+		<DndDroppable id="board" direction="horizontal" data={{ accepts: 'column' }} class="flex flex-row overflow-x-auto space-x-4 h-125">
 			{#each visibleColumns as column, colIndex (column.id)}
 				<DndPreview
 					containerId="board"

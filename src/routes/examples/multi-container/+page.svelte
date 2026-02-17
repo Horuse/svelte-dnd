@@ -79,12 +79,12 @@
 	</div>
 
 	<DndProvider {controller}>
-		<div class="flex h-125 overflow-x-auto flex-row gap-4">
+		<div data-dnd-scroll class="flex h-125 overflow-x-auto flex-row gap-4">
 			{#each Object.entries(columns) as [columnId, columnItems] (columnId)}
 				{@const visible = getVisibleItems(columnItems)}
 				<div class="flex flex-col w-72 shrink-0 h-full bg-foreground border-2 border-primary rounded-2xl">
 					<h2 class="text-xl p-6 font-semibold text-neutral-500">{columnMeta[columnId]}</h2>
-					<DndDroppable id={columnId} direction="vertical" class="space-y-3 p-3 border-t-2 border-primary pt-4 h-full">
+					<DndDroppable id={columnId} direction="vertical" class="space-y-3 overflow-y-auto p-3 border-t-2 border-primary pt-4 h-full">
 						{#each visible as item, index (item.id)}
 							<DndPreview
 								containerId={columnId}
