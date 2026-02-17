@@ -1,7 +1,10 @@
 import type { DropZone, DropPreview, DndDirection } from '../types.js'
 import type { DragState } from './drag-state.svelte.js'
+import { DOMHelper } from './dom-helper.js'
 
 export class DropZoneCalculator {
+	private domHelper = new DOMHelper()
+
 	constructor(
 		private state: DragState,
 		private droppableDataRegistry: Map<string, Record<string, any>>
@@ -14,16 +17,13 @@ export class DropZoneCalculator {
 	): DropZone[] {
 		if (!containerElement) return []
 
-		const containerRect = containerElement.getBoundingClientRect()
+		const containerRect = this.domHelper.getRect(containerElement)
 
-		const allDraggableItems = containerElement.querySelectorAll(
-			'[data-draggable-item]'
-		) as NodeListOf<HTMLElement>
+		const allDraggableItems = this.domHelper.findDraggableItems(containerElement)
 		const draggedId = this.state.draggedItem
-		const draggableItems = Array.from(allDraggableItems).filter((item) => {
+		const draggableItems = allDraggableItems.filter((item) => {
 			if (item.getAttribute('data-drag-id') === draggedId) return false
-			const closestDropZone = item.closest('[data-drop-id]')
-			return closestDropZone === containerElement
+			return this.domHelper.filterItemsByContainer([item], containerElement).length > 0
 		})
 
 		if (draggableItems.length === 0) {
@@ -68,7 +68,7 @@ export class DropZoneCalculator {
 		const zones: DropZone[] = []
 
 		items.forEach((item, index) => {
-			const itemRect = item.getBoundingClientRect()
+			const itemRect = this.domHelper.getRect(item)
 			const halfHeight = itemRect.height / 2
 
 			if (index === 0) {
@@ -96,7 +96,7 @@ export class DropZoneCalculator {
 			let zoneHeight = halfHeight
 
 			if (nextItem) {
-				const nextItemRect = nextItem.getBoundingClientRect()
+				const nextItemRect = this.domHelper.getRect(nextItem)
 				const nextHalfHeight = nextItemRect.height / 2
 				const gapBetweenItems = nextItemRect.top - itemRect.bottom
 				zoneHeight = halfHeight + gapBetweenItems + nextHalfHeight
@@ -129,7 +129,7 @@ export class DropZoneCalculator {
 		const zones: DropZone[] = []
 
 		items.forEach((item, index) => {
-			const itemRect = item.getBoundingClientRect()
+			const itemRect = this.domHelper.getRect(item)
 			const halfWidth = itemRect.width / 2
 
 			if (index === 0) {
@@ -157,7 +157,7 @@ export class DropZoneCalculator {
 			let zoneWidth = halfWidth
 
 			if (nextItem) {
-				const nextItemRect = nextItem.getBoundingClientRect()
+				const nextItemRect = this.domHelper.getRect(nextItem)
 				const nextHalfWidth = nextItemRect.width / 2
 				const gapBetweenItems = nextItemRect.left - itemRect.right
 				zoneWidth = halfWidth + gapBetweenItems + nextHalfWidth
@@ -195,7 +195,7 @@ export class DropZoneCalculator {
 			const nextRow = rows[rowIndex + 1]
 
 			row.forEach((item, colIndex) => {
-				const itemRect = item.getBoundingClientRect()
+				const itemRect = this.domHelper.getRect(item)
 				const halfWidth = itemRect.width / 2
 				const halfHeight = itemRect.height / 2
 
@@ -204,7 +204,7 @@ export class DropZoneCalculator {
 						? Math.min(containerRect.top, itemRect.top)
 						: itemRect.top - halfHeight
 				const zoneBottom = nextRow
-					? itemRect.bottom + (nextRow[0].getBoundingClientRect().top - itemRect.bottom) / 2
+					? itemRect.bottom + (this.domHelper.getRect(nextRow[0]).top - itemRect.bottom) / 2
 					: Math.max(containerRect.bottom, itemRect.bottom)
 
 				if (colIndex === 0) {
@@ -230,7 +230,7 @@ export class DropZoneCalculator {
 				let zoneRight: number
 
 				if (nextItem) {
-					const nextRect = nextItem.getBoundingClientRect()
+					const nextRect = this.domHelper.getRect(nextItem)
 					zoneRight = nextRect.left + nextRect.width / 2
 				} else {
 					zoneRight = Math.max(containerRect.right, itemRect.right)
@@ -259,11 +259,11 @@ export class DropZoneCalculator {
 
 		const rows: HTMLElement[][] = []
 		let currentRow: HTMLElement[] = [items[0]]
-		let currentRowTop = items[0].getBoundingClientRect().top
+		let currentRowTop = this.domHelper.getRect(items[0]).top
 
 		for (let i = 1; i < items.length; i++) {
-			const itemRect = items[i].getBoundingClientRect()
-			const rowThreshold = items[i].getBoundingClientRect().height * 0.5
+			const itemRect = this.domHelper.getRect(items[i])
+			const rowThreshold = this.domHelper.getRect(items[i]).height * 0.5
 
 			if (Math.abs(itemRect.top - currentRowTop) < rowThreshold) {
 				currentRow.push(items[i])
@@ -324,12 +324,10 @@ export class DropZoneCalculator {
 	}
 
 	private isPointInContainer(point: { x: number; y: number }, containerId: string): boolean {
-		const containerElement = document.querySelector(
-			`[data-drop-id="${containerId}"]`
-		) as HTMLElement | null
+		const containerElement = this.domHelper.findContainer(containerId)
 		if (!containerElement) return true
 
-		const rect = containerElement.getBoundingClientRect()
+		const rect = this.domHelper.getRect(containerElement)
 		return (
 			point.x >= rect.left &&
 			point.x <= rect.right &&
