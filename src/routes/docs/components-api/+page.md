@@ -80,13 +80,20 @@ Defines a container that accepts draggable items. Automatically registers and ca
 | `direction` | `DndDirection` | `'vertical'` | Layout direction: `'vertical'`, `'horizontal'` |
 | `class` | `string` | — | Additional CSS class names |
 
+### Auto-scroll
+
+`DndDroppable` automatically marks itself with a `data-dnd-scroll` attribute. The auto-scroll feature only activates for containers that carry this attribute, so only `DndDroppable` elements (not arbitrary scrollable ancestors) will be scrolled during a drag.
+
 ### Type Filtering
 
-Use the `data` prop to control which items can be dropped into a container:
+Use the `data` prop to control which items can be dropped into a container. The `accepts` field can be a string or an array of strings:
 
 ```svelte
 <!-- Only accepts items with data.type === 'task' -->
 <DndDroppable id="tasks" data={{ accepts: 'task' }}>
+
+<!-- Accepts multiple types -->
+<DndDroppable id="mixed" data={{ accepts: ['task', 'card'] }}>
 ```
 
 ---
