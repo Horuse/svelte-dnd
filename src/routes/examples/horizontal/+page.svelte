@@ -3,13 +3,12 @@
 	import { onDestroy } from 'svelte';
 	import Description from './description.md';
 
-	let items = $state([
-		{ id: '1', label: 'Card 1' },
-		{ id: '2', label: 'Card 2' },
-		{ id: '3', label: 'Card 3' },
-		{ id: '4', label: 'Card 4' },
-		{ id: '5', label: 'Card 5' }
-	]);
+	let items = $state(
+			Array.from({ length: 50 }, (_, i) => ({
+				id: String(i + 1),
+				label: `Item ${i + 1}`
+			}))
+	);
 
 	const controller = new DragController();
 	const dropPreview = $derived(controller.dropPreview);

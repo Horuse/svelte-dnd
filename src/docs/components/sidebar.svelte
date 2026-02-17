@@ -16,7 +16,9 @@
 		{ href: '/docs/getting-started', label: 'Getting Started' },
 		{ href: '/docs/components-api', label: 'Components API' },
 		{ href: '/docs/css-custom-props', label: 'CSS Custom Props' },
-		{ href: '/docs/drag-controller-api', label: 'DragController API' }
+		{ href: '/docs/drag-controller-api', label: 'DragController API' },
+		{ href: '/docs/html-attributes', label: 'HTML Attributes' },
+		{ href: '/docs/faq', label: 'FAQ' }
 	];
 
 	function isActive(href: string): boolean {

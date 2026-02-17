@@ -165,6 +165,40 @@ These methods are used internally by `DndDroppable` but can be called directly f
 | `registerDroppableData(id, data)` | Register container data |
 | `unregisterDroppableData(id)` | Unregister container data |
 
+## Transition Utilities
+
+Two helper functions are exported for building custom drop preview components. They produce Svelte transition functions that are aware of the controller's animation state — skipping animation when previews should appear instantly, and using shorter durations during ghost return.
+
+### createConditionalSlide
+
+```ts
+import { createConditionalSlide } from '@horuse/svelte-dnd';
+
+const slide = createConditionalSlide(controller);
+```
+
+Returns a Svelte `slide`-based transition function. Behaves as follows:
+- If `controller.skipDropPreviewAnimation` is `true` — duration is `0ms`
+- If `controller.animatingReturn` is `true` — duration is `200ms`
+- Otherwise — uses the options passed to the transition
+
+### createConditionalScale
+
+```ts
+import { createConditionalScale } from '@horuse/svelte-dnd';
+
+const scale = createConditionalScale(controller);
+```
+
+Returns a Svelte `scale`-based transition function. Behaves as follows:
+- If `controller.skipDropPreviewAnimation` is `true` — duration is `0ms`
+- If `controller.animatingReturn` is `true` — duration is `100ms`
+- Otherwise — uses the options passed to the transition
+
+These are used internally by `DndPreview`. Use them if you implement a fully custom preview component.
+
+---
+
 ## Types
 
 ```ts

@@ -1,6 +1,7 @@
 {
 	"name": "@horuse/svelte-dnd",
-	"version": "0.1.2",
+	"version": "0.2.0",
+	"description": "A drag-and-drop library for Svelte 5 with animated drop previews, auto-scroll, pointer & touch support, and multi-container support.",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && npm run prepack",
@@ -12,6 +13,7 @@
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write ."
 	},
+	"author": "Horuse",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
@@ -67,7 +69,20 @@
 		"vite": "^7.3.1",
 		"shiki": "^3.22.0"
 	},
+	"homepage": "https://github.com/Horuse/svelte-dnd",
+	"bugs": {
+		"url": "https://github.com/Horuse/svelte-dnd/issues"
+	},
 	"keywords": [
-		"svelte"
+		"svelte",
+		"sveltekit",
+		"svelte-5",
+		"svelte-dnd",
+		"drag",
+		"drop",
+		"drag-and-drop",
+		"dnd",
+		"sortable",
+		"kanban"
 	]
 }
