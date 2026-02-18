@@ -41,6 +41,9 @@
 		if (disabled) return
 		if (e.button !== 0) return
 
+		const target = e.target as HTMLElement
+		if (target.closest('[data-no-drag]')) return
+
 		isPotentialDrag = true
 		dragOccurred = false
 		dragStartPosition = { x: e.clientX, y: e.clientY }

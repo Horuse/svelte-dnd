@@ -4,6 +4,21 @@ Common questions
 
 ---
 
+## The button doesn't click
+
+Add `data-no-drag` attribute to the element so that it behaves as usual and does not start dragging the element.
+
+```svelte
+<DndDraggable id={task.id} data={{ type: 'task' }}>
+    <div class="drag-item">
+        <button data-no-drag onclick={() => alert("Test")}>Alert</button>
+        {task.label}
+    </div>
+</DndDraggable>
+```
+
+---
+
 ## How do I enable auto-scroll in a scrollable container?
 
 Auto-scroll activates for any element that has the `data-dnd-scroll` attribute **and** `overflow: auto` or `overflow: scroll`, when the pointer is near its edge during a drag.
@@ -16,7 +31,7 @@ If you have an **external** scrollable wrapper around several droppables (e.g. a
 <!-- Outer horizontal scroll area -->
 <div class="board" data-dnd-scroll style="overflow-x: auto; display: flex;">
   {#each columns as col}
-    <DndDroppable id={col.id} {controller} bind:items={col.items}>
+    <DndDroppable id={col.id}>
       ...
     </DndDroppable>
   {/each}
@@ -54,8 +69,8 @@ Use a single `DragController` shared across all containers. Read `targetContaine
   }
 </script>
 
-<DndDroppable id="list-a" {controller} bind:items={listA} {onDrop} .../>
-<DndDroppable id="list-b" {controller} bind:items={listB} {onDrop} .../>
+<DndDroppable id="list-a" {controller} .../>
+<DndDroppable id="list-b" {controller} .../>
 ```
 
 ---
@@ -109,20 +124,6 @@ Check two things:
 
 ---
 
-## Nested droppables: dragging in the inner container triggers the outer one
-
-Add a `pointerdown` handler with `stopPropagation` on the inner container to prevent the event from bubbling to the outer droppable:
-
-```svelte
-<DndDroppable id="outer" {controller} bind:items={outerItems}>
-  <div onpointerdown={(e) => e.stopPropagation()}>
-    <DndDroppable id="inner" {controller} bind:items={innerItems}>
-      ...
-    </DndDroppable>
-  </div>
-</DndDroppable>
-```
-
 See the **Sortable Containers** example for a working implementation.
 
 ---
@@ -159,7 +160,7 @@ See the [HTML Attributes & CSS Classes](/docs/html-attributes) page for the clas
 Pass the `disabled` prop to `DndDraggable`:
 
 ```svelte
-<DndDraggable disabled={!isEditing} {controller} id={item.id}>
+<DndDraggable disabled={!isEditing} id={item.id}>
   {item.label}
 </DndDraggable>
 ```

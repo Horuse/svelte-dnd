@@ -6,16 +6,17 @@ The library sets these attributes and classes automatically — you don't need t
 
 ## Data Attributes
 
-| Attribute | Set by | Purpose |
-|-----------|--------|---------|
-| `data-drop-id` | `DndDroppable` | Unique container ID — used for DOM lookup of the container |
-| `data-direction` | `DndDroppable` | `"vertical"` or `"horizontal"` — read when calculating drop zones |
-| `data-dnd-scroll` | `DndDroppable` | Flag — auto-scroll activates only for elements with this attribute |
-| `data-drag-id` | `DndDraggable` | Unique item ID — used when identifying a draggable element |
-| `data-draggable-item` | `DndDraggable` | Marker — the selector `:scope > [data-draggable-item]` collects container items |
-| `data-dnd-preview` | `DndPreview` | Marks a preview (placeholder) element |
+| Attribute                   | Set by | Purpose |
+|-----------------------------|--------|---------|
+| `data-drop-id`              | `DndDroppable` | Unique container ID — used for DOM lookup of the container |
+| `data-direction`            | `DndDroppable` | `"vertical"` or `"horizontal"` — read when calculating drop zones |
+| `data-dnd-scroll`           | `DndDroppable` | Flag — auto-scroll activates only for elements with this attribute |
+| `data-drag-id`              | `DndDraggable` | Unique item ID — used when identifying a draggable element |
+| `data-no-drag`              | `DndDraggable` | Disables dragging for this element. Use this for buttons, for example, so that they work when clicked. |
+| `data-draggable-item`       | `DndDraggable` | Marker — the selector `:scope > [data-draggable-item]` collects container items |
+| `data-dnd-preview`          | `DndPreview` | Marks a preview (placeholder) element |
 | `data-dnd-preview-position` | `DndPreview` | Numeric position of the preview — used to find a specific placeholder |
-| `data-dnd-dragged-element` | `DndProvider` | Marks the ghost element (the div that follows the cursor) |
+| `data-dnd-dragged-element`  | `DndProvider` | Marks the ghost element (the div that follows the cursor) |
 
 ### External scrollable containers
 
