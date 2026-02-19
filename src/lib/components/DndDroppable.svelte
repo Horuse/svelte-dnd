@@ -48,6 +48,7 @@
 
 	const updateDropZones = () => {
 		if (!element || disabled || !dndController) return
+		if (dndController.element?.contains(element)) return
 
 		const zones = dndController.calculateDropZones(id, element, direction)
 		const existingZones = dndController.dropZones || []
