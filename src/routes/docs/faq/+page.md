@@ -6,14 +6,12 @@ Common questions
 
 ## The button doesn't click
 
-Add `data-no-drag` attribute to the element so that it behaves as usual and does not start dragging the element.
+Add `data-dnd-no-drag` attribute to the element so that it behaves as usual and does not start dragging the element.
 
 ```svelte
-<DndDraggable id={task.id} data={{ type: 'task' }}>
-    <div class="drag-item">
-        <button data-no-drag onclick={() => alert("Test")}>Alert</button>
-        {task.label}
-    </div>
+<DndDraggable class="drag-item" id={task.id} data={{ type: 'task' }}>
+    <button data-no-drag onclick={() => alert("Test")}>Alert</button>
+    {task.label}
 </DndDraggable>
 ```
 

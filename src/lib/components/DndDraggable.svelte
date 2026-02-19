@@ -42,7 +42,9 @@
 		if (e.button !== 0) return
 
 		const target = e.target as HTMLElement
-		if (target.closest('[data-no-drag]')) return
+		if (target.closest('[data-dnd-no-drag]')) return
+
+		e.stopPropagation()
 
 		isPotentialDrag = true
 		dragOccurred = false

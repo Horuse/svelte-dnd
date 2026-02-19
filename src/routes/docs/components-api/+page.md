@@ -48,14 +48,12 @@ Wraps a single draggable element. Must be a child of `DndDroppable` inside a `Dn
 
 ### No drag
 
-You can add the `data-no-drag` attribute to any element inside your `DndDraggable` to prevent drag handling on that element. This allows native events on buttons, inputs, links, and other interactive elements to work normally without being intercepted by the drag logic.
+You can add the `data-dnd-no-drag` attribute to any element inside your `DndDraggable` to prevent drag handling on that element. This allows native events on buttons, inputs, links, and other interactive elements to work normally without being intercepted by the drag logic.
 
 ```svelte
-<DndDraggable ...>
-    <div class="drag-item">
-        <button data-no-drag onclick={() => alert("Test")}>Alert</button>
-        {task.label}
-    </div>
+<DndDraggable class="drag-item" id={task.id} data={{ type: 'task' }}>
+    <button data-no-drag onclick={() => alert("Test")}>Alert</button>
+    {task.label}
 </DndDraggable>
 ```
 

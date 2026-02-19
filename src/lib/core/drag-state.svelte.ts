@@ -149,6 +149,5 @@ export class DragState {
 		this.originPosition = 0
 		this.dropZones = []
 		this.currentDropPreview = null
-		this.showDebugZones = false
 	}
 }

@@ -102,24 +102,25 @@
 		}
 	});
 
-	function stopPropagation(e: PointerEvent) {
-		e.stopPropagation();
-	}
-	// controller.toggleDebugZones()
-
 	onDestroy(() => {
 		unsubStart();
 		unsubEnd();
 	});
 </script>
 
-<div class="mx-auto max-w-5xl flex mb-32 gap-6 flex-col">
+<div class="mx-auto max-w-5xl flex mb-32 items-start gap-6 flex-col">
 	<div class="prose max-w-3xl">
 		<Description />
 	</div>
 
+	<div class="flex bg-foreground px-6 items-center gap-6 text-neutral-500 p-3 rounded-xl">
+		<span>Debug: {controller.debugZones}</span>
+		<button class="black-button p-2 px-6" onclick={(e) => controller.toggleDebugZones()}>Show debug zones</button>
+		<p>- To see, start dragging</p>
+	</div>
+
 	<DndProvider {controller}>
-		<DndDroppable id="board" direction="horizontal" data={{ accepts: 'column' }} class="flex flex-row overflow-x-auto space-x-4 h-125">
+		<DndDroppable id="board" direction="horizontal" data={{ accepts: 'column' }} class="flex flex-row overflow-x-auto space-x-4 w-full h-125">
 			{#each visibleColumns as column, colIndex (column.id)}
 				<DndPreview
 					containerId="board"
@@ -127,36 +128,31 @@
 					direction="horizontal"
 					show={dropPreview?.containerId === 'board' && dropPreview?.position === colIndex}
 				/>
-				<DndDraggable id={column.id} data={{ type: 'column' }}>
-					<div class="column-card flex flex-col w-72 h-full bg-foreground border-2 border-primary rounded-2xl">
-						<h2 class="column-header text-lg p-4 font-semibold text-neutral-500 cursor-grab">
-							<span class="drag-handle">&#x2630;</span>
-							{column.title}
-						</h2>
-						<!-- svelte-ignore a11y_no_static_element_interactions -->
-						<div onpointerdown={stopPropagation}>
-							<DndDroppable id={column.id} direction="vertical" data={{ accepts: 'task' }} class="space-y-2 p-3 border-t-2 border-primary pt-3">
-								{@const visible = getVisibleTasks(column.tasks)}
-								{#each visible as task, taskIndex (task.id)}
-									<DndPreview
-										containerId={column.id}
-										position={taskIndex}
-										show={dropPreview?.containerId === column.id && dropPreview?.position === taskIndex}
-									/>
-									<DndDraggable id={task.id} data={{ type: 'task' }}>
-										<div class="drag-item">
-											{task.label}
-										</div>
-									</DndDraggable>
-								{/each}
-								<DndPreview
-									containerId={column.id}
-									position={visible.length}
-									show={dropPreview?.containerId === column.id && dropPreview?.position === visible.length}
-								/>
-							</DndDroppable>
-						</div>
-					</div>
+				<DndDraggable class="flex flex-col shrink-0 w-72 h-full bg-foreground border-2 border-primary rounded-2xl" id={column.id} data={{ type: 'column' }}>
+					<h2 class="column-header text-lg p-4 font-semibold text-neutral-500 cursor-grab">
+						<span class="drag-handle">&#x2630;</span>
+						{column.title}
+					</h2>
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
+					<DndDroppable id={column.id} direction="vertical" data={{ accepts: 'task' }} class="space-y-2 p-3 h-full border-t-2 border-primary pt-3">
+						{@const visible = getVisibleTasks(column.tasks)}
+						{#each visible as task, taskIndex (task.id)}
+							<DndPreview
+								containerId={column.id}
+								position={taskIndex}
+								show={dropPreview?.containerId === column.id && dropPreview?.position === taskIndex}
+							/>
+							<DndDraggable class="drag-item px-4 gap-3" id={task.id} data={{ type: 'task' }}>
+								<span class="truncate">{task.label}</span>
+								<button data-dnd-no-drag class="black-button" onclick={(e) => alert("Test")}>Alert</button>
+							</DndDraggable>
+						{/each}
+						<DndPreview
+							containerId={column.id}
+							position={visible.length}
+							show={dropPreview?.containerId === column.id && dropPreview?.position === visible.length}
+						/>
+					</DndDroppable>
 				</DndDraggable>
 			{/each}
 			<DndPreview
