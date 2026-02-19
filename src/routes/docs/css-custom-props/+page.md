@@ -1,4 +1,4 @@
-# CSS Custom Properties
+# CSS Custom Properties & Classes
 
 All `--dnd-*` CSS custom properties can be set on any ancestor element to customize the look and feel of the drag-and-drop components.
 
@@ -74,3 +74,72 @@ These properties control the placeholder that appears at potential drop position
   </DndDroppable>
 </div>
 ```
+
+---
+
+## CSS Classes
+
+### DndDraggable
+
+| Class | Applied when |
+|-------|-------------|
+| `.dnd-draggable` | Always — base class on every draggable item |
+| `.dnd-draggable--dragging` | The item is currently being dragged |
+| `.dnd-draggable--disabled` | The `disabled` prop is `true` |
+
+Example — dim disabled items:
+
+```css
+.dnd-draggable--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+```
+
+### DndDroppable
+
+| Class | Applied when |
+|-------|-------------|
+| `.dnd-droppable` | Always — base class on every droppable container |
+| `.dnd-droppable--disabled` | The `disabled` prop is `true` |
+
+### DndProvider — ghost element
+
+The ghost is a detached `div` that follows the pointer during drag.
+
+| Class | Applied when |
+|-------|-------------|
+| `.dnd-ghost` | Always present on the ghost element |
+| `.dnd-ghost--returning` | Ghost is animating back after a cancelled drag |
+
+Example — style the ghost:
+
+```css
+.dnd-ghost {
+  opacity: 0.85;
+  transform-origin: top left;
+}
+
+.dnd-ghost--returning {
+  transition: none; /* library controls the animation */
+}
+```
+
+### DndPreview
+
+Previews are placeholder elements rendered inside containers to show the future drop position.
+
+| Class | Applied when |
+|-------|-------------|
+| `.dnd-preview` | Always — outer wrapper of every preview |
+| `.dnd-preview__inner` | Inner element inside the preview wrapper |
+
+### Debug zones
+
+When `controller.toggleDebugZones()` is called, the library overlays coloured rectangles on all drop zones.
+
+| Class | Purpose |
+|-------|---------|
+| `.dnd-debug-zone` | Each individual drop zone overlay |
+| `.dnd-debug-zone--first` | Highlights the first zone in a container |
+| `.dnd-debug-zone__label` | Text label showing zone index |

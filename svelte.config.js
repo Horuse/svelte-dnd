@@ -1,6 +1,11 @@
 import adapter from '@sveltejs/adapter-auto';
-import {escapeSvelte, mdsvex} from 'mdsvex';
+import { mdsvex } from 'mdsvex';
 import { createHighlighter } from 'shiki'
+
+const highlighterPromise = createHighlighter({
+	themes: ['github-dark'],
+	langs: ['javascript', 'bash', 'typescript', 'css', 'html', 'svelte']
+})
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -9,19 +14,11 @@ const config = {
 		extensions: ['.svx', '.md'],
 		highlight: {
 			highlighter: async (code, lang = 'text') => {
-				const highlighter = await createHighlighter({
-					themes: ['github-dark'],
-					langs: ['javascript', 'bash', 'typescript', 'css', 'html', 'svelte']
-				})
-				await highlighter.loadLanguage('javascript', 'typescript')
-
-				// const html = escapeSvelte(highlighter.codeToHtml(code, { lang, theme: 'nord' }))
-
+				const highlighter = await highlighterPromise
 				const html = highlighter.codeToHtml(code, {
 					lang,
 					theme: 'github-dark'
 				});
-
 				return `{@html \`${html}\` }`
 			}
 		},

@@ -76,7 +76,7 @@ A minimal working drag-and-drop setup requires four components: `DndProvider`, `
             />
 
             <DndDraggable id={item.id}>
-                <div>{item.label}</div>
+                {item.label}
             </DndDraggable>
         {/each}
 

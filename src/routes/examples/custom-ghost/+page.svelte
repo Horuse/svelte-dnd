@@ -86,7 +86,7 @@
 			</div>
 		{/snippet}
 
-		<div class="flex flex-row gap-4 overflow-x-auto h-125">
+		<div data-dnd-scroll class="flex flex-row gap-4 overflow-x-auto h-125">
 			{#each Object.entries(columns) as [columnId, columnItems] (columnId)}
 				{@const visible = getVisibleItems(columnItems)}
 				<div

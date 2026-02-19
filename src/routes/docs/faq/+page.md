@@ -149,7 +149,7 @@ Call `controller.toggleDebugZones()` — blue overlays will appear on all drop z
 </button>
 ```
 
-See the [HTML Attributes & CSS Classes](/docs/html-attributes) page for the classes used by the overlay elements.
+See the [CSS Custom Properties & Classes](/docs/css-custom-props) page for the classes used by the overlay elements.
 
 ---
 
