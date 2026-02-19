@@ -129,7 +129,7 @@
 					show={dropPreview?.containerId === 'board' && dropPreview?.position === colIndex}
 				/>
 				<DndDraggable class="flex flex-col shrink-0 w-72 h-full bg-foreground border-2 border-primary rounded-2xl" id={column.id} data={{ type: 'column' }}>
-					<h2 class="column-header text-lg p-4 font-semibold text-neutral-500 cursor-grab">
+					<h2 data-dnd-handle class="column-header text-lg p-4 font-semibold text-neutral-500 cursor-grab">
 						<span class="drag-handle">&#x2630;</span>
 						{column.title}
 					</h2>

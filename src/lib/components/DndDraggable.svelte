@@ -42,7 +42,12 @@
 		if (e.button !== 0) return
 
 		const target = e.target as HTMLElement
-		if (target.closest('[data-dnd-no-drag]')) return
+		const hasHandle = !!element.querySelector('[data-dnd-handle]')
+		if (hasHandle) {
+			if (!target.closest('[data-dnd-handle]')) return
+		} else {
+			if (target.closest('[data-dnd-no-drag]')) return
+		}
 
 		e.stopPropagation()
 
@@ -217,9 +222,21 @@
 		touch-action: none;
 	}
 
+	.dnd-draggable:has(:global([data-dnd-handle])) {
+		cursor: default;
+	}
+
+	.dnd-draggable :global([data-dnd-handle]) {
+		cursor: var(--dnd-draggable-cursor, grab);
+	}
+
 	.dnd-draggable--dragging {
 		cursor: var(--dnd-draggable-cursor-active, grabbing);
 		opacity: var(--dnd-draggable-opacity-dragging, 0.5);
+	}
+
+	.dnd-draggable--dragging :global([data-dnd-handle]) {
+		cursor: var(--dnd-draggable-cursor-active, grabbing);
 	}
 
 	.dnd-draggable--disabled {

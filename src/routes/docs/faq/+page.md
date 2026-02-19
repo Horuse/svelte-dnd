@@ -17,6 +17,29 @@ Add `data-dnd-no-drag` attribute to the element so that it behaves as usual and 
 
 ---
 
+## How do I drag only by a handle?
+
+Add `data-dnd-handle` to the element that should act as the drag trigger. Once at least one handle is present, dragging from anywhere else on the item is blocked automatically - no need for `data-dnd-no-drag`.
+
+```svelte
+<DndDraggable id={column.id} data={{ type: 'column' }}>
+    <h2 data-dnd-handle>&#x2630; {column.title}</h2>
+    <div><!-- clicking here won't drag --></div>
+</DndDraggable>
+```
+
+Multiple handles are supported — just add the attribute to each element:
+
+```svelte
+<DndDraggable id={item.id}>
+    <header data-dnd-handle>&#x2630; drag</header>
+    <p>content</p>
+    <footer data-dnd-handle>&#x2630; drag</footer>
+</DndDraggable>
+```
+
+---
+
 ## How do I enable auto-scroll in a scrollable container?
 
 Auto-scroll activates for any element that has the `data-dnd-scroll` attribute **and** `overflow: auto` or `overflow: scroll`, when the pointer is near its edge during a drag.
