@@ -22,7 +22,7 @@ export class DropZoneCalculator {
 		const allDraggableItems = this.domHelper.findDraggableItems(containerElement)
 		const draggedId = this.state.draggedItem
 		const draggableItems = allDraggableItems.filter((item) => {
-			if (item.getAttribute('data-drag-id') === draggedId) return false
+			if (item.getAttribute('data-dnd-drag-id') === draggedId) return false
 			return this.domHelper.filterItemsByContainer([item], containerElement).length > 0
 		})
 

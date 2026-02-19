@@ -111,8 +111,8 @@
 	bind:this={element}
 	class="dnd-droppable {className ?? ''}"
 	class:dnd-droppable--disabled={disabled}
-	data-drop-id={id}
-	data-direction={direction}
+	data-dnd-drop-id={id}
+	data-dnd-direction={direction}
 	data-dnd-scroll
 >
 	{@render children()}

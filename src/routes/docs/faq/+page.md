@@ -10,7 +10,7 @@ Add `data-dnd-no-drag` attribute to the element so that it behaves as usual and 
 
 ```svelte
 <DndDraggable class="drag-item" id={task.id} data={{ type: 'task' }}>
-    <button data-no-drag onclick={() => alert("Test")}>Alert</button>
+    <button data-dnd-no-drag onclick={() => alert("Test")}>Alert</button>
     {task.label}
 </DndDraggable>
 ```

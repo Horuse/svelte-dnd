@@ -52,7 +52,7 @@ You can add the `data-dnd-no-drag` attribute to any element inside your `DndDrag
 
 ```svelte
 <DndDraggable class="drag-item" id={task.id} data={{ type: 'task' }}>
-    <button data-no-drag onclick={() => alert("Test")}>Alert</button>
+    <button data-dnd-no-drag onclick={() => alert("Test")}>Alert</button>
     {task.label}
 </DndDraggable>
 ```

@@ -1,8 +1,8 @@
 // DOM selectors
 const SELECTORS = {
-	container: (id: string) => `[data-drop-id="${id}"]`,
+	container: (id: string) => `[data-dnd-drop-id="${id}"]`,
 	placeholder: (position: number) => `[data-dnd-preview-position="${position}"]`,
-	draggableItems: ':scope > [data-draggable-item]'
+	draggableItems: ':scope > [data-dnd-draggable-item]'
 } as const
 
 export class DOMHelper {
@@ -17,7 +17,7 @@ export class DOMHelper {
 	}
 
 	getContainerDirection(container: HTMLElement): 'vertical' | 'horizontal' {
-		return (container.dataset.direction as 'vertical' | 'horizontal') || 'vertical'
+		return (container.dataset.dndDirection as 'vertical' | 'horizontal') || 'vertical'
 	}
 
 	// Placeholder queries
@@ -32,7 +32,7 @@ export class DOMHelper {
 
 	filterItemsByContainer(items: HTMLElement[], containerElement: HTMLElement): HTMLElement[] {
 		return items.filter((item) => {
-			const closestDropZone = item.closest('[data-drop-id]')
+			const closestDropZone = item.closest('[data-dnd-drop-id]')
 			return closestDropZone === containerElement
 		})
 	}

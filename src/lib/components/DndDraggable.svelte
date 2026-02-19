@@ -198,8 +198,8 @@
 	class:dnd-draggable--disabled={disabled}
 	role="button"
 	tabindex={disabled ? -1 : 0}
-	data-drag-id={id}
-	data-draggable-item
+	data-dnd-drag-id={id}
+	data-dnd-draggable-item
 	onpointerdown={handlePointerDown}
 	onpointermove={handlePointerMove}
 	onpointerup={handlePointerUp}

@@ -108,10 +108,10 @@ export class DragController {
 	) {
 		const rect = element.getBoundingClientRect()
 
-		const containerEl = element.closest('[data-drop-id]')
+		const containerEl = element.closest('[data-dnd-drop-id]')
 		if (containerEl) {
-			const containerId = containerEl.getAttribute('data-drop-id')!
-			const items = containerEl.querySelectorAll(':scope > [data-draggable-item]')
+			const containerId = containerEl.getAttribute('data-dnd-drop-id')!
+			const items = containerEl.querySelectorAll(':scope > [data-dnd-draggable-item]')
 			const position = Array.from(items).indexOf(element)
 			this.state.setOriginContainerId(containerId)
 			this.state.setOriginPosition(position >= 0 ? position : 0)
