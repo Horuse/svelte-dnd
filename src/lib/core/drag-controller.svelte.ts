@@ -248,12 +248,10 @@ export class DragController {
 
 		if (targetZone && this.state.element && this.state.transform) {
 			this.animationController.animateToTarget(targetZone, () => {
-				this.state.setDropPreview(null)
 				this.notifyDrop(sourceId, sourceData, targetContainerId, position)
 				this.finalizeDragEnd(sourceId)
 			})
 		} else {
-			this.state.setDropPreview(null)
 			this.notifyDrop(sourceId, sourceData, targetContainerId, position)
 			this.finalizeDragEnd(sourceId)
 		}
@@ -319,6 +317,9 @@ export class DragController {
 		this.state.setSkipDropPreviewAnimation(true)
 		this.scrollController.clearAll()
 		this.state.reset()
+		requestAnimationFrame(() => {
+			this.state.setPerformingDrop(false)
+		})
 
 		if (itemId) {
 			this.notifyDragEnd(itemId)

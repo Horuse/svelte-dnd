@@ -38,6 +38,7 @@
 	const DRAG_THRESHOLD = 5
 
 	const translate = $derived(dndController?.translations.get(id) ?? { x: 0, y: 0 })
+	const performingDrop = $derived(dndController?.performingDrop ?? false)
 
 	$effect(() => {
 		if (element) {
@@ -214,7 +215,7 @@
 		tabindex={disabled ? -1 : 0}
 		data-dnd-drag-id={id}
 		data-dnd-draggable-item
-		style="transform: translate3d({translate.x}px, {translate.y}px, 0)"
+		style="transform: translate3d({translate.x}px, {translate.y}px, 0); transition: {isDragging || performingDrop ? 'none' : 'transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)'}"
 		onpointerdown={handlePointerDown}
 		onpointermove={handlePointerMove}
 		onpointerup={handlePointerUp}
@@ -230,7 +231,6 @@
 		cursor: var(--dnd-draggable-cursor, grab);
 		user-select: none;
 		touch-action: none;
-		transition: transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 		will-change: transform;
 	}
 

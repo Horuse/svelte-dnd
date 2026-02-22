@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { DndProvider, DndDroppable, DndDraggable, DndPreview, DragController } from '$lib/index.js';
-	import { onDestroy } from 'svelte';
 	import Description from './description.md';
 
 	let items = $state(
@@ -11,19 +10,7 @@
 			}))
 	);
 
-
 	const controller = new DragController();
-	const dropPreview = $derived(controller.dropPreview);
-
-	let hiddenId = $state<string | null>(null);
-	const visibleItems = $derived(items.filter((item) => item.id !== hiddenId));
-
-	const unsubStart = controller.onDragStart((id: string) => {
-		hiddenId = id;
-	});
-	const unsubEnd = controller.onDragEnd(() => {
-		hiddenId = null;
-	});
 
 	controller.onDrop((sourceId: string, _sourceData: any, _targetContainerId: string, position: number) => {
 		const fromIndex = items.findIndex((item) => item.id === sourceId);
@@ -35,10 +22,6 @@
 		items = updated;
 	});
 
-	onDestroy(() => {
-		unsubStart();
-		unsubEnd();
-	});
 </script>
 
 <div class="mx-auto max-w-5xl mb-32 flex gap-6 flex-col">
@@ -49,18 +32,15 @@
 	<DndProvider {controller}>
 		<DndDroppable class="flex flex-col h-[calc(100vh-450px)] min-h-125 overflow-y-auto max-w-xl p-4 bg-foreground border-2 border-second rounded-xl" id="vertical-list" direction="vertical">
 			{#each items as item, index (item.id)}
+				<DndPreview containerId="vertical-list" position={index} />
 				<DndDraggable class="pb-4" id={item.id}>
 					<div class="drag-item">
-						<span class="text-2xl">{index}</span>
+						<span class="text-2xl">{item.id}</span>
 					</div>
 				</DndDraggable>
 			{/each}
 
-			<DndPreview
-				containerId="vertical-list"
-				position={visibleItems.length}
-				show={dropPreview?.containerId === 'vertical-list' && dropPreview?.position === visibleItems.length}
-			/>
+			<DndPreview containerId="vertical-list" position={items.length} />
 		</DndDroppable>
 	</DndProvider>
 </div>

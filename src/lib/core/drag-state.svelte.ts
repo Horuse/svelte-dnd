@@ -144,7 +144,6 @@ export class DragState {
 		this.elementSize = null
 		this.originalPosition = null
 		this.isAnimating = false
-		this.isPerformingDrop = false
 		this.originContainerId = null
 		this.originPosition = 0
 		this.dropZones = []
