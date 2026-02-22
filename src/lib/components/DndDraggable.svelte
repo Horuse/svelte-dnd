@@ -28,7 +28,7 @@
 
 	const dndController = getContext<DragController>('dnd')
 
-	let element: HTMLElement
+	let element = $state<HTMLElement | undefined>(undefined)
 	let isDragging = $state(false)
 	let isPotentialDrag = $state(false)
 	let dragStartPosition = $state({ x: 0, y: 0 })
@@ -36,6 +36,17 @@
 	let dragOccurred = $state(false)
 
 	const DRAG_THRESHOLD = 5
+
+	const translate = $derived(dndController?.translations.get(id) ?? { x: 0, y: 0 })
+
+	$effect(() => {
+		if (element) {
+			dndController?.registerDraggable(id, element)
+			return () => dndController?.unregisterDraggable(id)
+		}
+	})
+
+	// --- Drag handling ---
 
 	const handlePointerDown = (e: PointerEvent) => {
 		if (disabled) return
@@ -83,8 +94,6 @@
 		isPotentialDrag = false
 		dragOccurred = true
 
-		// Release pointer capture and switch to window-level listeners
-		// so drag continues even if the element is removed from DOM
 		if (element.hasPointerCapture(e.pointerId)) {
 			element.releasePointerCapture(e.pointerId)
 		}
@@ -197,20 +206,21 @@
 </script>
 
 <div
-	bind:this={element}
-	class="dnd-draggable {className ?? ''}"
-	class:dnd-draggable--dragging={isDragging}
-	class:dnd-draggable--disabled={disabled}
-	role="button"
-	tabindex={disabled ? -1 : 0}
-	data-dnd-drag-id={id}
-	data-dnd-draggable-item
-	onpointerdown={handlePointerDown}
-	onpointermove={handlePointerMove}
-	onpointerup={handlePointerUp}
-	onpointercancel={handlePointerCancel}
-	onclick={handleClick}
-	onkeydown={handleKeyDown}
+		bind:this={element}
+		class="dnd-draggable {className ?? ''}"
+		class:dnd-draggable--dragging={isDragging}
+		class:dnd-draggable--disabled={disabled}
+		role="button"
+		tabindex={disabled ? -1 : 0}
+		data-dnd-drag-id={id}
+		data-dnd-draggable-item
+		style="transform: translate3d({translate.x}px, {translate.y}px, 0)"
+		onpointerdown={handlePointerDown}
+		onpointermove={handlePointerMove}
+		onpointerup={handlePointerUp}
+		onpointercancel={handlePointerCancel}
+		onclick={handleClick}
+		onkeydown={handleKeyDown}
 >
 	{@render children()}
 </div>
@@ -220,6 +230,8 @@
 		cursor: var(--dnd-draggable-cursor, grab);
 		user-select: none;
 		touch-action: none;
+		transition: transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+		will-change: transform;
 	}
 
 	.dnd-draggable:has(:global([data-dnd-handle])) {
@@ -233,6 +245,7 @@
 	.dnd-draggable--dragging {
 		cursor: var(--dnd-draggable-cursor-active, grabbing);
 		opacity: var(--dnd-draggable-opacity-dragging, 0.5);
+		transition: none;
 	}
 
 	.dnd-draggable--dragging :global([data-dnd-handle]) {

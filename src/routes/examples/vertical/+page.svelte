@@ -4,10 +4,11 @@
 	import Description from './description.md';
 
 	let items = $state(
-		Array.from({ length: 50 }, (_, i) => ({
-			id: String(i + 1),
-			label: `Item ${i + 1}`
-		}))
+			Array.from({ length: 50 }, (_, i) => ({
+				id: String(i + 1),
+				label: `Item ${i + 1}`,
+				height: Math.floor(Math.random() * (100 - 50 + 1)) + 50
+			}))
 	);
 
 
@@ -46,17 +47,11 @@
 	</div>
 
 	<DndProvider {controller}>
-		<DndDroppable class="flex h-125 flex-col overflow-y-auto space-y-2 max-w-xl p-4 bg-foreground border-2 border-second rounded-xl" id="vertical-list" direction="vertical">
-			{#each visibleItems as item, index (item.id)}
-				<DndPreview
-					containerId="vertical-list"
-					position={index}
-					show={dropPreview?.containerId === 'vertical-list' && dropPreview?.position === index}
-				/>
-
-				<DndDraggable id={item.id}>
+		<DndDroppable class="flex flex-col h-[calc(100vh-450px)] min-h-125 overflow-y-auto max-w-xl p-4 bg-foreground border-2 border-second rounded-xl" id="vertical-list" direction="vertical">
+			{#each items as item, index (item.id)}
+				<DndDraggable class="pb-4" id={item.id}>
 					<div class="drag-item">
-						{item.label}
+						<span class="text-2xl">{index}</span>
 					</div>
 				</DndDraggable>
 			{/each}

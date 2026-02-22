@@ -146,7 +146,7 @@
     }
 
     .drag-item {
-        @apply p-4 flex whitespace-nowrap items-center text-lg justify-center bg-primary border-dashed border-2 text-neutral-500 rounded-xl border-primary-border shadow-sm transition-all;
+        @apply p-4 flex whitespace-nowrap items-center text-lg justify-center bg-primary border-dashed border-2 text-neutral-500 rounded-xl border-primary-border transition-all;
 
         @variant hover {
             @apply bg-primary-hover border-primary-hover-border

@@ -2,7 +2,6 @@
 	import { getContext } from 'svelte'
 	import type { DragController } from '../core/drag-controller.svelte.js'
 	import type { DndDirection } from '../types.js'
-	import { createConditionalSlide, createConditionalScale } from '../utils/conditional-transition.js'
 
 	interface Props {
 		containerId: string
@@ -24,14 +23,10 @@
 		class: className = ''
 	}: Props = $props()
 
-	const axis = direction === 'horizontal' ? 'x' : 'y'
-
 	const dndManager = getContext<DragController>('dnd')
-	const conditionalSlide = createConditionalSlide(dndManager)
-	const conditionalScale = createConditionalScale(dndManager)
 
 	const visible = $derived(
-		show &&
+			show &&
 			!!dndManager?.dropPreview &&
 			dndManager.dropPreview.containerId === containerId &&
 			dndManager.dropPreview.position === position &&
@@ -40,80 +35,31 @@
 
 	const height = $derived(dndManager?.dropPreview?.draggedElementHeight || fallbackHeight)
 	const width = $derived(dndManager?.dropPreview?.draggedElementWidth || fallbackWidth)
-
-	let previewHeight = $state(0)
-
-	const shouldSpeedUp = $derived(
-		!!(dndManager?.performingDrop || dndManager?.animatingReturn)
-	)
-
-	function speedUpOnDrop(node: HTMLElement, speedUp: boolean) {
-		let frameId: number | null = null
-		const RATE = 5
-
-		function apply() {
-			const anims = node.getAnimations({ subtree: true })
-			for (const a of anims) {
-				if (a.playbackRate !== RATE) a.playbackRate = RATE
-			}
-			if (anims.length > 0) {
-				frameId = requestAnimationFrame(apply)
-			} else {
-				frameId = null
-			}
-		}
-
-		function stop() {
-			if (frameId !== null) {
-				cancelAnimationFrame(frameId)
-				frameId = null
-			}
-		}
-
-		if (speedUp) apply()
-
-		return {
-			update(v: boolean) {
-				if (v) apply()
-				else stop()
-			},
-			destroy() {
-				stop()
-			}
-		}
-	}
 </script>
 
-{#if visible}
-	<div use:speedUpOnDrop={shouldSpeedUp}
-		bind:offsetHeight={previewHeight}
+<div
 		data-dnd-preview
 		data-dnd-preview-position={position}
-		transition:conditionalSlide|global={{ duration: 400, axis }}
-		style="height: {height}px; width: {width}px"
-		class="dnd-preview {className}"
-	>
-		{#if previewHeight > height * 0.85}
-			<div
-				transition:conditionalScale|global={{ duration: 400 }}
-				class="dnd-preview__inner"
-			></div>
-		{/if}
-	</div>
-{/if}
+		class="dnd-preview bg-red-500 {className}"
+		class:dnd-preview--visible={visible}
+		style:height="{0}px"
+		style:width={direction === 'horizontal' ? `${width}px` : undefined}
+></div>
 
 <style>
-	.dnd-preview {
-		flex-shrink: 0;
-		transition:
-			height var(--dnd-preview-transition-duration, 200ms) ease,
-			width var(--dnd-preview-transition-duration, 200ms) ease;
-	}
+	/*.dnd-preview {*/
+	/*	z-index: -1;*/
+	/*	position: absolute;*/
+	/*	left: 0px;*/
+	/*	right: 0px;*/
+	/*	top: -2px;*/
+	/*	pointer-events: none;*/
+	/*	transform: translateY(calc(-100% - 10px));*/
+	/*	opacity: 0;*/
+	/*	transition: opacity 100ms cubic-bezier(0.25, 0.46, 0.45, 0.94);*/
+	/*}*/
 
-	.dnd-preview__inner {
-		background: var(--dnd-preview-bg, rgba(0, 0, 0, 0.05));
-		border: var(--dnd-preview-border, 2px dashed rgba(0, 0, 0, 0.2));
-		border-radius: var(--dnd-preview-border-radius, 8px);
-		height: 100%;
-	}
+	/*.dnd-preview--visible {*/
+	/*	opacity: 1;*/
+	/*}*/
 </style>

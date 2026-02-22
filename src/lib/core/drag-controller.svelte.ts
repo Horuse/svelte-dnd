@@ -22,10 +22,76 @@ export class DragController {
 	})
 	private droppableDataRegistry = new Map<string, Record<string, any>>()
 	private dropZoneCalculator = new DropZoneCalculator(this.state, this.droppableDataRegistry)
+	private draggableRegistry = new Map<string, HTMLElement>()
 
 	private dragStartCallbacks = new Set<DragStartCallback>()
 	private dragEndCallbacks = new Set<DragEndCallback>()
 	private dropCallbacks = new Set<DropCallback>()
+
+	translations = $derived.by((): Map<string, { x: number; y: number }> => {
+		const map = new Map<string, { x: number; y: number }>()
+
+		if (!this.state.dragging || !this.state.dropPreview?.visible) return map
+
+		const preview = this.state.dropPreview
+		const draggedId = this.state.draggedItem
+
+		// Find the target container via registry (avoids per-component DOM traversal)
+		let targetContainer: HTMLElement | null = null
+		for (const [, el] of this.draggableRegistry) {
+			const containerEl = el.closest('[data-dnd-drop-id]') as HTMLElement | null
+			if (containerEl?.getAttribute('data-dnd-drop-id') === preview.containerId) {
+				targetContainer = containerEl
+				break
+			}
+		}
+
+		if (!targetContainer) return map
+
+		const direction = (targetContainer.getAttribute('data-dnd-direction') ?? 'vertical') as
+			| 'vertical'
+			| 'horizontal'
+
+		const size =
+			direction === 'horizontal'
+				? (preview.draggedElementWidth ?? 0)
+				: (preview.draggedElementHeight ?? 0)
+
+		if (size === 0) return map
+
+		const allItems = Array.from(
+			targetContainer.querySelectorAll(':scope > [data-dnd-draggable-item]')
+		) as HTMLElement[]
+
+		const draggedEl = draggedId ? this.draggableRegistry.get(draggedId) : null
+		const draggedIdx = draggedEl ? allItems.indexOf(draggedEl) : -1
+		const pos = preview.position
+
+		for (const [id, el] of this.draggableRegistry) {
+			if (id === draggedId) continue
+
+			const myIdx = allItems.indexOf(el)
+			if (myIdx === -1) continue
+
+			let offset = 0
+
+			if (draggedIdx === -1) {
+				// Cross-container: shift items from pos onwards
+				offset = myIdx >= pos ? size : 0
+			} else {
+				// Same container reorder
+				const targetIdx = pos <= draggedIdx ? pos : pos + 1
+				if (myIdx < draggedIdx && myIdx >= targetIdx) offset = size
+				else if (myIdx > draggedIdx && myIdx < targetIdx) offset = -size
+			}
+
+			if (offset !== 0) {
+				map.set(id, direction === 'horizontal' ? { x: offset, y: 0 } : { x: 0, y: offset })
+			}
+		}
+
+		return map
+	})
 
 	get dragging() {
 		return this.state.dragging
@@ -75,6 +141,14 @@ export class DragController {
 
 	setSkipDropPreviewAnimation(value: boolean) {
 		this.state.setSkipDropPreviewAnimation(value)
+	}
+
+	registerDraggable(id: string, element: HTMLElement) {
+		this.draggableRegistry.set(id, element)
+	}
+
+	unregisterDraggable(id: string) {
+		this.draggableRegistry.delete(id)
 	}
 
 	registerDroppableData(id: string, data: Record<string, any>) {
@@ -199,7 +273,6 @@ export class DragController {
 		}
 
 		if (shouldAnimate && this.state.element && this.state.transform) {
-			// Wait for next frame to ensure placeholder is rendered in DOM
 			requestAnimationFrame(() => {
 				this.animationController.animateReturn(() => {
 					this.finalizeDragEnd(itemId)
@@ -278,6 +351,7 @@ export class DragController {
 	destroy() {
 		this.scrollController.destroy()
 		this.droppableDataRegistry.clear()
+		this.draggableRegistry.clear()
 		this.dragStartCallbacks.clear()
 		this.dragEndCallbacks.clear()
 		this.dropCallbacks.clear()
