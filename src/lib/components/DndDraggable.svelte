@@ -39,6 +39,10 @@
 
 	const translate = $derived(dndController?.translations.get(id) ?? { x: 0, y: 0 })
 	const performingDrop = $derived(dndController?.performingDrop ?? false)
+	const isGhostActive = $derived(
+		isDragging ||
+		(dndController?.animatingReturn === true && dndController?.draggedItem === id)
+	)
 
 	$effect(() => {
 		if (element) {
@@ -209,13 +213,13 @@
 <div
 		bind:this={element}
 		class="dnd-draggable {className ?? ''}"
-		class:dnd-draggable--dragging={isDragging}
+		class:dnd-draggable--dragging={isGhostActive}
 		class:dnd-draggable--disabled={disabled}
 		role="button"
 		tabindex={disabled ? -1 : 0}
 		data-dnd-drag-id={id}
 		data-dnd-draggable-item
-		style="transform: translate3d({translate.x}px, {translate.y}px, 0); transition: {isDragging || performingDrop ? 'none' : 'transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)'}"
+		style="transform: translate3d({translate.x}px, {translate.y}px, 0); transition: {isGhostActive || performingDrop ? 'none' : 'transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)'}"
 		onpointerdown={handlePointerDown}
 		onpointermove={handlePointerMove}
 		onpointerup={handlePointerUp}
@@ -244,7 +248,7 @@
 
 	.dnd-draggable--dragging {
 		cursor: var(--dnd-draggable-cursor-active, grabbing);
-		opacity: var(--dnd-draggable-opacity-dragging, 0.5);
+		opacity: var(--dnd-draggable-opacity-dragging, 0);
 		transition: none;
 	}
 

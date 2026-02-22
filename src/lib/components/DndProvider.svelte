@@ -73,7 +73,7 @@
 				itemId: dragController.draggedItem
 			})}
 		{:else}
-			{@html dragController.element.outerHTML}
+			{@html dragController.element.innerHTML}
 		{/if}
 	</div>
 {/if}
