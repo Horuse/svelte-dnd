@@ -65,13 +65,20 @@
 			if (target.closest('[data-dnd-no-drag]')) return
 		}
 
+		const rect = element.getBoundingClientRect()
+		const styles = getComputedStyle(element)
+		const contentBottom = rect.bottom - parseFloat(styles.paddingBottom)
+		const contentRight = rect.right - parseFloat(styles.paddingRight)
+		const contentTop = rect.top + parseFloat(styles.paddingTop)
+		const contentLeft = rect.left + parseFloat(styles.paddingLeft)
+		if (e.clientY > contentBottom || e.clientY < contentTop || e.clientX > contentRight || e.clientX < contentLeft) return
+
 		e.stopPropagation()
 
 		isPotentialDrag = true
 		dragOccurred = false
 		dragStartPosition = { x: e.clientX, y: e.clientY }
 
-		const rect = element.getBoundingClientRect()
 		dragOffset = {
 			x: e.clientX - rect.left,
 			y: e.clientY - rect.top
@@ -227,15 +234,21 @@
 		onclick={handleClick}
 		onkeydown={handleKeyDown}
 >
-	{@render children()}
+	<div class="dnd-draggable__content">
+		{@render children()}
+	</div>
 </div>
 
 <style>
 	.dnd-draggable {
-		cursor: var(--dnd-draggable-cursor, grab);
+		cursor: default;
 		user-select: none;
 		touch-action: none;
 		will-change: transform;
+	}
+
+	.dnd-draggable__content {
+		cursor: var(--dnd-draggable-cursor, grab);
 	}
 
 	.dnd-draggable:has(:global([data-dnd-handle])) {
