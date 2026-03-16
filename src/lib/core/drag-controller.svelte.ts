@@ -38,40 +38,33 @@ export class DragController {
 		const preview = this.state.dropPreview
 		const draggedId = this.state.draggedItem
 
-		// Find the target container via registry (avoids per-component DOM traversal)
-		let targetContainer: HTMLElement | null = null
-		for (const [, el] of this.draggableRegistry) {
-			const containerEl = el.closest('[data-dnd-drop-id]') as HTMLElement | null
-			if (containerEl?.getAttribute('data-dnd-drop-id') === preview.containerId) {
-				targetContainer = containerEl
-				break
-			}
-		}
-
+		const targetContainer = this.domHelper.findContainer(preview.containerId)
 		if (!targetContainer) return map
 
 		const direction = (targetContainer.getAttribute('data-dnd-direction') ?? 'vertical') as
 			| 'vertical'
 			| 'horizontal'
 
-		const size =
-			direction === 'horizontal'
-				? (preview.draggedElementWidth ?? 0)
-				: (preview.draggedElementHeight ?? 0)
+		const slotSize = this.state.dragSlotSize
+		const elementSize = direction === 'horizontal'
+			? (preview.draggedElementWidth ?? 0)
+			: (preview.draggedElementHeight ?? 0)
+		const size = slotSize
+			? (direction === 'horizontal' ? slotSize.width : slotSize.height)
+			: elementSize
 
 		if (size === 0) return map
 
 		const allItems = this.domHelper.findDraggableItemsInContainer(targetContainer)
 
-		const draggedEl = draggedId ? this.draggableRegistry.get(draggedId) : null
-		const draggedIdx = draggedEl ? allItems.indexOf(draggedEl) : -1
+		const draggedIdx = allItems.findIndex(el => el.getAttribute('data-dnd-drag-id') === draggedId)
 		const pos = preview.position
 
-		for (const [id, el] of this.draggableRegistry) {
-			if (id === draggedId) continue
+		for (const el of allItems) {
+			const id = el.getAttribute('data-dnd-drag-id')
+			if (!id || id === draggedId) continue
 
 			const myIdx = allItems.indexOf(el)
-			if (myIdx === -1) continue
 
 			let offset = 0
 
@@ -189,6 +182,25 @@ export class DragController {
 			const position = items.indexOf(element)
 			this.state.setOriginContainerId(containerId)
 			this.state.setOriginPosition(position >= 0 ? position : 0)
+
+			const elementRect = element.getBoundingClientRect()
+			const nextItem = items[position + 1]
+			const prevItem = items[position - 1]
+			if (nextItem) {
+				const nextRect = nextItem.getBoundingClientRect()
+				this.state.setDragSlotSize({
+					width: nextRect.left - elementRect.left,
+					height: nextRect.top - elementRect.top
+				})
+			} else if (prevItem) {
+				const prevRect = prevItem.getBoundingClientRect()
+				this.state.setDragSlotSize({
+					width: elementRect.left - prevRect.left,
+					height: elementRect.top - prevRect.top
+				})
+			} else {
+				this.state.setDragSlotSize({ width: element.offsetWidth, height: element.offsetHeight })
+			}
 		}
 
 		this.state.setDragging(true)
