@@ -23,7 +23,11 @@ export class DOMHelper {
 
 	// Placeholder queries
 	static findPlaceholder(container: HTMLElement, position: number): HTMLElement | null {
-		return container.querySelector(SELECTORS.placeholder(position))
+		const all = container.querySelectorAll<HTMLElement>(SELECTORS.placeholder(position))
+		for (const el of all) {
+			if (el.closest('[data-dnd-drop-id]') === container) return el
+		}
+		return null
 	}
 
 	// Draggable items queries
