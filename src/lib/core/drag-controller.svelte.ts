@@ -24,7 +24,6 @@ export class DragController {
 	private droppableDataRegistry = new Map<string, Record<string, any>>()
 	private dropZoneCalculator = new DropZoneCalculator(this.state, this.droppableDataRegistry)
 	private draggableRegistry = new Map<string, HTMLElement>()
-	private domHelper = new DOMHelper()
 
 	private dragStartCallbacks = new Set<DragStartCallback>()
 	private dragEndCallbacks = new Set<DragEndCallback>()
@@ -38,7 +37,7 @@ export class DragController {
 		const preview = this.state.dropPreview
 		const draggedId = this.state.draggedItem
 
-		const targetContainer = this.domHelper.findContainer(preview.containerId)
+		const targetContainer = DOMHelper.findContainer(preview.containerId)
 		if (!targetContainer) return map
 
 		const direction = (targetContainer.getAttribute('data-dnd-direction') ?? 'vertical') as
@@ -55,7 +54,7 @@ export class DragController {
 
 		if (size === 0) return map
 
-		const allItems = this.domHelper.findDraggableItemsInContainer(targetContainer)
+		const allItems = DOMHelper.findDraggableItemsInContainer(targetContainer)
 
 		const draggedIdx = allItems.findIndex(el => el.getAttribute('data-dnd-drag-id') === draggedId)
 		const pos = preview.position
@@ -178,7 +177,7 @@ export class DragController {
 		const containerEl = element.closest('[data-dnd-drop-id]')
 		if (containerEl) {
 			const containerId = containerEl.getAttribute('data-dnd-drop-id')!
-			const items = this.domHelper.findDraggableItemsInContainer(containerEl)
+			const items = DOMHelper.findDraggableItemsInContainer(containerEl)
 			const position = items.indexOf(element)
 			this.state.setOriginContainerId(containerId)
 			this.state.setOriginPosition(position >= 0 ? position : 0)

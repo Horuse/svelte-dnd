@@ -2,41 +2,48 @@
 const SELECTORS = {
 	container: (id: string) => `[data-dnd-drop-id="${id}"]`,
 	placeholder: (position: number) => `[data-dnd-preview-position="${position}"]`,
-	draggableItems: '[data-dnd-draggable-item]'
+	draggableItems: '[data-dnd-draggable-item]',
+	draggableItemsWithId: '[data-dnd-draggable-item][data-dnd-drag-id]'
 } as const
 
 export class DOMHelper {
 	// Container queries
-	findContainer(containerId: string): HTMLElement | null {
+	static findContainer(containerId: string): HTMLElement | null {
 		return document.querySelector(SELECTORS.container(containerId))
 	}
 
-	getContainerRect(containerId: string): DOMRect | null {
-		const container = this.findContainer(containerId)
+	static getContainerRect(containerId: string): DOMRect | null {
+		const container = DOMHelper.findContainer(containerId)
 		return container ? container.getBoundingClientRect() : null
 	}
 
-	getContainerDirection(container: HTMLElement): 'vertical' | 'horizontal' {
+	static getContainerDirection(container: HTMLElement): 'vertical' | 'horizontal' {
 		return (container.dataset.dndDirection as 'vertical' | 'horizontal') || 'vertical'
 	}
 
 	// Placeholder queries
-	findPlaceholder(container: HTMLElement, position: number): HTMLElement | null {
+	static findPlaceholder(container: HTMLElement, position: number): HTMLElement | null {
 		return container.querySelector(SELECTORS.placeholder(position))
 	}
 
 	// Draggable items queries
-	findDraggableItems(container: HTMLElement): HTMLElement[] {
+	static findDraggableItems(container: HTMLElement): HTMLElement[] {
 		return Array.from(container.querySelectorAll(SELECTORS.draggableItems))
 	}
 
-	findDraggableItemsInContainer(container: HTMLElement): HTMLElement[] {
-		return this.findDraggableItems(container).filter(
+	static findDraggableItemsInContainer(container: HTMLElement): HTMLElement[] {
+		return DOMHelper.findDraggableItems(container).filter(
 			(item) => item.closest('[data-dnd-drop-id]') === container
 		)
 	}
 
-	filterItemsByContainer(items: HTMLElement[], containerElement: HTMLElement): HTMLElement[] {
+	static findDraggableItemsInContainerById(container: HTMLElement): HTMLElement[] {
+		return Array.from(
+			container.querySelectorAll<HTMLElement>(SELECTORS.draggableItemsWithId)
+		).filter((item) => item.closest('[data-dnd-drop-id]') === container)
+	}
+
+	static filterItemsByContainer(items: HTMLElement[], containerElement: HTMLElement): HTMLElement[] {
 		return items.filter((item) => {
 			const closestDropZone = item.closest('[data-dnd-drop-id]')
 			return closestDropZone === containerElement
@@ -44,7 +51,7 @@ export class DOMHelper {
 	}
 
 	// Visibility checks
-	isElementVisibleInContainer(element: HTMLElement, container: HTMLElement): boolean {
+	static isElementVisibleInContainer(element: HTMLElement, container: HTMLElement): boolean {
 		const containerRect = container.getBoundingClientRect()
 		const elementRect = element.getBoundingClientRect()
 
@@ -57,7 +64,7 @@ export class DOMHelper {
 	}
 
 	// Rect helpers
-	getRect(element: HTMLElement): DOMRect {
+	static getRect(element: HTMLElement): DOMRect {
 		return element.getBoundingClientRect()
 	}
 }

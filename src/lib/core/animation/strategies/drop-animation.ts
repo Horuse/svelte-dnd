@@ -9,7 +9,6 @@ const easing = {
 }
 
 export class DropAnimationStrategy implements AnimationStrategy {
-	private domHelper = new DOMHelper()
 
 	constructor(
 		private state: DragState,
@@ -52,12 +51,12 @@ export class DropAnimationStrategy implements AnimationStrategy {
 	}
 
 	private calculatePlaceholderPosition(): { x: number; y: number } {
-		const container = this.domHelper.findContainer(this.targetZone.containerId)
+		const container = DOMHelper.findContainer(this.targetZone.containerId)
 		if (!container) {
 			return this.calculateFallbackPosition()
 		}
 
-		const placeholder = this.domHelper.findPlaceholder(container, this.targetZone.position)
+		const placeholder = DOMHelper.findPlaceholder(container, this.targetZone.position)
 		if (placeholder) {
 			const rect = placeholder.getBoundingClientRect()
 			return { x: rect.left, y: rect.top }

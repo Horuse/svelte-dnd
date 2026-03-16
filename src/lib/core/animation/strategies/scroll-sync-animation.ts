@@ -9,7 +9,6 @@ const easing = {
 }
 
 export class ScrollSyncAnimationStrategy implements AnimationStrategy {
-	private domHelper = new DOMHelper()
 	private scrollCalc = new ScrollSyncCalculator()
 
 	constructor(
@@ -19,17 +18,17 @@ export class ScrollSyncAnimationStrategy implements AnimationStrategy {
 	) {}
 
 	execute(onComplete?: () => void): void {
-		const container = this.domHelper.findContainer(this.containerId)
+		const container = DOMHelper.findContainer(this.containerId)
 		if (!container) {
 			onComplete?.()
 			return
 		}
 
-		const placeholder = this.domHelper.findPlaceholder(container, this.position)
+		const placeholder = DOMHelper.findPlaceholder(container, this.position)
 		if (!placeholder) {
 			// Retry next frame if placeholder not rendered yet
 			requestAnimationFrame(() => {
-				const retryPlaceholder = this.domHelper.findPlaceholder(container, this.position)
+				const retryPlaceholder = DOMHelper.findPlaceholder(container, this.position)
 				if (retryPlaceholder) {
 					this.executeScrollSync(container, retryPlaceholder, onComplete)
 				} else {
@@ -49,7 +48,7 @@ export class ScrollSyncAnimationStrategy implements AnimationStrategy {
 	): void {
 		this.state.setAnimating(true)
 
-		const direction = this.domHelper.getContainerDirection(container)
+		const direction = DOMHelper.getContainerDirection(container)
 		const adapter = getDirectionAdapter(direction)
 
 		const startScroll = adapter.getScroll(container)

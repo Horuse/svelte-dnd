@@ -9,7 +9,6 @@ const easing = {
 }
 
 export class ReturnAnimationStrategy implements AnimationStrategy {
-	private domHelper = new DOMHelper()
 
 	constructor(private state: DragState) {}
 
@@ -39,13 +38,13 @@ export class ReturnAnimationStrategy implements AnimationStrategy {
 		position: number,
 		onComplete?: () => void
 	): void {
-		const container = this.domHelper.findContainer(containerId)
+		const container = DOMHelper.findContainer(containerId)
 		if (!container) {
 			this.startSimpleReturnAnimation(onComplete)
 			return
 		}
 
-		const placeholder = this.domHelper.findPlaceholder(container, position)
+		const placeholder = DOMHelper.findPlaceholder(container, position)
 		if (placeholder) {
 			this.handleFoundPlaceholder(container, placeholder, containerId, position, onComplete)
 		} else {
@@ -60,7 +59,7 @@ export class ReturnAnimationStrategy implements AnimationStrategy {
 		position: number,
 		onComplete?: () => void
 	): void {
-		if (this.domHelper.isElementVisibleInContainer(placeholder, container)) {
+		if (DOMHelper.isElementVisibleInContainer(placeholder, container)) {
 			this.startSimpleReturnAnimation(onComplete)
 		} else {
 			// Delegate to scroll sync strategy
@@ -81,7 +80,7 @@ export class ReturnAnimationStrategy implements AnimationStrategy {
 	): void {
 		// Placeholder might not be rendered yet, retry next frame
 		requestAnimationFrame(() => {
-			const placeholder = this.domHelper.findPlaceholder(container, position)
+			const placeholder = DOMHelper.findPlaceholder(container, position)
 			if (placeholder) {
 				this.handleFoundPlaceholder(container, placeholder, containerId, position, onComplete)
 			} else {
@@ -133,10 +132,10 @@ export class ReturnAnimationStrategy implements AnimationStrategy {
 	): { x: number; y: number } {
 		if (!containerId) return fallback
 
-		const container = this.domHelper.findContainer(containerId)
+		const container = DOMHelper.findContainer(containerId)
 		if (!container) return fallback
 
-		const placeholder = this.domHelper.findPlaceholder(container, position)
+		const placeholder = DOMHelper.findPlaceholder(container, position)
 		if (!placeholder) return fallback
 
 		const rect = placeholder.getBoundingClientRect()
