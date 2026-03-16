@@ -60,3 +60,12 @@ export interface GhostSnippetProps {
 }
 
 export type GhostSnippet = Snippet<[GhostSnippetProps]>
+
+export type DragStartCallback = (itemId: string) => void
+export type DragEndCallback = (itemId: string) => void
+export type DropCallback = (
+	sourceId: string,
+	sourceData: any,
+	targetContainerId: string,
+	position: number
+) => void

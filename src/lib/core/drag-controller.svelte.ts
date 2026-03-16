@@ -3,16 +3,11 @@ import { AnimationController } from './animation-controller.js'
 import { ScrollController } from './scroll-controller.js'
 import { DropZoneCalculator } from './dropzone-calculator.js'
 import { DOMHelper } from './dom-helper.js'
+import { DragEventEmitter } from './drag-event-emitter.js'
+import { TranslationCalculator } from './translation-calculator.svelte.js'
 import type { DndDragEvent, DndDropEvent, DropZone, DndDirection } from '../types.js'
 
-export type DragStartCallback = (itemId: string) => void
-export type DragEndCallback = (itemId: string) => void
-export type DropCallback = (
-	sourceId: string,
-	sourceData: any,
-	targetContainerId: string,
-	position: number
-) => void
+export type { DragStartCallback, DragEndCallback, DropCallback } from '../types.js'
 
 export class DragController {
 	private state = new DragState()
@@ -24,131 +19,12 @@ export class DragController {
 	private droppableDataRegistry = new Map<string, Record<string, any>>()
 	private dropZoneCalculator = new DropZoneCalculator(this.state, this.droppableDataRegistry)
 	private draggableRegistry = new Map<string, HTMLElement>()
+	private eventBus = new DragEventEmitter()
+	private translationCalc = new TranslationCalculator(this.state)
 
-	private dragStartCallbacks = new Set<DragStartCallback>()
-	private dragEndCallbacks = new Set<DragEndCallback>()
-	private dropCallbacks = new Set<DropCallback>()
-
-	translations = $derived.by((): Map<string, { x: number; y: number }> => {
-		const map = new Map<string, { x: number; y: number }>()
-
-		if (!this.state.dragging) return map
-
-		const draggedId = this.state.draggedItem
-
-		if (!this.state.dropPreview?.visible) {
-			// No preview visible: collapse the gap left by the invisible dragged element
-			const originContainerId = this.state.originContainerId
-			if (!originContainerId || !draggedId) return map
-
-			const originContainer = DOMHelper.findContainer(originContainerId)
-			if (!originContainer) return map
-
-			const direction = (originContainer.getAttribute('data-dnd-direction') ?? 'vertical') as
-				| 'vertical'
-				| 'horizontal'
-
-			const slotSize = this.state.dragSlotSize
-			if (!slotSize) return map
-
-			const size = direction === 'horizontal' ? slotSize.width : slotSize.height
-			if (size === 0) return map
-
-			const allItems = DOMHelper.findDraggableItemsInContainer(originContainer)
-			const draggedIdx = allItems.findIndex(el => el.getAttribute('data-dnd-drag-id') === draggedId)
-			if (draggedIdx === -1) return map
-
-			for (const el of allItems) {
-				const id = el.getAttribute('data-dnd-drag-id')
-				if (!id || id === draggedId) continue
-
-				const myIdx = allItems.indexOf(el)
-				if (myIdx > draggedIdx) {
-					map.set(id, direction === 'horizontal' ? { x: -size, y: 0 } : { x: 0, y: -size })
-				}
-			}
-
-			return map
-		}
-
-		const preview = this.state.dropPreview
-
-		const targetContainer = DOMHelper.findContainer(preview.containerId)
-		if (!targetContainer) return map
-
-		const direction = (targetContainer.getAttribute('data-dnd-direction') ?? 'vertical') as
-			| 'vertical'
-			| 'horizontal'
-
-		const slotSize = this.state.dragSlotSize
-		const elementSize = direction === 'horizontal'
-			? (preview.draggedElementWidth ?? 0)
-			: (preview.draggedElementHeight ?? 0)
-		const size = slotSize
-			? (direction === 'horizontal' ? slotSize.width : slotSize.height)
-			: elementSize
-
-		if (size === 0) return map
-
-		const allItems = DOMHelper.findDraggableItemsInContainer(targetContainer)
-
-		const draggedIdx = allItems.findIndex(el => el.getAttribute('data-dnd-drag-id') === draggedId)
-		const pos = preview.position
-
-		for (const el of allItems) {
-			const id = el.getAttribute('data-dnd-drag-id')
-			if (!id || id === draggedId) continue
-
-			const myIdx = allItems.indexOf(el)
-
-			let offset = 0
-
-			if (draggedIdx === -1) {
-				// Cross-container: shift items from pos onwards
-				offset = myIdx >= pos ? size : 0
-			} else {
-				// Same container reorder
-				const targetIdx = pos <= draggedIdx ? pos : pos + 1
-				if (myIdx < draggedIdx && myIdx >= targetIdx) offset = size
-				else if (myIdx > draggedIdx && myIdx < targetIdx) offset = -size
-			}
-
-			if (offset !== 0) {
-				map.set(id, direction === 'horizontal' ? { x: offset, y: 0 } : { x: 0, y: offset })
-			}
-		}
-
-		// Cross-container: also collapse the gap in the origin container
-		if (draggedIdx === -1) {
-			const originContainerId = this.state.originContainerId
-			if (originContainerId && originContainerId !== preview.containerId) {
-				const originContainer = DOMHelper.findContainer(originContainerId)
-				if (originContainer) {
-					const originDirection = (originContainer.getAttribute('data-dnd-direction') ?? 'vertical') as
-						| 'vertical'
-						| 'horizontal'
-					const slotSize = this.state.dragSlotSize
-					if (slotSize) {
-						const originSize = originDirection === 'horizontal' ? slotSize.width : slotSize.height
-						const originItems = DOMHelper.findDraggableItemsInContainer(originContainer)
-						const originDraggedIdx = originItems.findIndex(el => el.getAttribute('data-dnd-drag-id') === draggedId)
-						if (originDraggedIdx !== -1) {
-							for (const el of originItems) {
-								const id = el.getAttribute('data-dnd-drag-id')
-								if (!id || id === draggedId) continue
-								const myIdx = originItems.indexOf(el)
-								if (myIdx > originDraggedIdx) {
-									map.set(id, originDirection === 'horizontal' ? { x: -originSize, y: 0 } : { x: 0, y: -originSize })
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		return map
-	})
+	get translations() {
+		return this.translationCalc.translations
+	}
 
 	get dragging() {
 		return this.state.dragging
@@ -216,19 +92,16 @@ export class DragController {
 		this.droppableDataRegistry.delete(id)
 	}
 
-	onDragStart(callback: DragStartCallback) {
-		this.dragStartCallbacks.add(callback)
-		return () => this.dragStartCallbacks.delete(callback)
+	onDragStart(callback: (itemId: string) => void) {
+		return this.eventBus.onDragStart(callback)
 	}
 
-	onDragEnd(callback: DragEndCallback) {
-		this.dragEndCallbacks.add(callback)
-		return () => this.dragEndCallbacks.delete(callback)
+	onDragEnd(callback: (itemId: string) => void) {
+		return this.eventBus.onDragEnd(callback)
 	}
 
-	onDrop(callback: DropCallback) {
-		this.dropCallbacks.add(callback)
-		return () => this.dropCallbacks.delete(callback)
+	onDrop(callback: (sourceId: string, sourceData: any, targetContainerId: string, position: number) => void) {
+		return this.eventBus.onDrop(callback)
 	}
 
 	startDrag(
@@ -283,7 +156,7 @@ export class DragController {
 		})
 
 		this.state.setSkipDropPreviewAnimation(true)
-		this.notifyDragStart(itemId)
+		this.eventBus.notifyDragStart(itemId)
 	}
 
 	updateTransform(transform: { x: number; y: number }) {
@@ -324,11 +197,11 @@ export class DragController {
 
 		if (targetZone && this.state.element && this.state.transform) {
 			this.animationController.animateToTarget(targetZone, () => {
-				this.notifyDrop(sourceId, sourceData, targetContainerId, position)
+				this.eventBus.notifyDrop(sourceId, sourceData, targetContainerId, position)
 				this.finalizeDragEnd(sourceId)
 			})
 		} else {
-			this.notifyDrop(sourceId, sourceData, targetContainerId, position)
+			this.eventBus.notifyDrop(sourceId, sourceData, targetContainerId, position)
 			this.finalizeDragEnd(sourceId)
 		}
 	}
@@ -366,7 +239,7 @@ export class DragController {
 	}
 
 	refreshDropZones() {
-		this.notifyDragStart(this.state.draggedItem || '')
+		this.eventBus.notifyDragStart(this.state.draggedItem || '')
 	}
 
 	calculateDropZones(
@@ -398,7 +271,7 @@ export class DragController {
 		})
 
 		if (itemId) {
-			this.notifyDragEnd(itemId)
+			this.eventBus.notifyDragEnd(itemId)
 		}
 
 		setTimeout(() => {
@@ -406,31 +279,10 @@ export class DragController {
 		}, 100)
 	}
 
-	private notifyDragStart(itemId: string) {
-		this.dragStartCallbacks.forEach((callback) => callback(itemId))
-	}
-
-	private notifyDragEnd(itemId: string) {
-		this.dragEndCallbacks.forEach((callback) => callback(itemId))
-	}
-
-	private notifyDrop(
-		sourceId: string,
-		sourceData: any,
-		targetContainerId: string,
-		position: number
-	) {
-		this.dropCallbacks.forEach((callback) =>
-			callback(sourceId, sourceData, targetContainerId, position)
-		)
-	}
-
 	destroy() {
 		this.scrollController.destroy()
 		this.droppableDataRegistry.clear()
 		this.draggableRegistry.clear()
-		this.dragStartCallbacks.clear()
-		this.dragEndCallbacks.clear()
-		this.dropCallbacks.clear()
+		this.eventBus.destroy()
 	}
 }
