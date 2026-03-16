@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { DndProvider, DndDroppable, DndDraggable, DndPreview, DragController } from '$lib/index.js';
-	import { onDestroy } from 'svelte';
 	import Description from './description.md';
 
 	let columns = $state<Record<string, { id: string; label: string }[]>>({
@@ -26,20 +25,6 @@
 	};
 
 	const controller = new DragController();
-	const dropPreview = $derived(controller.dropPreview);
-
-	let hiddenId = $state<string | null>(null);
-
-	function getVisibleItems(items: { id: string; label: string }[]) {
-		return items.filter((item) => item.id !== hiddenId);
-	}
-
-	const unsubStart = controller.onDragStart((id: string) => {
-		hiddenId = id;
-	});
-	const unsubEnd = controller.onDragEnd(() => {
-		hiddenId = null;
-	});
 
 	controller.onDrop((sourceId: string, _sourceData: any, targetContainerId: string, position: number) => {
 		let sourceColumn = '';
@@ -66,11 +51,6 @@
 		updated[targetContainerId].splice(position, 0, moved);
 		columns = updated;
 	});
-
-	onDestroy(() => {
-		unsubStart();
-		unsubEnd();
-	});
 </script>
 
 <div class="mx-auto max-w-5xl flex mb-32 gap-6 flex-col">
@@ -81,27 +61,17 @@
 	<DndProvider {controller}>
 		<div data-dnd-scroll class="flex h-125 overflow-x-auto flex-row gap-4">
 			{#each Object.entries(columns) as [columnId, columnItems] (columnId)}
-				{@const visible = getVisibleItems(columnItems)}
 				<div class="flex flex-col w-72 shrink-0 h-full bg-foreground border-2 border-primary rounded-2xl">
 					<h2 class="text-xl p-6 font-semibold text-neutral-500">{columnMeta[columnId]}</h2>
 					<DndDroppable id={columnId} direction="vertical" class="space-y-3 overflow-y-auto p-3 border-t-2 border-primary pt-4 h-full">
-						{#each visible as item, index (item.id)}
-							<DndPreview
-								containerId={columnId}
-								position={index}
-								show={dropPreview?.containerId === columnId && dropPreview?.position === index}
-							/>
-							<DndDraggable id={item.id}>
+						{#each columnItems as item, index (item.id)}
+							<DndDraggable id={item.id} position={index}>
 								<div class="drag-item">
 									{item.label}
 								</div>
 							</DndDraggable>
 						{/each}
-						<DndPreview
-							containerId={columnId}
-							position={visible.length}
-							show={dropPreview?.containerId === columnId && dropPreview?.position === visible.length}
-						/>
+						<DndPreview containerId={columnId} position={columnItems.length} />
 					</DndDroppable>
 				</div>
 			{/each}

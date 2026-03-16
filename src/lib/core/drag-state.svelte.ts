@@ -8,6 +8,7 @@ export class DragState {
 	draggedItemData = $state<Record<string, any> | undefined>(undefined)
 	currentTransform = $state<{ x: number; y: number } | null>(null)
 	elementSize = $state<{ width: number; height: number } | null>(null)
+	dragSlotSize = $state<{ width: number; height: number } | null>(null)
 	originalPosition = $state<{ x: number; y: number } | null>(null)
 	isAnimating = $state(false)
 	dropZones = $state<DropZone[]>([])
@@ -94,6 +95,10 @@ export class DragState {
 		this.elementSize = size
 	}
 
+	setDragSlotSize(size: { width: number; height: number } | null) {
+		this.dragSlotSize = size
+	}
+
 	setOriginalPosition(position: { x: number; y: number } | null) {
 		this.originalPosition = position
 	}
@@ -142,6 +147,7 @@ export class DragState {
 		this.draggedItemType = null
 		this.draggedItemData = undefined
 		this.elementSize = null
+		this.dragSlotSize = null
 		this.originalPosition = null
 		this.isAnimating = false
 		this.originContainerId = null

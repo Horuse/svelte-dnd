@@ -30,16 +30,14 @@
 	</div>
 
 	<DndProvider {controller}>
-		<DndDroppable class="flex flex-col h-[calc(100vh-450px)] min-h-125 overflow-y-auto max-w-xl p-4 bg-foreground border-2 border-second rounded-xl" id="vertical-list" direction="vertical">
+		<DndDroppable class="flex space-y-4  flex-col h-[calc(100vh-450px)] min-h-125 overflow-y-auto max-w-xl p-4 bg-foreground border-2 border-second rounded-xl" id="vertical-list" direction="vertical">
 			{#each items as item, index (item.id)}
-				<DndDraggable class="pb-3" id={item.id} position={index}>
+				<DndDraggable id={item.id} position={index}>
 					<div class="drag-item">
 						<span class="text-2xl">{item.id}</span>
 					</div>
 				</DndDraggable>
 			{/each}
-
-			<DndPreview containerId="vertical-list" position={items.length} />
 		</DndDroppable>
 	</DndProvider>
 </div>

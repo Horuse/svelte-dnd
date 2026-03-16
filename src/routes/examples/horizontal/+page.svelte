@@ -46,34 +46,13 @@
 
 	<DndProvider {controller}>
 		<DndDroppable id="horizontal-list" direction="horizontal" class="flex space-x-2 overflow-x-auto  p-4 bg-foreground border-2 border-second rounded-xl">
-			{#each visibleItems as item, index (item.id)}
-				<DndPreview
-					containerId="horizontal-list"
-					position={index}
-					direction="horizontal"
-					show={dropPreview?.containerId === 'horizontal-list' && dropPreview?.position === index}
-				/>
-
-				<DndDraggable id={item.id}>
-					<div class="drag-item p-5 text-xl">
-						{item.label}
+			{#each items as item, index (item.id)}
+				<DndDraggable id={item.id} position={index}>
+					<div class="drag-item w-32">
+						<span class="text-2xl">{item.id}</span>
 					</div>
 				</DndDraggable>
-
-				<DndPreview
-					containerId="horizontal-list"
-					position={index+ 1}
-					direction="horizontal"
-					show={dropPreview?.containerId === 'horizontal-list' && dropPreview?.position === index}
-				/>
 			{/each}
-
-			<DndPreview
-				containerId="horizontal-list"
-				position={visibleItems.length}
-				direction="horizontal"
-				show={dropPreview?.containerId === 'horizontal-list' && dropPreview?.position === visibleItems.length}
-			/>
 		</DndDroppable>
 	</DndProvider>
 </div>
