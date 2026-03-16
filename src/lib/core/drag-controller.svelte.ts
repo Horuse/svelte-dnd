@@ -32,10 +32,46 @@ export class DragController {
 	translations = $derived.by((): Map<string, { x: number; y: number }> => {
 		const map = new Map<string, { x: number; y: number }>()
 
-		if (!this.state.dragging || !this.state.dropPreview?.visible) return map
+		if (!this.state.dragging) return map
+
+		const draggedId = this.state.draggedItem
+
+		if (!this.state.dropPreview?.visible) {
+			// No preview visible: collapse the gap left by the invisible dragged element
+			const originContainerId = this.state.originContainerId
+			if (!originContainerId || !draggedId) return map
+
+			const originContainer = DOMHelper.findContainer(originContainerId)
+			if (!originContainer) return map
+
+			const direction = (originContainer.getAttribute('data-dnd-direction') ?? 'vertical') as
+				| 'vertical'
+				| 'horizontal'
+
+			const slotSize = this.state.dragSlotSize
+			if (!slotSize) return map
+
+			const size = direction === 'horizontal' ? slotSize.width : slotSize.height
+			if (size === 0) return map
+
+			const allItems = DOMHelper.findDraggableItemsInContainer(originContainer)
+			const draggedIdx = allItems.findIndex(el => el.getAttribute('data-dnd-drag-id') === draggedId)
+			if (draggedIdx === -1) return map
+
+			for (const el of allItems) {
+				const id = el.getAttribute('data-dnd-drag-id')
+				if (!id || id === draggedId) continue
+
+				const myIdx = allItems.indexOf(el)
+				if (myIdx > draggedIdx) {
+					map.set(id, direction === 'horizontal' ? { x: -size, y: 0 } : { x: 0, y: -size })
+				}
+			}
+
+			return map
+		}
 
 		const preview = this.state.dropPreview
-		const draggedId = this.state.draggedItem
 
 		const targetContainer = DOMHelper.findContainer(preview.containerId)
 		if (!targetContainer) return map
@@ -79,6 +115,35 @@ export class DragController {
 
 			if (offset !== 0) {
 				map.set(id, direction === 'horizontal' ? { x: offset, y: 0 } : { x: 0, y: offset })
+			}
+		}
+
+		// Cross-container: also collapse the gap in the origin container
+		if (draggedIdx === -1) {
+			const originContainerId = this.state.originContainerId
+			if (originContainerId && originContainerId !== preview.containerId) {
+				const originContainer = DOMHelper.findContainer(originContainerId)
+				if (originContainer) {
+					const originDirection = (originContainer.getAttribute('data-dnd-direction') ?? 'vertical') as
+						| 'vertical'
+						| 'horizontal'
+					const slotSize = this.state.dragSlotSize
+					if (slotSize) {
+						const originSize = originDirection === 'horizontal' ? slotSize.width : slotSize.height
+						const originItems = DOMHelper.findDraggableItemsInContainer(originContainer)
+						const originDraggedIdx = originItems.findIndex(el => el.getAttribute('data-dnd-drag-id') === draggedId)
+						if (originDraggedIdx !== -1) {
+							for (const el of originItems) {
+								const id = el.getAttribute('data-dnd-drag-id')
+								if (!id || id === draggedId) continue
+								const myIdx = originItems.indexOf(el)
+								if (myIdx > originDraggedIdx) {
+									map.set(id, originDirection === 'horizontal' ? { x: -originSize, y: 0 } : { x: 0, y: -originSize })
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 
