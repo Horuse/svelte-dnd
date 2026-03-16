@@ -2,6 +2,7 @@ import { DragState } from './drag-state.svelte.js'
 import { AnimationController } from './animation-controller.js'
 import { ScrollController } from './scroll-controller.js'
 import { DropZoneCalculator } from './dropzone-calculator.js'
+import { DOMHelper } from './dom-helper.js'
 import type { DndDragEvent, DndDropEvent, DropZone, DndDirection } from '../types.js'
 
 export type DragStartCallback = (itemId: string) => void
@@ -23,6 +24,7 @@ export class DragController {
 	private droppableDataRegistry = new Map<string, Record<string, any>>()
 	private dropZoneCalculator = new DropZoneCalculator(this.state, this.droppableDataRegistry)
 	private draggableRegistry = new Map<string, HTMLElement>()
+	private domHelper = new DOMHelper()
 
 	private dragStartCallbacks = new Set<DragStartCallback>()
 	private dragEndCallbacks = new Set<DragEndCallback>()
@@ -59,9 +61,7 @@ export class DragController {
 
 		if (size === 0) return map
 
-		const allItems = Array.from(
-			targetContainer.querySelectorAll(':scope > [data-dnd-draggable-item]')
-		) as HTMLElement[]
+		const allItems = this.domHelper.findDraggableItemsInContainer(targetContainer)
 
 		const draggedEl = draggedId ? this.draggableRegistry.get(draggedId) : null
 		const draggedIdx = draggedEl ? allItems.indexOf(draggedEl) : -1
@@ -185,8 +185,8 @@ export class DragController {
 		const containerEl = element.closest('[data-dnd-drop-id]')
 		if (containerEl) {
 			const containerId = containerEl.getAttribute('data-dnd-drop-id')!
-			const items = containerEl.querySelectorAll(':scope > [data-dnd-draggable-item]')
-			const position = Array.from(items).indexOf(element)
+			const items = this.domHelper.findDraggableItemsInContainer(containerEl)
+			const position = items.indexOf(element)
 			this.state.setOriginContainerId(containerId)
 			this.state.setOriginPosition(position >= 0 ? position : 0)
 		}

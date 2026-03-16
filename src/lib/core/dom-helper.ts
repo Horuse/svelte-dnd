@@ -2,7 +2,7 @@
 const SELECTORS = {
 	container: (id: string) => `[data-dnd-drop-id="${id}"]`,
 	placeholder: (position: number) => `[data-dnd-preview-position="${position}"]`,
-	draggableItems: ':scope > [data-dnd-draggable-item]'
+	draggableItems: '[data-dnd-draggable-item]'
 } as const
 
 export class DOMHelper {
@@ -28,6 +28,12 @@ export class DOMHelper {
 	// Draggable items queries
 	findDraggableItems(container: HTMLElement): HTMLElement[] {
 		return Array.from(container.querySelectorAll(SELECTORS.draggableItems))
+	}
+
+	findDraggableItemsInContainer(container: HTMLElement): HTMLElement[] {
+		return this.findDraggableItems(container).filter(
+			(item) => item.closest('[data-dnd-drop-id]') === container
+		)
 	}
 
 	filterItemsByContainer(items: HTMLElement[], containerElement: HTMLElement): HTMLElement[] {

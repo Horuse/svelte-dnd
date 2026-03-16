@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { DndProvider, DndDroppable, DndDraggable, DndPreview, DragController } from '$lib/index.js';
+	import { DndProvider, DndDroppable, DndDraggable, DndPreview, DragController } from '$lib/index.js'
 	import Description from './description.md';
 
 	let items = $state(
@@ -32,8 +32,7 @@
 	<DndProvider {controller}>
 		<DndDroppable class="flex flex-col h-[calc(100vh-450px)] min-h-125 overflow-y-auto max-w-xl p-4 bg-foreground border-2 border-second rounded-xl" id="vertical-list" direction="vertical">
 			{#each items as item, index (item.id)}
-				<DndPreview containerId="vertical-list" position={index} />
-				<DndDraggable class="pb-4" id={item.id}>
+				<DndDraggable class="pb-3" id={item.id} position={index}>
 					<div class="drag-item">
 						<span class="text-2xl">{item.id}</span>
 					</div>

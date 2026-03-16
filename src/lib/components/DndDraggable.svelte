@@ -3,6 +3,7 @@
 	import type { DndDragEvent } from '../types.js'
 	import type { DragController } from '../core/drag-controller.svelte.js'
 	import type { Snippet } from 'svelte'
+	import DndPreview from './DndPreview.svelte'
 
 	interface Props {
 		id: string
@@ -13,6 +14,7 @@
 		onDragEnd?: (event: DndDragEvent) => void
 		children: Snippet
 		class?: string
+		position?: number
 	}
 
 	let {
@@ -23,10 +25,12 @@
 		onDragStart,
 		onDrag,
 		onDragEnd,
-		children
+		children,
+		position
 	}: Props = $props()
 
 	const dndController = getContext<DragController>('dnd')
+	const getContainerId = getContext<(() => string) | undefined>('dnd-container-id')
 
 	let element = $state<HTMLElement | undefined>(undefined)
 	let isDragging = $state(false)
@@ -217,27 +221,54 @@
 	}
 </script>
 
-<div
-		bind:this={element}
-		class="dnd-draggable {className ?? ''}"
-		class:dnd-draggable--dragging={isGhostActive}
-		class:dnd-draggable--disabled={disabled}
-		role="button"
-		tabindex={disabled ? -1 : 0}
-		data-dnd-drag-id={id}
-		data-dnd-draggable-item
-		style="transform: translate3d({translate.x}px, {translate.y}px, 0); transition: {isGhostActive || performingDrop ? 'none' : 'transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)'}"
-		onpointerdown={handlePointerDown}
-		onpointermove={handlePointerMove}
-		onpointerup={handlePointerUp}
-		onpointercancel={handlePointerCancel}
-		onclick={handleClick}
-		onkeydown={handleKeyDown}
->
-	<div class="dnd-draggable__content">
-		{@render children()}
+{#if position !== undefined && getContainerId}
+	<div>
+		<DndPreview containerId={getContainerId()} {position} />
+		<div
+				bind:this={element}
+				class="dnd-draggable {className ?? ''}"
+				class:dnd-draggable--dragging={isGhostActive}
+				class:dnd-draggable--disabled={disabled}
+				role="button"
+				tabindex={disabled ? -1 : 0}
+				data-dnd-drag-id={id}
+				data-dnd-draggable-item
+				style="transform: translate3d({translate.x}px, {translate.y}px, 0); transition: {isGhostActive || performingDrop ? 'none' : 'transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)'}"
+				onpointerdown={handlePointerDown}
+				onpointermove={handlePointerMove}
+				onpointerup={handlePointerUp}
+				onpointercancel={handlePointerCancel}
+				onclick={handleClick}
+				onkeydown={handleKeyDown}
+		>
+			<div class="dnd-draggable__content">
+				{@render children()}
+			</div>
+		</div>
 	</div>
-</div>
+{:else}
+	<div
+			bind:this={element}
+			class="dnd-draggable {className ?? ''}"
+			class:dnd-draggable--dragging={isGhostActive}
+			class:dnd-draggable--disabled={disabled}
+			role="button"
+			tabindex={disabled ? -1 : 0}
+			data-dnd-drag-id={id}
+			data-dnd-draggable-item
+			style="transform: translate3d({translate.x}px, {translate.y}px, 0); transition: {isGhostActive || performingDrop ? 'none' : 'transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)'}"
+			onpointerdown={handlePointerDown}
+			onpointermove={handlePointerMove}
+			onpointerup={handlePointerUp}
+			onpointercancel={handlePointerCancel}
+			onclick={handleClick}
+			onkeydown={handleKeyDown}
+	>
+		<div class="dnd-draggable__content">
+			{@render children()}
+		</div>
+	</div>
+{/if}
 
 <style>
 	.dnd-draggable {

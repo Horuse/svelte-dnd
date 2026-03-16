@@ -19,12 +19,10 @@ export class DropZoneCalculator {
 
 		const containerRect = this.domHelper.getRect(containerElement)
 
-		const allDraggableItems = this.domHelper.findDraggableItems(containerElement)
 		const draggedId = this.state.draggedItem
-		const draggableItems = allDraggableItems.filter((item) => {
-			if (item.getAttribute('data-dnd-drag-id') === draggedId) return false
-			return this.domHelper.filterItemsByContainer([item], containerElement).length > 0
-		})
+		const draggableItems = this.domHelper.findDraggableItemsInContainer(containerElement).filter(
+			(item) => item.getAttribute('data-dnd-drag-id') !== draggedId
+		)
 
 		if (draggableItems.length === 0) {
 			return this.createEmptyContainerZone(containerId, containerRect, direction)
