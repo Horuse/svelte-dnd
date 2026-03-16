@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { DndProvider, DndDroppable, DndDraggable, DndPreview, DragController } from '$lib/index.js';
-	import { onDestroy } from 'svelte';
+	import { DndProvider, DndDroppable, DndDraggable, DragController } from '$lib/index.js';
 	import Description from './description.md';
 
 	let items = $state(
@@ -11,17 +10,6 @@
 	);
 
 	const controller = new DragController();
-	const dropPreview = $derived(controller.dropPreview);
-
-	let hiddenId = $state<string | null>(null);
-	const visibleItems = $derived(items.filter((item) => item.id !== hiddenId));
-
-	const unsubStart = controller.onDragStart((id: string) => {
-		hiddenId = id;
-	});
-	const unsubEnd = controller.onDragEnd(() => {
-		hiddenId = null;
-	});
 
 	controller.onDrop((sourceId: string, _sourceData: any, _targetContainerId: string, position: number) => {
 		const fromIndex = items.findIndex((item) => item.id === sourceId);
@@ -31,11 +19,6 @@
 		const [moved] = updated.splice(fromIndex, 1);
 		updated.splice(position, 0, moved);
 		items = updated;
-	});
-
-	onDestroy(() => {
-		unsubStart();
-		unsubEnd();
 	});
 </script>
 

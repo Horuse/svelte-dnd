@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { DndProvider, DndDroppable, DndDraggable, DndPreview, DragController } from '$lib/index.js';
-	import { onDestroy } from 'svelte';
+	import { DndProvider, DndDroppable, DndDraggable, DragController } from '$lib/index.js';
 	import Description from './description.md';
 
 	type Task = { id: string; label: string };
@@ -35,32 +34,6 @@
 	]);
 
 	const controller = new DragController();
-	const dropPreview = $derived(controller.dropPreview);
-
-	let hiddenId = $state<string | null>(null);
-	let draggedType = $state<string | null>(null);
-
-	const visibleColumns = $derived(
-		draggedType === 'column'
-			? columns.filter((col) => col.id !== hiddenId)
-			: columns
-	);
-
-	function getVisibleTasks(tasks: Task[]) {
-		if (draggedType === 'task') {
-			return tasks.filter((t) => t.id !== hiddenId);
-		}
-		return tasks;
-	}
-
-	const unsubStart = controller.onDragStart((id: string) => {
-		hiddenId = id;
-		draggedType = controller.draggedType;
-	});
-	const unsubEnd = controller.onDragEnd(() => {
-		hiddenId = null;
-		draggedType = null;
-	});
 
 	controller.onDrop((sourceId: string, sourceData: any, targetContainerId: string, position: number) => {
 		if (sourceData.type === 'column') {
@@ -101,11 +74,6 @@
 			columns = updated;
 		}
 	});
-
-	onDestroy(() => {
-		unsubStart();
-		unsubEnd();
-	});
 </script>
 
 <div class="mx-auto max-w-5xl flex mb-32 items-start gap-6 flex-col">
@@ -120,47 +88,28 @@
 	</div>
 
 	<DndProvider {controller}>
-		<DndDroppable id="board" direction="horizontal" data={{ accepts: 'column' }} class="flex flex-row overflow-x-auto space-x-4 w-full h-125">
-			{#each visibleColumns as column, colIndex (column.id)}
-				<DndPreview
-					containerId="board"
-					position={colIndex}
-					direction="horizontal"
-					show={dropPreview?.containerId === 'board' && dropPreview?.position === colIndex}
-				/>
-				<DndDraggable class="flex flex-col shrink-0 w-72 h-full bg-foreground border-2 border-primary rounded-2xl" id={column.id} data={{ type: 'column' }}>
-					<h2 data-dnd-handle class="column-header text-lg p-4 font-semibold text-neutral-500 cursor-grab">
-						<span class="drag-handle">&#x2630;</span>
-						{column.title}
-					</h2>
-					<!-- svelte-ignore a11y_no_static_element_interactions -->
-					<DndDroppable id={column.id} direction="vertical" data={{ accepts: 'task' }} class="space-y-2 p-3 h-full border-t-2 border-primary pt-3">
-						{@const visible = getVisibleTasks(column.tasks)}
-						{#each visible as task, taskIndex (task.id)}
-							<DndPreview
-								containerId={column.id}
-								position={taskIndex}
-								show={dropPreview?.containerId === column.id && dropPreview?.position === taskIndex}
-							/>
-							<DndDraggable class="drag-item px-4 gap-3" id={task.id} data={{ type: 'task' }}>
-								<span class="truncate">{task.label}</span>
-								<button data-dnd-no-drag class="black-button" onclick={(e) => alert("Test")}>Alert</button>
-							</DndDraggable>
-						{/each}
-						<DndPreview
-							containerId={column.id}
-							position={visible.length}
-							show={dropPreview?.containerId === column.id && dropPreview?.position === visible.length}
-						/>
-					</DndDroppable>
+		<DndDroppable id="board" direction="horizontal" data={{ accepts: 'column' }} class="flex flex-row h-125 overflow-x-auto space-x-4 w-full">
+			{#each columns as column, colIndex (column.id)}
+				<DndDraggable class="h-full" id={column.id} data={{ type: 'column' }} position={colIndex}>
+					<div class="flex flex-col h-full shrink-0 w-72 bg-foreground border-2 border-primary rounded-2xl">
+						<h2 data-dnd-handle class="column-header text-lg p-4 font-semibold text-neutral-500 cursor-grab">
+							<span class="drag-handle">&#x2630;</span>
+							{column.title}
+						</h2>
+						<!-- svelte-ignore a11y_no_static_element_interactions -->
+						<DndDroppable id={column.id} direction="vertical" data={{ accepts: 'task' }} class="space-y-2 p-3 h-full border-t-2 border-primary pt-3">
+							{#each column.tasks as task, taskIndex (task.id)}
+								<DndDraggable id={task.id} data={{ type: 'task' }} position={taskIndex}>
+									<div class="drag-item px-4 gap-3">
+										<span class="truncate">{task.label}</span>
+										<button data-dnd-no-drag class="black-button" onclick={(e) => alert("Test")}>Alert</button>
+									</div>
+								</DndDraggable>
+							{/each}
+						</DndDroppable>
+					</div>
 				</DndDraggable>
 			{/each}
-			<DndPreview
-				containerId="board"
-				position={visibleColumns.length}
-				direction="horizontal"
-				show={dropPreview?.containerId === 'board' && dropPreview?.position === visibleColumns.length}
-			/>
 		</DndDroppable>
 	</DndProvider>
 </div>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { DndProvider, DndDroppable, DndDraggable, DndPreview, DragController } from '$lib/index.js';
+	import { DndProvider, DndDroppable, DndDraggable, DragController } from '$lib/index.js';
 	import Description from './description.md';
 
 	let columns = $state<Record<string, { id: string; label: string }[]>>({
@@ -71,7 +71,6 @@
 								</div>
 							</DndDraggable>
 						{/each}
-						<DndPreview containerId={columnId} position={columnItems.length} />
 					</DndDroppable>
 				</div>
 			{/each}
