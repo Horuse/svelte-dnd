@@ -1,65 +1,80 @@
 <script lang="ts">
 	import { getContext } from 'svelte'
-	import type { DragController } from '../core/drag-controller.svelte.js'
-	import type { DndDirection } from '../types.js'
+	import type { DragController } from '../core/drag-controller.svelte'
 
 	interface Props {
 		containerId: string
 		position: number
-		show?: boolean
-		direction?: DndDirection
-		fallbackHeight?: number
-		fallbackWidth?: number
 		class?: string
 	}
 
 	let {
 		containerId,
 		position,
-		show = true,
-		direction = 'vertical',
-		fallbackHeight = 48,
-		fallbackWidth = 48,
 		class: className = ''
 	}: Props = $props()
 
 	const dndManager = getContext<DragController>('dnd')
 
 	const visible = $derived(
-			show &&
 			!!dndManager?.dropPreview &&
 			dndManager.dropPreview.containerId === containerId &&
 			dndManager.dropPreview.position === position &&
 			dndManager.dropPreview.visible
 	)
 
-	const height = $derived(dndManager?.dropPreview?.draggedElementHeight || fallbackHeight)
-	const width = $derived(dndManager?.dropPreview?.draggedElementWidth || fallbackWidth)
+	const height = $derived(dndManager?.dropPreview?.draggedElementHeight)
+	const width = $derived(dndManager?.dropPreview?.draggedElementWidth)
 </script>
 
 <div
 		data-dnd-preview
 		data-dnd-preview-position={position}
-		class="dnd-preview bg-red-500 {className}"
+		class="dnd-preview {className}"
 		class:dnd-preview--visible={visible}
-		style:height="{0}px"
-		style:width={direction === 'horizontal' ? `${width}px` : undefined}
-></div>
+		style:height={visible ? `${height}px` : '0px'}
+		style:width={visible ? `${width}px` : '0px'}
+>
+
+</div>
 
 <style>
-	/*.dnd-preview {*/
-	/*	z-index: -1;*/
-	/*	position: absolute;*/
-	/*	left: 0px;*/
-	/*	right: 0px;*/
-	/*	top: -2px;*/
-	/*	pointer-events: none;*/
-	/*	transform: translateY(calc(-100% - 10px));*/
-	/*	opacity: 0;*/
-	/*	transition: opacity 100ms cubic-bezier(0.25, 0.46, 0.45, 0.94);*/
-	/*}*/
+	.dnd-preview {
+		position: absolute;
+		pointer-events: none;
+	}
 
-	/*.dnd-preview--visible {*/
-	/*	opacity: 1;*/
-	/*}*/
+	.dnd-preview--visible {
+		transform: scale(0.8);
+		border-radius: var(--dnd-preview-border-radius, 8px);
+		background: var(--dnd-preview-bg, rgba(99, 102, 241, 0.15));
+		border: var(--dnd-preview-border, 2px dashed rgba(99, 102, 241, 0.4));
+		animation: var(--dnd-preview-animation-in, dnd-preview-in 300ms cubic-bezier(0.33, 0.49, 0.27, 0.67) forwards);
+	}
+
+	.dnd-preview:not(.dnd-preview--visible) {
+		animation: var(--dnd-preview-animation-out, dnd-preview-out 300ms cubic-bezier(0.33, 0.49, 0.27, 0.67) forwards);
+	}
+
+	@keyframes dnd-preview-in {
+		from {
+			opacity: 0;
+			transform: scale(0.8);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+
+	@keyframes dnd-preview-out {
+		from {
+			opacity: 1;
+			transform: scale(1);
+		}
+		to {
+			opacity: 0;
+			transform: scale(0.8);
+		}
+	}
 </style>

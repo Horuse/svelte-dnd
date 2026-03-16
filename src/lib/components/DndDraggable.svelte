@@ -221,7 +221,7 @@
 	}
 </script>
 
-<div>
+<div style="position: relative">
 	<DndPreview containerId={getContainerId()} {position} />
 	<div
 			bind:this={element}
