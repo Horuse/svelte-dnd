@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { getContext, untrack } from 'svelte'
+	import { getContext, onDestroy } from 'svelte'
 	import type { DndController } from '../core/dnd/dnd-controller.svelte'
+	import { PreviewHandler } from '../core/handlers/preview-handler.svelte.js'
 
 	interface Props {
 		containerId: string
@@ -8,75 +9,35 @@
 		class?: string
 	}
 
-	let {
-		containerId,
-		position,
-		class: className = ''
-	}: Props = $props()
+	let { containerId, position, class: className = '' }: Props = $props()
 
 	const dndManager = getContext<DndController>('dnd')
+	const handler = new PreviewHandler()
 
 	const visible = $derived(
-			!!dndManager?.dropPreview &&
-			dndManager.dropPreview.containerId === containerId &&
-			dndManager.dropPreview.position === position &&
-			dndManager.dropPreview.visible
+		!!dndManager?.dropPreview &&
+		dndManager.dropPreview.containerId === containerId &&
+		dndManager.dropPreview.position === position &&
+		dndManager.dropPreview.visible
 	)
 
-	let height = $state(0)
-	let width = $state(0)
-	let revealed = $state(false)
-	let instant = $state(false)
-
-	let showTimer: ReturnType<typeof setTimeout> | null = null
-	let collapseTimer: ReturnType<typeof setTimeout> | null = null
-
 	$effect(() => {
-		if (visible) {
-			height = dndManager?.dropPreview?.draggedElementHeight ?? 0
-			width = dndManager?.dropPreview?.draggedElementWidth ?? 0
-
-			// Cancel any pending collapse from previous hide
-			if (collapseTimer) { clearTimeout(collapseTimer); collapseTimer = null }
-
-			const skip = untrack(() => dndManager?.skipDropPreviewAnimation)
-			if (skip) {
-				// Appear instantly with no transition — feels like the slot was always there
-				if (showTimer) { clearTimeout(showTimer); showTimer = null }
-				revealed = true
-				instant = true
-				requestAnimationFrame(() => { instant = false })
-			} else if (!showTimer) {
-				// Delay reveal so the slot has time to open before the preview fades in
-				showTimer = setTimeout(() => {
-					revealed = true
-					showTimer = null
-				}, 300)
-			}
-		} else {
-			if (showTimer) { clearTimeout(showTimer); showTimer = null }
-			revealed = false
-			instant = false
-
-			// Collapse size after fade-out transition completes
-			collapseTimer = setTimeout(() => {
-				height = 0
-				width = 0
-				collapseTimer = null
-			}, 200)
-		}
+		if (visible) handler.show(dndManager)
+		else handler.hide()
 	})
+
+	onDestroy(() => handler.destroy())
 </script>
 
 <div
 	data-dnd-preview
 	data-dnd-preview-position={position}
 	class="dnd-preview {className}"
-	class:dnd-preview--revealed={revealed}
-	class:dnd-preview--instant={instant}
-	style:height={`${height}px`}
-	style:width={`${width}px`}
-	style:visibility={height === 0 ? 'hidden' : undefined}
+	class:dnd-preview--revealed={handler.revealed}
+	class:dnd-preview--instant={handler.instant}
+	style:height={`${handler.height}px`}
+	style:width={`${handler.width}px`}
+	style:visibility={handler.height === 0 ? 'hidden' : undefined}
 >
 </div>
 

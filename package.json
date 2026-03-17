@@ -1,6 +1,6 @@
 {
 	"name": "@horuse/svelte-dnd",
-	"version": "0.3.0",
+	"version": "1.0.0-beta1",
 	"description": "A drag-and-drop library for Svelte 5 with animated drop previews, auto-scroll, pointer & touch support, and multi-container support.",
 	"scripts": {
 		"dev": "vite dev",
@@ -46,7 +46,7 @@
 		"@eslint/compat": "^2.0.2",
 		"@eslint/js": "^9.39.2",
 		"@sveltejs/adapter-auto": "^7.0.0",
-		"@sveltejs/kit": "^2.50.2",
+		"@sveltejs/kit": "^2.55.0",
 		"@sveltejs/package": "^2.5.7",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
 		"@tailwindcss/typography": "^0.5.19",
@@ -61,7 +61,7 @@
 		"prettier-plugin-svelte": "^3.4.1",
 		"prettier-plugin-tailwindcss": "^0.7.2",
 		"publint": "^0.3.17",
-		"svelte": "^5.51.0",
+		"svelte": "^5.53.13",
 		"svelte-check": "^4.4.0",
 		"tailwindcss": "^4.1.18",
 		"typescript": "^5.9.3",

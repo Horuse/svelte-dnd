@@ -3,6 +3,7 @@
 	import type { DndDirection } from '../types.js'
 	import type { DndController } from '../core/dnd/dnd-controller.svelte.js'
 	import type { Snippet } from 'svelte'
+	import { DropHandler } from '../core/handlers/drop-handler.svelte.js'
 
 	interface Props {
 		id: string
@@ -27,91 +28,15 @@
 	let element: HTMLElement
 
 	$effect(() => {
-		if (dndController) {
-			dndController.registerDroppableData(id, data)
-		}
+		if (dndController) dndController.registerDroppableData(id, data)
 	})
 
-	let scrollListeners: HTMLElement[] = []
-	let scrollTimeout: ReturnType<typeof setTimeout> | null = null
+	const handler = new DropHandler(
+		() => element,
+		() => ({ id, data, disabled, direction, dndController })
+	)
 
-	const handleScroll = () => {
-		if (dndController?.dragging) {
-			if (scrollTimeout) {
-				clearTimeout(scrollTimeout)
-			}
-			scrollTimeout = setTimeout(() => {
-				updateDropZones()
-				scrollTimeout = null
-			}, 10)
-		}
-	}
-
-	const updateDropZones = () => {
-		if (!element || disabled || !dndController) return
-		if (dndController.element?.contains(element)) return
-
-		const zones = dndController.calculateDropZones(id, element, direction)
-		const existingZones = dndController.dropZones || []
-		const mergedZones = dndController.mergeDropZones(existingZones, zones, id)
-		dndController.registerDropZones(mergedZones)
-	}
-
-	const setupScrollListeners = () => {
-		let parent = element?.parentElement
-		while (parent) {
-			const style = window.getComputedStyle(parent)
-			const overflowY = style.overflowY
-			const overflowX = style.overflowX
-			if (
-				['auto', 'scroll', 'overlay'].includes(overflowY) ||
-				['auto', 'scroll', 'overlay'].includes(overflowX)
-			) {
-				parent.addEventListener('scroll', handleScroll, { passive: true })
-				scrollListeners.push(parent)
-			}
-			parent = parent.parentElement
-		}
-
-		if (typeof window !== 'undefined') {
-			window.addEventListener('scroll', handleScroll, { passive: true })
-		}
-	}
-
-	const cleanupScrollListeners = () => {
-		scrollListeners.forEach((parent) => {
-			parent.removeEventListener('scroll', handleScroll)
-		})
-		if (typeof window !== 'undefined') {
-			window.removeEventListener('scroll', handleScroll)
-		}
-		scrollListeners = []
-		if (scrollTimeout) {
-			clearTimeout(scrollTimeout)
-			scrollTimeout = null
-		}
-	}
-
-	const unsubscribeDragStart = dndController?.onDragStart(() => {
-		updateDropZones()
-		setupScrollListeners()
-	})
-
-	const unsubscribeZonesInvalidated = dndController?.onZonesInvalidated(() => {
-		updateDropZones()
-	})
-
-	const unsubscribeDragEnd = dndController?.onDragEnd(() => {
-		cleanupScrollListeners()
-	})
-
-	onDestroy(() => {
-		cleanupScrollListeners()
-		unsubscribeDragStart?.()
-		unsubscribeZonesInvalidated?.()
-		unsubscribeDragEnd?.()
-		dndController?.unregisterDroppableData(id)
-	})
+	onDestroy(() => handler.destroy())
 </script>
 
 <div
