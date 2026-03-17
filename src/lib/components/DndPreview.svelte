@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getContext } from 'svelte'
+	import { getContext, untrack } from 'svelte'
 	import type { DragController } from '../core/controller/drag-controller.svelte'
 
 	interface Props {
@@ -23,71 +23,87 @@
 			dndManager.dropPreview.visible
 	)
 
-	let cachedHeight = $state(0)
-	let cachedWidth = $state(0)
+	let height = $state(0)
+	let width = $state(0)
+	let revealed = $state(false)
+	let instant = $state(false)
+
+	let showTimer: ReturnType<typeof setTimeout> | null = null
+	let collapseTimer: ReturnType<typeof setTimeout> | null = null
 
 	$effect(() => {
 		if (visible) {
-			cachedHeight = dndManager?.dropPreview?.draggedElementHeight ?? 0
-			cachedWidth = dndManager?.dropPreview?.draggedElementWidth ?? 0
-		} else if (!dndManager?.dropPreview) {
-			cachedHeight = 0
-			cachedWidth = 0
+			height = dndManager?.dropPreview?.draggedElementHeight ?? 0
+			width = dndManager?.dropPreview?.draggedElementWidth ?? 0
+
+			// Cancel any pending collapse from previous hide
+			if (collapseTimer) { clearTimeout(collapseTimer); collapseTimer = null }
+
+			const skip = untrack(() => dndManager?.skipDropPreviewAnimation)
+			if (skip) {
+				// Appear instantly with no transition — feels like the slot was always there
+				if (showTimer) { clearTimeout(showTimer); showTimer = null }
+				revealed = true
+				instant = true
+				requestAnimationFrame(() => { instant = false })
+			} else if (!showTimer) {
+				// Delay reveal so the slot has time to open before the preview fades in
+				showTimer = setTimeout(() => {
+					revealed = true
+					showTimer = null
+				}, 300)
+			}
+		} else {
+			if (showTimer) { clearTimeout(showTimer); showTimer = null }
+			revealed = false
+			instant = false
+
+			// Collapse size after fade-out transition completes
+			collapseTimer = setTimeout(() => {
+				height = 0
+				width = 0
+				collapseTimer = null
+			}, 200)
 		}
 	})
 </script>
 
 <div
-		data-dnd-preview
-		data-dnd-preview-position={position}
-		class="dnd-preview {className}"
-		class:dnd-preview--visible={visible}
-		style:height={`${cachedHeight}px`}
-		style:width={`${cachedWidth}px`}
-		style:visibility={cachedHeight === 0 ? 'hidden' : undefined}
+	data-dnd-preview
+	data-dnd-preview-position={position}
+	class="dnd-preview {className}"
+	class:dnd-preview--revealed={revealed}
+	class:dnd-preview--instant={instant}
+	style:height={`${height}px`}
+	style:width={`${width}px`}
+	style:visibility={height === 0 ? 'hidden' : undefined}
 >
-
 </div>
 
 <style>
 	.dnd-preview {
-		z-index: 0;
 		position: absolute;
 		pointer-events: none;
+		opacity: 0;
+		transform: scale(0.5);
+		transition:
+			opacity var(--dnd-preview-duration-out, 200ms) ease,
+			transform var(--dnd-preview-duration-out, 200ms) ease;
 
 		border-radius: var(--dnd-preview-border-radius, 1rem);
 		background: var(--dnd-preview-bg, rgba(99, 102, 241, 0.15));
 		border: var(--dnd-preview-border, 2px dashed rgba(99, 102, 241, 0.4));
 	}
 
-	.dnd-preview--visible {
-		transform: scale(0.8);
-		animation: var(--dnd-preview-animation-in, dnd-preview-in 300ms cubic-bezier(0.33, 0.49, 0.27, 0.67) forwards);
+	.dnd-preview--revealed {
+		opacity: 1;
+		transform: scale(1);
+		transition:
+			opacity var(--dnd-preview-duration-in, 200ms) ease,
+			transform var(--dnd-preview-duration-in, 200ms) ease;
 	}
 
-	.dnd-preview:not(.dnd-preview--visible) {
-		animation: var(--dnd-preview-animation-out, dnd-preview-out 100ms cubic-bezier(0.33, 0.49, 0.27, 0.67) forwards);
-	}
-
-	@keyframes dnd-preview-in {
-		from {
-			opacity: 0;
-			transform: scale(0.8);
-		}
-		to {
-			opacity: 1;
-			transform: scale(1);
-		}
-	}
-
-	@keyframes dnd-preview-out {
-		from {
-			opacity: 1;
-			transform: scale(1);
-		}
-		to {
-			opacity: 0;
-			transform: scale(0.8);
-		}
+	.dnd-preview--instant {
+		transition: none;
 	}
 </style>
