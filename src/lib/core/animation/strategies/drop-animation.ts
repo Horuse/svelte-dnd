@@ -58,7 +58,12 @@ export class DropAnimationStrategy implements AnimationStrategy {
 
 		const placeholder = DOMHelper.findPlaceholder(container, this.targetZone.position)
 		if (placeholder) {
-			const rect = placeholder.getBoundingClientRect()
+			// Use the parent wrapper's rect, not the placeholder's own rect.
+			// The placeholder (DndPreview) may have CSS animations (scale, opacity, etc.) that
+			// affect getBoundingClientRect(). The parent is the static position:relative slot wrapper
+			// whose position is always stable and correct regardless of any preview animation.
+			const slotWrapper = placeholder.parentElement ?? placeholder
+			const rect = slotWrapper.getBoundingClientRect()
 			return { x: rect.left, y: rect.top }
 		}
 
