@@ -5,7 +5,7 @@ import { DropZoneCalculator } from '../zones/dropzone-calculator.js'
 import { DOMHelper } from '../utils/dom-helper.js'
 import { DndEventEmitter } from './dnd-event-emitter.js'
 import { TranslationCalculator } from '../zones/translation-calculator.svelte.js'
-import type { DndDragEvent, DndDropEvent, DropZone, DndDirection, DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback } from '../../types.js'
+import type { DndDragEvent, DndDropEvent, DropZone, DndDirection, DndMode, DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback } from '../../types.js'
 
 export type { DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback } from '../../types.js'
 
@@ -237,9 +237,10 @@ export class DndController {
 	calculateDropZones(
 		containerId: string,
 		containerElement: HTMLElement,
-		direction: DndDirection = 'vertical'
+		direction: DndDirection = 'vertical',
+		mode: DndMode = 'sortable'
 	): DropZone[] {
-		return this.dropZoneCalculator.calculateDropZones(containerId, containerElement, direction)
+		return this.dropZoneCalculator.calculateDropZones(containerId, containerElement, direction, mode)
 	}
 
 	mergeDropZones(

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getContext, onDestroy, setContext } from 'svelte'
-	import type { DndDirection } from '../types.js'
+	import type { DndDirection, DndMode } from '../types.js'
 	import type { DndController } from '../core/dnd/dnd-controller.svelte.js'
 	import type { Snippet } from 'svelte'
 	import { DropHandler } from '../core/handlers/drop-handler.svelte.js'
@@ -11,6 +11,12 @@
 		data?: Record<string, any>
 		disabled?: boolean
 		direction?: DndDirection
+		/**
+		 * `'sortable'` (default) — position-based drop zones with insert previews.
+		 * `'target'` — single drop zone covering the whole container, no previews.
+		 *   Use for trash zones, boards, or any droppable that isn't a sorted list.
+		 */
+		mode?: DndMode
 		children: Snippet
 		class?: string
 	}
@@ -20,6 +26,7 @@
 		data = {},
 		disabled = false,
 		direction = 'vertical',
+		mode = 'sortable',
 		children,
 		class: className
 	}: Props = $props()
@@ -34,7 +41,7 @@
 
 	const handler = new DropHandler(
 		() => element,
-		() => ({ id, data, disabled, direction, dndController })
+		() => ({ id, data, disabled, direction, mode, dndController })
 	)
 
 	onDestroy(() => handler.destroy())
@@ -55,10 +62,11 @@
 	class:dnd-droppable--disabled={disabled}
 	data-dnd-drop-id={id}
 	data-dnd-direction={direction}
+	data-dnd-mode={mode}
 	data-dnd-scroll
 >
 	{@render children()}
-	{#if tailPosition >= 0}
+	{#if tailPosition >= 0 && mode === 'sortable'}
 		<div style="position: relative">
 			<DndPreview containerId={id} position={tailPosition} />
 		</div>

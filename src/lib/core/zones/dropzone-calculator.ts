@@ -1,4 +1,4 @@
-import type { DropZone, DropPreview, DndDirection } from '../../types.js'
+import type { DropZone, DropPreview, DndDirection, DndMode } from '../../types.js'
 import type { DndState } from '../dnd/dnd-state.svelte.js'
 import { DOMHelper } from '../utils/dom-helper.js'
 
@@ -18,11 +18,17 @@ export class DropZoneCalculator {
 	calculateDropZones(
 		containerId: string,
 		containerElement: HTMLElement,
-		direction: DndDirection = 'vertical'
+		direction: DndDirection = 'vertical',
+		mode: DndMode = 'sortable'
 	): DropZone[] {
 		if (!containerElement) return []
 
 		const containerRect = DOMHelper.getRect(containerElement)
+
+		// Target mode: single zone covering the whole container, no position tracking
+		if (mode === 'target') {
+			return this.createEmptyContainerZone(containerId, containerRect, direction)
+		}
 
 		const draggedId = this.state.draggedItem
 		// Exclude the dragged element — its slot is handled via translations, not a drop zone

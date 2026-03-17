@@ -1,4 +1,4 @@
-import type { DndDirection } from '../../types.js'
+import type { DndDirection, DndMode } from '../../types.js'
 import type { DndController } from '../dnd/dnd-controller.svelte.js'
 
 interface DroppableHandlerOptions {
@@ -6,6 +6,7 @@ interface DroppableHandlerOptions {
 	data: Record<string, any>
 	disabled: boolean
 	direction: DndDirection
+	mode: DndMode
 	dndController: DndController | undefined
 }
 
@@ -38,11 +39,11 @@ export class DropHandler {
 
 	updateDropZones() {
 		const element = this.getElement()
-		const { id, disabled, direction, dndController } = this.getOptions()
+		const { id, disabled, direction, mode, dndController } = this.getOptions()
 		if (!element || disabled || !dndController) return
 		if (dndController.element?.contains(element)) return
 
-		const zones = dndController.calculateDropZones(id, element, direction)
+		const zones = dndController.calculateDropZones(id, element, direction, mode)
 		const existingZones = dndController.dropZones || []
 		const mergedZones = dndController.mergeDropZones(existingZones, zones, id)
 		dndController.registerDropZones(mergedZones)

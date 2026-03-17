@@ -51,6 +51,35 @@ export class TranslationCalculator {
 		const targetContainer = DOMHelper.findContainer(preview.containerId)
 		if (!targetContainer) return map
 
+		// Target-mode containers are not sorted lists — don't translate any items
+		if (targetContainer.getAttribute('data-dnd-mode') === 'target') {
+			// Still collapse the gap in the origin container
+			const originContainerId = this.state.originContainerId
+			if (originContainerId && originContainerId !== preview.containerId) {
+				const originContainer = DOMHelper.findContainer(originContainerId)
+				if (originContainer) {
+					const originDirection = (originContainer.getAttribute('data-dnd-direction') ?? 'vertical') as 'vertical' | 'horizontal'
+					const slotSize = this.state.dragSlotSize
+					if (slotSize) {
+						const originSize = originDirection === 'horizontal' ? slotSize.width : slotSize.height
+						const originItems = DOMHelper.findDraggableItemsInContainer(originContainer)
+						const draggedId = this.state.draggedItem
+						const originDraggedIdx = originItems.findIndex(el => el.getAttribute('data-dnd-drag-id') === draggedId)
+						if (originDraggedIdx !== -1) {
+							for (const el of originItems) {
+								const id = el.getAttribute('data-dnd-drag-id')
+								if (!id || id === draggedId) continue
+								if (originItems.indexOf(el) > originDraggedIdx) {
+									map.set(id, originDirection === 'horizontal' ? { x: -originSize, y: 0 } : { x: 0, y: -originSize })
+								}
+							}
+						}
+					}
+				}
+			}
+			return map
+		}
+
 		const direction = (targetContainer.getAttribute('data-dnd-direction') ?? 'vertical') as
 			| 'vertical'
 			| 'horizontal'

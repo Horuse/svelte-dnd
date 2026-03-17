@@ -56,6 +56,17 @@ export class DropAnimationStrategy implements AnimationStrategy {
 			return this.calculateFallbackPosition()
 		}
 
+		// Target-mode containers have no placeholder — fly to the container center
+		if (container.getAttribute('data-dnd-mode') === 'target') {
+			const rect = container.getBoundingClientRect()
+			const width = this.state.size?.width ?? 0
+			const height = this.state.size?.height ?? 0
+			return {
+				x: rect.left + rect.width / 2 - width / 2,
+				y: rect.top + rect.height / 2 - height / 2
+			}
+		}
+
 		const placeholder = DOMHelper.findPlaceholder(container, this.targetZone.position)
 		if (placeholder) {
 			// Use the parent wrapper's rect, not the placeholder's own rect.
