@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Description from './description.md';
-	import SortableContainersExample from '$docs/examples/SortableContainersExample.svelte';
+	import SortableContainersExample from '$docs/examples/SortableContainersExample/index.svelte';
 </script>
 
 <div class="mx-auto max-w-5xl flex mb-32 items-start gap-6 flex-col">

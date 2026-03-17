@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { DndProvider, DndDroppable, DndDraggable, DndController } from '$lib/index.js';
+	import TrashZone from './TrashZone.svelte';
 
 	type Task = { id: string; label: string };
 	type Column = { id: string; title: string; tasks: Task[] };
@@ -35,6 +36,8 @@
 	const controller = new DndController();
 
 	controller.onDrop((sourceId: string, sourceData: any, targetContainerId: string, position: number) => {
+		if (targetContainerId === 'trash-zone') return
+
 		if (sourceData.type === 'column') {
 			const fromIndex = columns.findIndex((col) => col.id === sourceId);
 			if (fromIndex === -1) return;
@@ -73,6 +76,25 @@
 			columns = updated;
 		}
 	});
+
+	function handleRemove(taskId: string, columnId: string) {
+		const col = columns.find(c => c.id === columnId);
+		if (!col) return null;
+
+		const taskIndex = col.tasks.findIndex(t => t.id === taskId);
+		if (taskIndex === -1) return null;
+
+		const [task] = col.tasks.splice(taskIndex, 1);
+		columns = columns.map(c => c.id === columnId ? { ...c, tasks: [...c.tasks] } : c);
+		return { id: task.id, label: task.label, columnId };
+	}
+
+	function handleRestore(task: { id: string; label: string; columnId: string }) {
+		const col = columns.find(c => c.id === task.columnId);
+		if (!col) return;
+		col.tasks.push({ id: task.id, label: task.label });
+		columns = [...columns];
+	}
 </script>
 
 <div class="flex bg-foreground px-6 items-center gap-6 text-neutral-500 p-3 rounded-xl">
@@ -93,10 +115,10 @@
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<DndDroppable id={column.id} direction="vertical" data={{ accepts: 'task' }} class="space-y-2 p-3 h-full border-t-2 border-primary pt-3">
 						{#each column.tasks as task, taskIndex (task.id)}
-							<DndDraggable id={task.id} data={{ type: 'task' }} position={taskIndex}>
+							<DndDraggable id={task.id} data={{ type: 'task', label: task.label, columnId: column.id }} position={taskIndex}>
 								<div class="drag-item px-4 gap-3">
 									<span class="truncate">{task.label}</span>
-									<button data-dnd-no-drag class="black-button" onclick={() => alert("Test")}>Alert</button>
+									<button data-dnd-no-drag class="black-button" onclick={() => alert('Test')}>Alert</button>
 								</div>
 							</DndDraggable>
 						{/each}
@@ -105,6 +127,8 @@
 			</DndDraggable>
 		{/each}
 	</DndDroppable>
+
+	<TrashZone onRemove={handleRemove} onRestore={handleRestore} />
 </DndProvider>
 
 <style>
