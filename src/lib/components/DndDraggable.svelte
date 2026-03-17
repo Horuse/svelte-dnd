@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getContext } from 'svelte'
+	import { getContext, onDestroy } from 'svelte'
 	import type { DndDragEvent } from '../types.js'
 	import type { DragController } from '../core/controller/drag-controller.svelte.js'
 	import type { Snippet } from 'svelte'
@@ -15,6 +15,18 @@
 		children: Snippet
 		class?: string
 		position: number
+		/**
+		 * Delay in ms before drag starts on touch devices.
+		 * During the delay, finger movement scrolls the container natively (with momentum).
+		 * If the finger moves more than `scrollCancelThreshold` px — it's a scroll, not a drag.
+		 * @default 300
+		 */
+		dragDelay?: number
+		/**
+		 * Max movement in px during `dragDelay` before the gesture is treated as a scroll.
+		 * @default 8
+		 */
+		scrollCancelThreshold?: number
 	}
 
 	let {
@@ -26,7 +38,9 @@
 		onDrag,
 		onDragEnd,
 		children,
-		position
+		position,
+		dragDelay = 300,
+		scrollCancelThreshold = 8
 	}: Props = $props()
 
 	const dndController = getContext<DragController>('dnd')
@@ -39,6 +53,17 @@
 	let dragOffset = $state({ x: 0, y: 0 })
 	let dragOccurred = $state(false)
 
+	// Long-press / manual scroll state
+	let longPressTimer: ReturnType<typeof setTimeout> | null = null
+	let isManualScrolling = false
+	let scrollTarget: Element | null = null
+	let lastScrollPos = { x: 0, y: 0 }
+	let lastScrollTime = 0
+	let scrollVelocity = { x: 0, y: 0 }
+	let momentumRaf: number | null = null
+	let lastPointerPos = { x: 0, y: 0 }
+	let lastPointerId = 0
+
 	const DRAG_THRESHOLD = 5
 
 	const translate = $derived(dndController?.translations.get(id) ?? { x: 0, y: 0 })
@@ -47,6 +72,93 @@
 		isDragging ||
 		(dndController?.animatingReturn === true && dndController?.draggedItem === id)
 	)
+
+	// --- Manual scroll helpers ---
+
+	const findScrollableParent = (el: HTMLElement): Element | null => {
+		let parent = el.parentElement
+		while (parent && parent !== document.body) {
+			const style = getComputedStyle(parent)
+			if (['auto', 'scroll', 'overlay'].includes(style.overflowY) ||
+				['auto', 'scroll', 'overlay'].includes(style.overflowX)) {
+				return parent
+			}
+			parent = parent.parentElement
+		}
+		return document.scrollingElement
+	}
+
+	const stopMomentum = () => {
+		if (momentumRaf !== null) {
+			cancelAnimationFrame(momentumRaf)
+			momentumRaf = null
+		}
+	}
+
+	const applyMomentum = (target: Element) => {
+		const DECELERATION = 0.92
+
+		const tick = () => {
+			scrollVelocity.x *= DECELERATION
+			scrollVelocity.y *= DECELERATION
+
+			if (Math.abs(scrollVelocity.x) < 0.05 && Math.abs(scrollVelocity.y) < 0.05) {
+				momentumRaf = null
+				return
+			}
+
+			target.scrollBy(scrollVelocity.x * 16, scrollVelocity.y * 16)
+			momentumRaf = requestAnimationFrame(tick)
+		}
+
+		momentumRaf = requestAnimationFrame(tick)
+	}
+
+	const startManualScroll = (clientX: number, clientY: number) => {
+		isManualScrolling = true
+		scrollTarget = findScrollableParent(element!)
+		lastScrollPos = { x: clientX, y: clientY }
+		lastScrollTime = Date.now()
+		scrollVelocity = { x: 0, y: 0 }
+		stopMomentum()
+	}
+
+	const updateManualScroll = (clientX: number, clientY: number) => {
+		if (!scrollTarget) return
+
+		const dx = lastScrollPos.x - clientX
+		const dy = lastScrollPos.y - clientY
+		const now = Date.now()
+		const dt = now - lastScrollTime
+
+		scrollTarget.scrollBy(dx, dy)
+
+		if (dt > 0) {
+			// Exponential moving average for smoother velocity
+			const alpha = 0.7
+			scrollVelocity.x = alpha * (dx / dt) + (1 - alpha) * scrollVelocity.x
+			scrollVelocity.y = alpha * (dy / dt) + (1 - alpha) * scrollVelocity.y
+		}
+
+		lastScrollPos = { x: clientX, y: clientY }
+		lastScrollTime = now
+	}
+
+	const endManualScroll = () => {
+		isManualScrolling = false
+		const target = scrollTarget
+		scrollTarget = null
+		if (target) applyMomentum(target)
+	}
+
+	// --- Long-press helpers ---
+
+	const cancelLongPress = () => {
+		if (longPressTimer) {
+			clearTimeout(longPressTimer)
+			longPressTimer = null
+		}
+	}
 
 	// --- Drag handling ---
 
@@ -71,6 +183,7 @@
 		if (e.clientY > contentBottom || e.clientY < contentTop || e.clientX > contentRight || e.clientX < contentLeft) return
 
 		e.stopPropagation()
+		stopMomentum()
 
 		isPotentialDrag = true
 		dragOccurred = false
@@ -81,7 +194,25 @@
 			y: e.clientY - rect.top
 		}
 
-		element.setPointerCapture(e.pointerId)
+		const isTouch = e.pointerType === 'touch'
+		const effectiveDelay = isTouch ? dragDelay : 0
+
+		lastPointerPos = { x: e.clientX, y: e.clientY }
+		lastPointerId = e.pointerId
+
+
+		if (effectiveDelay > 0) {
+			// touch-action: none is always set (CSS), so we own all pointer events.
+			// We manually scroll during the delay if the user moves.
+			longPressTimer = setTimeout(() => {
+				longPressTimer = null
+				if (!isPotentialDrag || isManualScrolling) return
+				element.setPointerCapture(lastPointerId)
+				startActualDrag(lastPointerPos.x, lastPointerPos.y, lastPointerId)
+			}, effectiveDelay)
+		} else {
+			element.setPointerCapture(e.pointerId)
+		}
 	}
 
 	const addWindowListeners = () => {
@@ -96,25 +227,25 @@
 		window.removeEventListener('pointercancel', handleWindowPointerCancel)
 	}
 
-	const startActualDrag = (e: PointerEvent) => {
+	const startActualDrag = (clientX: number, clientY: number, pointerId: number) => {
 		if (isDragging) return
 
 		isDragging = true
 		isPotentialDrag = false
 		dragOccurred = true
 
-		if (element.hasPointerCapture(e.pointerId)) {
-			element.releasePointerCapture(e.pointerId)
+		if (element.hasPointerCapture(pointerId)) {
+			element.releasePointerCapture(pointerId)
 		}
 		addWindowListeners()
 
 		const initialTransform = {
-			x: e.clientX - dragOffset.x,
-			y: e.clientY - dragOffset.y
+			x: clientX - dragOffset.x,
+			y: clientY - dragOffset.y
 		}
 
 		dndController?.startDrag(element, id, initialTransform, data)
-		dndController?.updateMousePosition?.(e.clientX, e.clientY)
+		dndController?.updateMousePosition?.(clientX, clientY)
 
 		const dragEvent: DndDragEvent = {
 			source: { id, element, data },
@@ -126,14 +257,31 @@
 	}
 
 	const handlePointerMove = (e: PointerEvent) => {
-		if (!isPotentialDrag) return
+		if (!isPotentialDrag && !isManualScrolling) return
+
+		lastPointerPos = { x: e.clientX, y: e.clientY }
+
+		if (!isPotentialDrag) {
+			if (isManualScrolling) updateManualScroll(e.clientX, e.clientY)
+			return
+		}
 
 		const deltaX = Math.abs(e.clientX - dragStartPosition.x)
 		const deltaY = Math.abs(e.clientY - dragStartPosition.y)
 		const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
 
+		if (longPressTimer !== null) {
+			// Still in delay — check if user is scrolling
+			if (distance > scrollCancelThreshold) {
+				cancelLongPress()
+				isPotentialDrag = false
+				startManualScroll(e.clientX, e.clientY)
+			}
+			return
+		}
+
 		if (distance >= DRAG_THRESHOLD) {
-			startActualDrag(e)
+			startActualDrag(e.clientX, e.clientY, e.pointerId)
 		}
 	}
 
@@ -158,7 +306,11 @@
 	}
 
 	const handlePointerUp = (e: PointerEvent) => {
+		if (isManualScrolling) {
+			endManualScroll()
+		}
 		if (isPotentialDrag) {
+			cancelLongPress()
 			isPotentialDrag = false
 			return
 		}
@@ -188,6 +340,10 @@
 	}
 
 	const handlePointerCancel = () => {
+		if (isManualScrolling) {
+			endManualScroll()
+		}
+		cancelLongPress()
 		isPotentialDrag = false
 	}
 
@@ -198,6 +354,11 @@
 			dndController?.endDrag(false)
 		}
 	}
+
+	onDestroy(() => {
+		cancelLongPress()
+		stopMomentum()
+	})
 
 	const handleClick = (e: MouseEvent) => {
 		if (dragOccurred) {
