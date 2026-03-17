@@ -129,6 +129,6 @@
 	:root {
 		--dnd-preview-bg: var(--color-third);
 		--dnd-preview-border: 2px dashed var(--color-second-active);
-		--dnd-preview-border-radius: 12px;
+		--dnd-preview-border-radius: 1rem;
 	}
 </style>

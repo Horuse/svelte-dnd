@@ -2,6 +2,7 @@ import type { DropZone, DropPreview, DndDirection } from '../../types.js'
 import type { DragState } from '../controller/drag-state.svelte.js'
 import { DOMHelper } from '../dom/dom-helper.js'
 
+/** @internal */
 export class DropZoneCalculator {
 
 	constructor(
@@ -9,6 +10,11 @@ export class DropZoneCalculator {
 		private droppableDataRegistry: Map<string, Record<string, any>>
 	) {}
 
+	/**
+	 * Recalculates all drop zones for a container based on current DOM positions.
+	 * Called by DndDroppable on drag start and on scroll/resize.
+	 * Excludes the dragged item itself so it doesn't create a zone at its own position.
+	 */
 	calculateDropZones(
 		containerId: string,
 		containerElement: HTMLElement,
@@ -19,6 +25,7 @@ export class DropZoneCalculator {
 		const containerRect = DOMHelper.getRect(containerElement)
 
 		const draggedId = this.state.draggedItem
+		// Exclude the dragged element — its slot is handled via translations, not a drop zone
 		const draggableItems = DOMHelper.findDraggableItemsInContainer(containerElement).filter(
 			(item) => item.getAttribute('data-dnd-drag-id') !== draggedId
 		)
@@ -37,6 +44,7 @@ export class DropZoneCalculator {
 		}
 	}
 
+	/** Single full-container zone used when there are no items (empty droppable). */
 	private createEmptyContainerZone(
 		containerId: string,
 		containerRect: DOMRect,
@@ -51,12 +59,26 @@ export class DropZoneCalculator {
 					x: containerRect.left,
 					y: containerRect.top,
 					width: containerRect.width,
-					height: Math.max(containerRect.height, 20)
+					height: Math.max(containerRect.height, 20) // min 20px so empty containers are hittable
 				}
 			}
 		]
 	}
 
+	/**
+	 * Zone layout for vertical lists.
+	 *
+	 * Each item produces one zone — the drop slot AFTER it (position = index + 1).
+	 * The first item additionally produces zone 0 (the slot BEFORE it).
+	 *
+	 * Zone boundaries:
+	 * - Starts at the vertical midpoint of the current item
+	 * - Ends at the vertical midpoint of the next item (or container bottom for the last item)
+	 *
+	 * Special case for zone 0 (before first item):
+	 * - Top is clamped to container top to cover any padding above the first item
+	 * - Height extends down to the midpoint of the first item
+	 */
 	private createVerticalZones(
 		containerId: string,
 		containerRect: DOMRect,
@@ -68,6 +90,7 @@ export class DropZoneCalculator {
 			const itemRect = DOMHelper.getRect(item)
 			const halfHeight = itemRect.height / 2
 
+			// Zone 0: slot before the first item — covers container top padding + first half of item
 			if (index === 0) {
 				const zoneTop = Math.min(containerRect.top, itemRect.top)
 				const zoneHeight = Math.max(
@@ -88,16 +111,19 @@ export class DropZoneCalculator {
 				})
 			}
 
+			// Zone index+1: slot after this item — from its midpoint to the next item's midpoint
 			const nextItem = items[index + 1]
 			const zoneY = itemRect.top + halfHeight
 			let zoneHeight = halfHeight
 
 			if (nextItem) {
+				// Stretch zone to cover the gap between items + half of the next item
 				const nextItemRect = DOMHelper.getRect(nextItem)
 				const nextHalfHeight = nextItemRect.height / 2
 				const gapBetweenItems = nextItemRect.top - itemRect.bottom
 				zoneHeight = halfHeight + gapBetweenItems + nextHalfHeight
 			} else {
+				// Last item: stretch to container bottom (covers bottom padding)
 				const remainingSpace = containerRect.bottom - zoneY
 				zoneHeight = Math.max(halfHeight, remainingSpace)
 			}
@@ -118,6 +144,13 @@ export class DropZoneCalculator {
 		return zones
 	}
 
+	/**
+	 * Zone layout for horizontal lists. Mirror of createVerticalZones along the X axis.
+	 *
+	 * Zone 0: before the first item (covers left padding + first half of item).
+	 * Zone index+1: from the midpoint of item N to the midpoint of item N+1.
+	 * Last zone: stretches to container right edge.
+	 */
 	private createHorizontalZones(
 		containerId: string,
 		containerRect: DOMRect,
@@ -129,6 +162,7 @@ export class DropZoneCalculator {
 			const itemRect = DOMHelper.getRect(item)
 			const halfWidth = itemRect.width / 2
 
+			// Zone 0: before the first item
 			if (index === 0) {
 				const zoneLeft = Math.min(containerRect.left, itemRect.left)
 				const zoneWidth = Math.max(
@@ -159,6 +193,7 @@ export class DropZoneCalculator {
 				const gapBetweenItems = nextItemRect.left - itemRect.right
 				zoneWidth = halfWidth + gapBetweenItems + nextHalfWidth
 			} else {
+				// Last item: stretch to container right edge
 				const remainingSpace = containerRect.right - zoneX
 				zoneWidth = Math.max(halfWidth, remainingSpace)
 			}
@@ -179,6 +214,23 @@ export class DropZoneCalculator {
 		return zones
 	}
 
+	/**
+	 * Zone layout for grid (wrapping) containers.
+	 *
+	 * Items are grouped into rows first (by comparing top offsets).
+	 * Each item produces one zone to its right; the leftmost item in each row
+	 * additionally produces a zone to its left (position before that item in the row).
+	 *
+	 * Vertical boundaries:
+	 * - First row top: clamped to container top
+	 * - Between rows: midpoint between the bottom of current row and the top of the next
+	 * - Last row bottom: clamped to container bottom
+	 *
+	 * Horizontal boundaries:
+	 * - Left zone of first column: clamped to container left
+	 * - Between columns: from current item's midpoint to next item's midpoint
+	 * - Right zone of last column: clamped to container right
+	 */
 	private createGridZones(
 		containerId: string,
 		containerRect: DOMRect,
@@ -196,6 +248,7 @@ export class DropZoneCalculator {
 				const halfWidth = itemRect.width / 2
 				const halfHeight = itemRect.height / 2
 
+				// Vertical span of this row's zones
 				const zoneTop =
 					rowIndex === 0
 						? Math.min(containerRect.top, itemRect.top)
@@ -204,6 +257,7 @@ export class DropZoneCalculator {
 					? itemRect.bottom + (DOMHelper.getRect(nextRow[0]).top - itemRect.bottom) / 2
 					: Math.max(containerRect.bottom, itemRect.bottom)
 
+				// Extra zone before the first item in each row
 				if (colIndex === 0) {
 					const zoneLeft = Math.min(containerRect.left, itemRect.left)
 					const zoneRight = itemRect.left + halfWidth
@@ -222,6 +276,7 @@ export class DropZoneCalculator {
 					positionIndex++
 				}
 
+				// Zone after this item (right half of current + left half of next, or to container edge)
 				const nextItem = row[colIndex + 1]
 				const zoneLeft = itemRect.left + halfWidth
 				let zoneRight: number
@@ -251,6 +306,11 @@ export class DropZoneCalculator {
 		return zones
 	}
 
+	/**
+	 * Groups a flat list of items into rows based on their vertical position.
+	 * An item is considered part of the current row if its top offset differs by
+	 * less than 50% of its own height from the row's reference top.
+	 */
 	private groupItemsIntoRows(items: HTMLElement[]): HTMLElement[][] {
 		if (items.length === 0) return []
 
@@ -275,6 +335,12 @@ export class DropZoneCalculator {
 		return rows
 	}
 
+	/**
+	 * Updates the active drop preview based on the ghost element's center position.
+	 * - If hovering a valid zone → set preview visible at that position
+	 * - If leaving a zone → set visible:false (triggers CSS out-animation), then clear after 300ms
+	 * - skipDropPreviewAnimation flag suppresses the in-animation on drag start
+	 */
 	updateDropPreview(mousePos: { x: number; y: number }) {
 		if (!this.state.dragging) {
 			this.state.setDropPreview(null)
@@ -293,16 +359,32 @@ export class DropZoneCalculator {
 			}
 			this.state.setDropPreview(preview)
 
+			// First move after drag start — disable in-animation to avoid jarring pop-in
 			if (this.state.skipDropPreviewAnimation) {
 				requestAnimationFrame(() => {
 					this.state.setSkipDropPreviewAnimation(false)
 				})
 			}
 		} else {
-			this.state.setDropPreview(null)
+			const current = this.state.dropPreview
+			if (current?.visible) {
+				// Keep dimensions but hide — lets the CSS out-animation play at full size
+				this.state.setDropPreview({ ...current, visible: false })
+				setTimeout(() => {
+					// Guard: don't clear if a new visible preview appeared before timeout fires
+					if (this.state.dropPreview && !this.state.dropPreview.visible) {
+						this.state.setDropPreview(null)
+					}
+				}, 300)
+			}
 		}
 	}
 
+	/**
+	 * Finds the drop zone that contains the given point, respecting container boundaries.
+	 * A zone only activates if the point is also inside its container's bounding rect —
+	 * this prevents zones from "leaking" outside overflow:hidden containers.
+	 */
 	private findZoneAtPosition(mousePos: { x: number; y: number }): DropZone | null {
 		const draggedItemId = this.state.draggedItem
 		if (!draggedItemId) return null
@@ -320,6 +402,12 @@ export class DropZoneCalculator {
 		return null
 	}
 
+	/**
+	 * Secondary containment check on top of isPointInZone.
+	 * Needed because zones extend to container edges — without this check, a zone
+	 * near the edge of container A could be hit while the cursor is inside container B.
+	 * Returns true if no container element is found (fail-open).
+	 */
 	private isPointInContainer(point: { x: number; y: number }, containerId: string): boolean {
 		const containerElement = DOMHelper.findContainer(containerId)
 		if (!containerElement) return true
@@ -337,6 +425,11 @@ export class DropZoneCalculator {
 		return this.filterZonesByDraggedItemType(this.state.zones, this.state.draggedItem || '')
 	}
 
+	/**
+	 * Filters zones to only those whose container accepts the currently dragged item type.
+	 * A container with no `accepts` / `type` data accepts everything.
+	 * Accepts can be a single string or an array of strings.
+	 */
 	filterZonesByDraggedItemType(zones: DropZone[], draggedItemId: string): DropZone[] {
 		const draggedType = this.state.draggedType
 		if (!draggedType) return zones
@@ -366,6 +459,7 @@ export class DropZoneCalculator {
 		)
 	}
 
+	/** Replaces all zones for a given container, keeping zones from other containers intact. */
 	mergeZones(
 		existingZones: DropZone[],
 		newZones: DropZone[],
