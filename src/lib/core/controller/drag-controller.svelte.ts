@@ -9,6 +9,20 @@ import type { DndDragEvent, DndDropEvent, DropZone, DndDirection, DragStartCallb
 
 export type { DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback } from '../../types.js'
 
+/**
+ * Central controller for drag-and-drop. Create one instance and pass it to
+ * `DndProvider` — all child `DndDroppable` and `DndDraggable` components will
+ * share the same state.
+ *
+ * @example
+ * ```ts
+ * const controller = new DragController()
+ *
+ * controller.onDrop((sourceId, sourceData, targetContainerId, position) => {
+ *   // reorder / move items in your data model
+ * })
+ * ```
+ */
 export class DragController {
 	private state = new DragState()
 	private animationController = new AnimationController(this.state)
@@ -21,52 +35,74 @@ export class DragController {
 	private eventEmitter = new DragEventEmitter()
 	private translationCalc = new TranslationCalculator(this.state)
 
-	get translations() {
-		return this.translationCalc.translations
-	}
+	// --- Reactive state (read-only) ---
 
-	get dragging() {
-		return this.state.dragging
-	}
-	get element() {
-		return this.state.element
-	}
-	get transform() {
-		return this.state.transform
-	}
-	get draggedItem() {
-		return this.state.draggedItem
-	}
-	get draggedType() {
-		return this.state.draggedType
-	}
-	get draggedItemData() {
-		return this.state.draggedItemData
-	}
-	get size() {
-		return this.state.size
-	}
-	get animatingReturn() {
-		return this.state.animating
-	}
-	get dropPreview() {
-		return this.state.dropPreview
-	}
-	get dropZones() {
-		return this.state.zones
-	}
-	get debugZones() {
-		return this.state.debugZones
-	}
-	get filteredDropZones() {
-		return this.dropZoneCalculator.filteredZones
-	}
-	get performingDrop() {
-		return this.state.performingDrop
-	}
-	get skipDropPreviewAnimation() {
-		return this.state.skipDropPreviewAnimation
-	}
+	/** CSS translate offsets for each draggable item during an active drag. Keyed by item id. */
+	get translations() { return this.translationCalc.translations }
+
+	/** `true` while the user is dragging an item. */
+	get dragging() { return this.state.dragging }
+
+	/** The DOM element currently being dragged. */
+	get element() { return this.state.element }
+
+	/** Current `{ x, y }` transform of the ghost element. */
+	get transform() { return this.state.transform }
+
+	/** Id of the item being dragged. */
+	get draggedItem() { return this.state.draggedItem }
+
+	/** `type` field from the dragged item's data, used for accept filtering. */
+	get draggedType() { return this.state.draggedType }
+
+	/** Full data object of the dragged item. */
+	get draggedItemData() { return this.state.draggedItemData }
+
+	/** Width/height of the dragged element. */
+	get size() { return this.state.size }
+
+	/** `true` while the ghost is animating back to its origin. */
+	get animatingReturn() { return this.state.animating }
+
+	/** Current drop preview (target container + insertion position). */
+	get dropPreview() { return this.state.dropPreview }
+
+	/** All registered drop zones across every `DndDroppable`. */
+	get dropZones() { return this.state.zones }
+
+	get debugZones() { return this.state.debugZones }
+
+	/** Drop zones filtered to only those that accept the currently dragged item type. */
+	get filteredDropZones() { return this.dropZoneCalculator.filteredZones }
+
+	/** `true` while the drop animation is in progress. */
+	get performingDrop() { return this.state.performingDrop }
+
+	get skipDropPreviewAnimation() { return this.state.skipDropPreviewAnimation }
+
+	// --- Event subscriptions ---
+	// Each method returns an unsubscribe function: `const off = controller.onDrop(...); off()`
+
+	/** Fired when a drag begins. */
+	onDragStart(cb: DragStartCallback)               { return this.eventEmitter.onDragStart(cb) }
+
+	/** Fired when a drag ends (drop or cancel). */
+	onDragEnd(cb: DragEndCallback)                   { return this.eventEmitter.onDragEnd(cb) }
+
+	/**
+	 * Fired when an item is successfully dropped into a container.
+	 *
+	 * @param cb `(sourceId, sourceData, targetContainerId, position) => void`
+	 */
+	onDrop(cb: DropCallback)                         { return this.eventEmitter.onDrop(cb) }
+
+	/**
+	 * Fired after auto-scroll moves a container, invalidating existing drop zone
+	 * coordinates. Subscribe to recalculate zones if you manage them manually.
+	 */
+	onZonesInvalidated(cb: ZonesInvalidatedCallback) { return this.eventEmitter.onZonesInvalidated(cb) }
+
+	// --- Lifecycle (called by DndDraggable / DndDroppable internally) ---
 
 	setSkipDropPreviewAnimation(value: boolean) {
 		this.state.setSkipDropPreviewAnimation(value)
@@ -79,11 +115,6 @@ export class DragController {
 	unregisterDroppableData(id: string) {
 		this.droppableDataRegistry.delete(id)
 	}
-
-	onDragStart(cb: DragStartCallback)           { return this.eventEmitter.onDragStart(cb) }
-	onDragEnd(cb: DragEndCallback)               { return this.eventEmitter.onDragEnd(cb) }
-	onDrop(cb: DropCallback)                     { return this.eventEmitter.onDrop(cb) }
-	onZonesInvalidated(cb: ZonesInvalidatedCallback) { return this.eventEmitter.onZonesInvalidated(cb) }
 
 	startDrag(
 		element: HTMLElement,
@@ -169,6 +200,7 @@ export class DragController {
 		}
 	}
 
+	/** Cancel the current drag and animate the ghost back to its origin. */
 	endDrag(shouldAnimate = true) {
 		const itemId = this.state.draggedItem
 
@@ -217,6 +249,7 @@ export class DragController {
 		return this.dropZoneCalculator.mergeZones(existingZones, newZones, containerId)
 	}
 
+	/** Toggle visual overlay of drop zones — useful for debugging layout. */
 	toggleDebugZones() {
 		this.state.toggleDebugZones()
 	}
@@ -238,6 +271,7 @@ export class DragController {
 		}, 100)
 	}
 
+	/** Release all resources. Call when the `DndProvider` is destroyed. */
 	destroy() {
 		this.scrollController.destroy()
 		this.droppableDataRegistry.clear()

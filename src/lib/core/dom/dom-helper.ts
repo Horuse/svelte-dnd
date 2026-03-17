@@ -1,3 +1,8 @@
+/**
+ * Static DOM utilities for querying DnD-related elements by their data attributes.
+ * Used internally by the library; exposed for advanced custom implementations.
+ */
+
 // DOM selectors
 const SELECTORS = {
 	container: (id: string) => `[data-dnd-drop-id="${id}"]`,
