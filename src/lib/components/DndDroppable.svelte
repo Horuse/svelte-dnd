@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { getContext, onDestroy, setContext } from 'svelte'
 	import type { DndDirection } from '../types.js'
-	import type { DragController } from '../core/controller/drag-controller.svelte.js'
+	import type { DndController } from '../core/dnd/dnd-controller.svelte.js'
 	import type { Snippet } from 'svelte'
 
 	interface Props {
@@ -22,7 +22,7 @@
 		class: className
 	}: Props = $props()
 
-	const dndController = getContext<DragController>('dnd')
+	const dndController = getContext<DndController>('dnd')
 	setContext('dnd-container-id', () => id)
 	let element: HTMLElement
 

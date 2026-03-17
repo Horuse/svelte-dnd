@@ -1,6 +1,6 @@
 import type { DropZone, DropPreview } from '../../types.js'
 
-export class DragState {
+export class DndState {
 	isDragging = $state(false)
 	dragElement = $state<HTMLElement | null>(null)
 	draggedItemId = $state<string | null>(null)

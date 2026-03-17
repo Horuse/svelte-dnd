@@ -1,4 +1,4 @@
-import type { DragState } from '../controller/drag-state.svelte.js'
+import type { DndState } from '../dnd/dnd-state.svelte.js'
 
 export interface ScrollOptions {
 	onZoneRefresh?: () => void
@@ -10,7 +10,7 @@ export class ScrollController {
 	private lastMousePosition = { x: 0, y: 0 }
 
 	constructor(
-		private state: DragState,
+		private state: DndState,
 		private options: ScrollOptions = {}
 	) {}
 

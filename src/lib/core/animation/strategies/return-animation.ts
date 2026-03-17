@@ -1,6 +1,6 @@
 import type { AnimationStrategy } from './animation-strategy.js'
-import type { DragState } from '../../controller/drag-state.svelte.js'
-import { DOMHelper } from '../../dom/dom-helper.js'
+import type { DndState } from '../../dnd/dnd-state.svelte.js'
+import { DOMHelper } from '../../utils/dom-helper.js'
 import { ScrollSyncAnimationStrategy } from './scroll-sync-animation.js'
 
 const ANIMATION_DURATION = 300
@@ -10,7 +10,7 @@ const easing = {
 
 export class ReturnAnimationStrategy implements AnimationStrategy {
 
-	constructor(private state: DragState) {}
+	constructor(private state: DndState) {}
 
 	execute(onComplete?: () => void): void {
 		if (!this.canAnimate()) {

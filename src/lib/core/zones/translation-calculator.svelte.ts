@@ -1,8 +1,8 @@
-import type { DragState } from '../controller/drag-state.svelte.js'
-import { DOMHelper } from '../dom/dom-helper.js'
+import type { DndState } from '../dnd/dnd-state.svelte.js'
+import { DOMHelper } from '../utils/dom-helper.js'
 
 export class TranslationCalculator {
-	constructor(private state: DragState) {}
+	constructor(private state: DndState) {}
 
 	translations = $derived.by((): Map<string, { x: number; y: number }> => {
 		const map = new Map<string, { x: number; y: number }>()

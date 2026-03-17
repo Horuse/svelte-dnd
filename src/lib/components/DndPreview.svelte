@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getContext, untrack } from 'svelte'
-	import type { DragController } from '../core/controller/drag-controller.svelte'
+	import type { DndController } from '../core/dnd/dnd-controller.svelte'
 
 	interface Props {
 		containerId: string
@@ -14,7 +14,7 @@
 		class: className = ''
 	}: Props = $props()
 
-	const dndManager = getContext<DragController>('dnd')
+	const dndManager = getContext<DndController>('dnd')
 
 	const visible = $derived(
 			!!dndManager?.dropPreview &&

@@ -1,18 +1,18 @@
 <script lang="ts">
 	import { setContext, onDestroy, untrack } from 'svelte'
-	import { DragController } from '../core/controller/drag-controller.svelte.js'
+	import { DndController } from '../core/dnd/dnd-controller.svelte.js'
 	import type { GhostSnippet } from '../types.js'
 	import type { Snippet } from 'svelte'
 
 	interface Props {
 		children: Snippet
-		controller?: DragController
+		controller?: DndController
 		ghost?: GhostSnippet
 	}
 
 	let { children, ghost, ...rest }: Props = $props()
 
-	const dragController = untrack(() => rest.controller) ?? new DragController()
+	const dragController = untrack(() => rest.controller) ?? new DndController()
 	const ownsController = untrack(() => !rest.controller)
 
 	let rotated = $state(false)

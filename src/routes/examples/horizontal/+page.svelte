@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { DndProvider, DndDroppable, DndDraggable, DragController } from '$lib/index.js';
+	import { DndProvider, DndDroppable, DndDraggable, DndController } from '$lib/index.js';
 	import Description from './description.md';
 
 	let items = $state(
@@ -9,7 +9,7 @@
 			}))
 	);
 
-	const controller = new DragController();
+	const controller = new DndController();
 
 	controller.onDrop((sourceId: string, _sourceData: any, _targetContainerId: string, position: number) => {
 		const fromIndex = items.findIndex((item) => item.id === sourceId);

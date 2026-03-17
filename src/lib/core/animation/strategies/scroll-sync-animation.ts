@@ -1,6 +1,6 @@
 import type { AnimationStrategy } from './animation-strategy.js'
-import type { DragState } from '../../controller/drag-state.svelte.js'
-import { DOMHelper } from '../../dom/dom-helper.js'
+import type { DndState } from '../../dnd/dnd-state.svelte.js'
+import { DOMHelper } from '../../utils/dom-helper.js'
 import { ScrollSyncCalculator } from '../scroll-sync-calculator.js'
 import { getDirectionAdapter } from '../direction-adapter.js'
 
@@ -12,7 +12,7 @@ export class ScrollSyncAnimationStrategy implements AnimationStrategy {
 	private scrollCalc = new ScrollSyncCalculator()
 
 	constructor(
-		private state: DragState,
+		private state: DndState,
 		private containerId: string,
 		private position: number
 	) {}

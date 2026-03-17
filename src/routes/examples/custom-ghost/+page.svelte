@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { DndProvider, DndDroppable, DndDraggable, DragController } from '$lib/index.js';
+	import { DndProvider, DndDroppable, DndDraggable, DndController } from '$lib/index.js';
 	import Description from './description.md';
 
 	let columns = $state<Record<string, { id: string; label: string; color: string }[]>>({
@@ -20,7 +20,7 @@
 		green: 'Green Team'
 	};
 
-	const controller = new DragController();
+	const controller = new DndController();
 
 	controller.onDrop((sourceId: string, _sourceData: any, targetContainerId: string, position: number) => {
 		let sourceColumn = '';

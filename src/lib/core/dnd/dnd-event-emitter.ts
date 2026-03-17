@@ -1,6 +1,6 @@
 import type { DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback } from '../../types.js'
 
-export class DragEventEmitter {
+export class DndEventEmitter {
 	private dragStartCallbacks = new Set<DragStartCallback>()
 	private dragEndCallbacks = new Set<DragEndCallback>()
 	private dropCallbacks = new Set<DropCallback>()

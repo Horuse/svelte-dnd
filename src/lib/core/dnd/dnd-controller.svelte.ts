@@ -1,9 +1,9 @@
-import { DragState } from './drag-state.svelte.js'
+import { DndState } from './dnd-state.svelte.js'
 import { AnimationController } from '../animation/animation-controller.js'
 import { ScrollController } from '../scroll/scroll-controller.js'
 import { DropZoneCalculator } from '../zones/dropzone-calculator.js'
-import { DOMHelper } from '../dom/dom-helper.js'
-import { DragEventEmitter } from './drag-event-emitter.js'
+import { DOMHelper } from '../utils/dom-helper.js'
+import { DndEventEmitter } from './dnd-event-emitter.js'
 import { TranslationCalculator } from '../zones/translation-calculator.svelte.js'
 import type { DndDragEvent, DndDropEvent, DropZone, DndDirection, DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback } from '../../types.js'
 
@@ -23,8 +23,8 @@ export type { DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidated
  * })
  * ```
  */
-export class DragController {
-	private state = new DragState()
+export class DndController {
+	private state = new DndState()
 	private animationController = new AnimationController(this.state)
 	private scrollController = new ScrollController(this.state, {
 		onZoneRefresh: () => this.eventEmitter.notifyZonesInvalidated(),
@@ -32,7 +32,7 @@ export class DragController {
 	})
 	private droppableDataRegistry = new Map<string, Record<string, any>>()
 	private dropZoneCalculator = new DropZoneCalculator(this.state, this.droppableDataRegistry)
-	private eventEmitter = new DragEventEmitter()
+	private eventEmitter = new DndEventEmitter()
 	private translationCalc = new TranslationCalculator(this.state)
 
 	// --- Reactive state (read-only) ---
@@ -124,7 +124,7 @@ export class DragController {
 	) {
 		const rect = element.getBoundingClientRect()
 
-		const containerEl = element.closest('[data-dnd-drop-id]')
+		const containerEl = element.closest<HTMLElement>('[data-dnd-drop-id]')
 		if (containerEl) {
 			const containerId = containerEl.getAttribute('data-dnd-drop-id')!
 			const items = DOMHelper.findDraggableItemsInContainer(containerEl)

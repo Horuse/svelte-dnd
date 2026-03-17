@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { DndProvider, DndDroppable, DndDraggable, DragController } from '$lib/index.js';
+	import { DndProvider, DndDroppable, DndDraggable, DndController } from '$lib/index.js';
 	import Description from './description.md';
 
 	type Task = { id: string; label: string };
@@ -33,7 +33,7 @@
 		}
 	]);
 
-	const controller = new DragController();
+	const controller = new DndController();
 
 	controller.onDrop((sourceId: string, sourceData: any, targetContainerId: string, position: number) => {
 		if (sourceData.type === 'column') {

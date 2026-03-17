@@ -1,10 +1,10 @@
-import type { DragState } from '../controller/drag-state.svelte.js'
+import type { DndState } from '../dnd/dnd-state.svelte.js'
 import type { DropZone } from '../../types.js'
 import { ReturnAnimationStrategy } from './strategies/return-animation.js'
 import { DropAnimationStrategy } from './strategies/drop-animation.js'
 
 export class AnimationController {
-	constructor(private state: DragState) {}
+	constructor(private state: DndState) {}
 
 	animateReturn(onComplete?: () => void) {
 		const strategy = new ReturnAnimationStrategy(this.state)
