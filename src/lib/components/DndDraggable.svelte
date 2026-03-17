@@ -48,13 +48,6 @@
 		(dndController?.animatingReturn === true && dndController?.draggedItem === id)
 	)
 
-	$effect(() => {
-		if (element) {
-			dndController?.registerDraggable(id, element)
-			return () => dndController?.unregisterDraggable(id)
-		}
-	})
-
 	// --- Drag handling ---
 
 	const handlePointerDown = (e: PointerEvent) => {

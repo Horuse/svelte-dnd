@@ -71,4 +71,30 @@ export class DOMHelper {
 	static getRect(element: HTMLElement): DOMRect {
 		return element.getBoundingClientRect()
 	}
+
+	static calculateSlotSize(
+		element: HTMLElement,
+		items: HTMLElement[]
+	): { width: number; height: number } {
+		const position = items.indexOf(element)
+		const elementRect = element.getBoundingClientRect()
+		const nextItem = items[position + 1]
+		const prevItem = items[position - 1]
+
+		if (nextItem) {
+			const nextRect = nextItem.getBoundingClientRect()
+			return {
+				width: nextRect.left - elementRect.left,
+				height: nextRect.top - elementRect.top
+			}
+		} else if (prevItem) {
+			const prevRect = prevItem.getBoundingClientRect()
+			return {
+				width: elementRect.left - prevRect.left,
+				height: elementRect.top - prevRect.top
+			}
+		} else {
+			return { width: element.offsetWidth, height: element.offsetHeight }
+		}
+	}
 }

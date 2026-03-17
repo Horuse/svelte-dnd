@@ -97,6 +97,10 @@
 		setupScrollListeners()
 	})
 
+	const unsubscribeZonesInvalidated = dndController?.onZonesInvalidated(() => {
+		updateDropZones()
+	})
+
 	const unsubscribeDragEnd = dndController?.onDragEnd(() => {
 		cleanupScrollListeners()
 	})
@@ -104,6 +108,7 @@
 	onDestroy(() => {
 		cleanupScrollListeners()
 		unsubscribeDragStart?.()
+		unsubscribeZonesInvalidated?.()
 		unsubscribeDragEnd?.()
 		dndController?.unregisterDroppableData(id)
 	})

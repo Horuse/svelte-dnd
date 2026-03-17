@@ -1,9 +1,10 @@
-import type { DragStartCallback, DragEndCallback, DropCallback } from '../types.js'
+import type { DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback } from '../types.js'
 
 export class DragEventEmitter {
 	private dragStartCallbacks = new Set<DragStartCallback>()
 	private dragEndCallbacks = new Set<DragEndCallback>()
 	private dropCallbacks = new Set<DropCallback>()
+	private zonesInvalidatedCallbacks = new Set<ZonesInvalidatedCallback>()
 
 	onDragStart(cb: DragStartCallback) {
 		this.dragStartCallbacks.add(cb)
@@ -32,9 +33,19 @@ export class DragEventEmitter {
 		this.dropCallbacks.forEach(cb => cb(sourceId, sourceData, targetContainerId, position))
 	}
 
+	onZonesInvalidated(cb: ZonesInvalidatedCallback) {
+		this.zonesInvalidatedCallbacks.add(cb)
+		return () => this.zonesInvalidatedCallbacks.delete(cb)
+	}
+
+	notifyZonesInvalidated() {
+		this.zonesInvalidatedCallbacks.forEach(cb => cb())
+	}
+
 	destroy() {
 		this.dragStartCallbacks.clear()
 		this.dragEndCallbacks.clear()
 		this.dropCallbacks.clear()
+		this.zonesInvalidatedCallbacks.clear()
 	}
 }

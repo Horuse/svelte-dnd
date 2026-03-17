@@ -69,3 +69,4 @@ export type DropCallback = (
 	targetContainerId: string,
 	position: number
 ) => void
+export type ZonesInvalidatedCallback = () => void

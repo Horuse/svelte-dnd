@@ -5,21 +5,20 @@ import { DropZoneCalculator } from './dropzone-calculator.js'
 import { DOMHelper } from './dom-helper.js'
 import { DragEventEmitter } from './drag-event-emitter.js'
 import { TranslationCalculator } from './translation-calculator.svelte.js'
-import type { DndDragEvent, DndDropEvent, DropZone, DndDirection } from '../types.js'
+import type { DndDragEvent, DndDropEvent, DropZone, DndDirection, DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback } from '../types.js'
 
-export type { DragStartCallback, DragEndCallback, DropCallback } from '../types.js'
+export type { DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback } from '../types.js'
 
 export class DragController {
 	private state = new DragState()
 	private animationController = new AnimationController(this.state)
 	private scrollController = new ScrollController(this.state, {
-		onZoneRefresh: () => this.refreshDropZones(),
+		onZoneRefresh: () => this.eventEmitter.notifyZonesInvalidated(),
 		onMouseUpdate: (x, y) => this.updateMousePosition(x, y)
 	})
 	private droppableDataRegistry = new Map<string, Record<string, any>>()
 	private dropZoneCalculator = new DropZoneCalculator(this.state, this.droppableDataRegistry)
-	private draggableRegistry = new Map<string, HTMLElement>()
-	private eventBus = new DragEventEmitter()
+	private eventEmitter = new DragEventEmitter()
 	private translationCalc = new TranslationCalculator(this.state)
 
 	get translations() {
@@ -60,10 +59,7 @@ export class DragController {
 		return this.state.debugZones
 	}
 	get filteredDropZones() {
-		return this.dropZoneCalculator.filterZonesByDraggedItemType(
-			this.state.zones,
-			this.state.draggedItem || ''
-		)
+		return this.dropZoneCalculator.filteredZones
 	}
 	get performingDrop() {
 		return this.state.performingDrop
@@ -76,14 +72,6 @@ export class DragController {
 		this.state.setSkipDropPreviewAnimation(value)
 	}
 
-	registerDraggable(id: string, element: HTMLElement) {
-		this.draggableRegistry.set(id, element)
-	}
-
-	unregisterDraggable(id: string) {
-		this.draggableRegistry.delete(id)
-	}
-
 	registerDroppableData(id: string, data: Record<string, any>) {
 		this.droppableDataRegistry.set(id, data)
 	}
@@ -92,17 +80,10 @@ export class DragController {
 		this.droppableDataRegistry.delete(id)
 	}
 
-	onDragStart(callback: (itemId: string) => void) {
-		return this.eventBus.onDragStart(callback)
-	}
-
-	onDragEnd(callback: (itemId: string) => void) {
-		return this.eventBus.onDragEnd(callback)
-	}
-
-	onDrop(callback: (sourceId: string, sourceData: any, targetContainerId: string, position: number) => void) {
-		return this.eventBus.onDrop(callback)
-	}
+	onDragStart(cb: DragStartCallback)           { return this.eventEmitter.onDragStart(cb) }
+	onDragEnd(cb: DragEndCallback)               { return this.eventEmitter.onDragEnd(cb) }
+	onDrop(cb: DropCallback)                     { return this.eventEmitter.onDrop(cb) }
+	onZonesInvalidated(cb: ZonesInvalidatedCallback) { return this.eventEmitter.onZonesInvalidated(cb) }
 
 	startDrag(
 		element: HTMLElement,
@@ -119,25 +100,7 @@ export class DragController {
 			const position = items.indexOf(element)
 			this.state.setOriginContainerId(containerId)
 			this.state.setOriginPosition(position >= 0 ? position : 0)
-
-			const elementRect = element.getBoundingClientRect()
-			const nextItem = items[position + 1]
-			const prevItem = items[position - 1]
-			if (nextItem) {
-				const nextRect = nextItem.getBoundingClientRect()
-				this.state.setDragSlotSize({
-					width: nextRect.left - elementRect.left,
-					height: nextRect.top - elementRect.top
-				})
-			} else if (prevItem) {
-				const prevRect = prevItem.getBoundingClientRect()
-				this.state.setDragSlotSize({
-					width: elementRect.left - prevRect.left,
-					height: elementRect.top - prevRect.top
-				})
-			} else {
-				this.state.setDragSlotSize({ width: element.offsetWidth, height: element.offsetHeight })
-			}
+			this.state.setDragSlotSize(DOMHelper.calculateSlotSize(element, items))
 		}
 
 		this.state.setDragging(true)
@@ -156,7 +119,7 @@ export class DragController {
 		})
 
 		this.state.setSkipDropPreviewAnimation(true)
-		this.eventBus.notifyDragStart(itemId)
+		this.eventEmitter.notifyDragStart(itemId)
 	}
 
 	updateTransform(transform: { x: number; y: number }) {
@@ -197,11 +160,11 @@ export class DragController {
 
 		if (targetZone && this.state.element && this.state.transform) {
 			this.animationController.animateToTarget(targetZone, () => {
-				this.eventBus.notifyDrop(sourceId, sourceData, targetContainerId, position)
+				this.eventEmitter.notifyDrop(sourceId, sourceData, targetContainerId, position)
 				this.finalizeDragEnd(sourceId)
 			})
 		} else {
-			this.eventBus.notifyDrop(sourceId, sourceData, targetContainerId, position)
+			this.eventEmitter.notifyDrop(sourceId, sourceData, targetContainerId, position)
 			this.finalizeDragEnd(sourceId)
 		}
 	}
@@ -238,10 +201,6 @@ export class DragController {
 		this.state.setDropZones(zones)
 	}
 
-	refreshDropZones() {
-		this.eventBus.notifyDragStart(this.state.draggedItem || '')
-	}
-
 	calculateDropZones(
 		containerId: string,
 		containerElement: HTMLElement,
@@ -271,7 +230,7 @@ export class DragController {
 		})
 
 		if (itemId) {
-			this.eventBus.notifyDragEnd(itemId)
+			this.eventEmitter.notifyDragEnd(itemId)
 		}
 
 		setTimeout(() => {
@@ -282,7 +241,6 @@ export class DragController {
 	destroy() {
 		this.scrollController.destroy()
 		this.droppableDataRegistry.clear()
-		this.draggableRegistry.clear()
-		this.eventBus.destroy()
+		this.eventEmitter.destroy()
 	}
 }

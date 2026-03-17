@@ -333,6 +333,10 @@ export class DropZoneCalculator {
 		)
 	}
 
+	get filteredZones(): DropZone[] {
+		return this.filterZonesByDraggedItemType(this.state.zones, this.state.draggedItem || '')
+	}
+
 	filterZonesByDraggedItemType(zones: DropZone[], draggedItemId: string): DropZone[] {
 		const draggedType = this.state.draggedType
 		if (!draggedType) return zones
