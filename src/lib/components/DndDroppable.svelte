@@ -17,6 +17,13 @@
 		 *   Use for trash zones, boards, or any droppable that isn't a sorted list.
 		 */
 		mode?: DndMode
+		/**
+		 * How much of the dragged element must overlap this container to activate it.
+		 * - `number` — pixels of intersection required (0 = any pixel)
+		 * - `string` — CSS-like percentage of the ghost's smaller dimension, e.g. `"25%"`
+		 * - `undefined` (default) — center-point detection (current behaviour)
+		 */
+		overlap?: number | string
 		children: Snippet
 		class?: string
 	}
@@ -27,6 +34,7 @@
 		disabled = false,
 		direction = 'vertical',
 		mode = 'sortable',
+		overlap = undefined,
 		children,
 		class: className
 	}: Props = $props()
@@ -63,6 +71,7 @@
 	data-dnd-drop-id={id}
 	data-dnd-direction={direction}
 	data-dnd-mode={mode}
+	data-dnd-overlap={overlap !== undefined ? String(overlap) : undefined}
 	data-dnd-scroll
 >
 	{@render children()}

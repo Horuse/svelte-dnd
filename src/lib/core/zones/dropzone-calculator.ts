@@ -388,8 +388,12 @@ export class DropZoneCalculator {
 
 	/**
 	 * Finds the drop zone that contains the given point, respecting container boundaries.
-	 * A zone only activates if the point is also inside its container's bounding rect —
-	 * this prevents zones from "leaking" outside overflow:hidden containers.
+	 *
+	 * If the container has `data-dnd-overlap` set, uses ghost-rect intersection instead of
+	 * center-point detection — the ghost must overlap the zone by at least that many pixels
+	 * (number) or that fraction of the ghost's smaller dimension (string "X%").
+	 *
+	 * Without `data-dnd-overlap`: falls back to center-point check (default behaviour).
 	 */
 	private findZoneAtPosition(mousePos: { x: number; y: number }): DropZone | null {
 		const draggedItemId = this.state.draggedItem
@@ -401,11 +405,72 @@ export class DropZoneCalculator {
 		)
 
 		for (const zone of filteredZones) {
-			if (this.isPointInZone(mousePos, zone) && this.isPointInContainer(mousePos, zone.containerId)) {
-				return zone
+			const container = DOMHelper.findContainer(zone.containerId)
+			const overlapAttr = container?.getAttribute('data-dnd-overlap') ?? null
+
+			if (overlapAttr !== null) {
+				// Overlap mode: check ghost rect vs zone rect
+				const threshold = this.parseOverlapThreshold(overlapAttr)
+				if (this.isGhostOverlappingZone(zone, threshold) && this.isGhostOverlappingContainer(zone.containerId)) {
+					return zone
+				}
+			} else {
+				// Default: center-point detection
+				if (this.isPointInZone(mousePos, zone) && this.isPointInContainer(mousePos, zone.containerId)) {
+					return zone
+				}
 			}
 		}
 		return null
+	}
+
+	/**
+	 * Parses the `data-dnd-overlap` attribute value into a pixel threshold.
+	 * - `"0"` or `"20"` → pixels (number)
+	 * - `"25%"` → 25% of the ghost's smaller dimension (width or height)
+	 */
+	private parseOverlapThreshold(value: string): number {
+		if (value.endsWith('%')) {
+			const pct = parseFloat(value) / 100
+			const size = this.state.size
+			if (!size) return 0
+			return pct * Math.min(size.width, size.height)
+		}
+		return parseFloat(value) || 0
+	}
+
+	/**
+	 * Returns true if the ghost rect overlaps the zone rect by at least `threshold` pixels
+	 * in both dimensions. threshold=0 means any pixel of intersection is enough.
+	 */
+	private isGhostOverlappingZone(zone: DropZone, threshold: number): boolean {
+		const transform = this.state.transform
+		const size = this.state.size
+		if (!transform || !size) return false
+
+		const intersectW = Math.min(transform.x + size.width, zone.rect.x + zone.rect.width) - Math.max(transform.x, zone.rect.x)
+		const intersectH = Math.min(transform.y + size.height, zone.rect.y + zone.rect.height) - Math.max(transform.y, zone.rect.y)
+
+		return intersectW > threshold && intersectH > threshold
+	}
+
+	/**
+	 * Overlap-mode variant of isPointInContainer.
+	 * Returns true if the ghost rect intersects the container rect at all.
+	 */
+	private isGhostOverlappingContainer(containerId: string): boolean {
+		const containerElement = DOMHelper.findContainer(containerId)
+		if (!containerElement) return true
+
+		const transform = this.state.transform
+		const size = this.state.size
+		if (!transform || !size) return true
+
+		const rect = DOMHelper.getRect(containerElement)
+		const intersectW = Math.min(transform.x + size.width, rect.right) - Math.max(transform.x, rect.left)
+		const intersectH = Math.min(transform.y + size.height, rect.bottom) - Math.max(transform.y, rect.top)
+
+		return intersectW > 0 && intersectH > 0
 	}
 
 	/**

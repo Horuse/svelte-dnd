@@ -113,7 +113,7 @@
 						{column.title}
 					</h2>
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
-					<DndDroppable id={column.id} direction="vertical" data={{ accepts: 'task' }} class="space-y-2 p-3 h-full border-t-2 border-primary pt-3">
+					<DndDroppable id={column.id} direction="vertical" data={{ accepts: 'task' }} class="space-y-2 p-3 h-full overflow-auto border-t-2 border-primary pt-3">
 						{#each column.tasks as task, taskIndex (task.id)}
 							<DndDraggable id={task.id} data={{ type: 'task', label: task.label, columnId: column.id }} position={taskIndex}>
 								<div class="drag-item px-4 gap-3">
