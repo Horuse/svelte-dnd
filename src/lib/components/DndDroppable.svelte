@@ -4,6 +4,7 @@
 	import type { DndController } from '../core/dnd/dnd-controller.svelte.js'
 	import type { Snippet } from 'svelte'
 	import { DropHandler } from '../core/handlers/drop-handler.svelte.js'
+	import DndPreview from './DndPreview.svelte'
 
 	interface Props {
 		id: string
@@ -37,6 +38,15 @@
 	)
 
 	onDestroy(() => handler.destroy())
+
+	// Tail preview: handles position = items.length (drop after the last item in cross-container drags).
+	// DndDraggable renders previews for positions 0..M-1; position M is never covered by an item wrapper.
+	// tailPosition stays -1 (inactive) unless this container is the current drop target.
+	const tailPosition = $derived.by(() => {
+		if (!dndController?.dropPreview?.visible || dndController.dropPreview.containerId !== id) return -1
+		if (!element) return -1
+		return element.querySelectorAll('[data-dnd-draggable-item]').length
+	})
 </script>
 
 <div
@@ -48,6 +58,11 @@
 	data-dnd-scroll
 >
 	{@render children()}
+	{#if tailPosition >= 0}
+		<div style="position: relative">
+			<DndPreview containerId={id} position={tailPosition} />
+		</div>
+	{/if}
 </div>
 
 <style>

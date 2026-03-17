@@ -45,7 +45,7 @@
 	}: Props = $props()
 
 	const dndController = getContext<DndController>('dnd')
-	const getContainerId = getContext<(() => string) | undefined>('dnd-container-id')
+	const getContainerId = getContext<(() => string)>('dnd-container-id')
 
 	let element = $state<HTMLElement | undefined>(undefined)
 
@@ -66,6 +66,7 @@
 
 <div style="position: relative">
 	<DndPreview containerId={getContainerId()} {position} />
+
 	<div
 		bind:this={element}
 		class="dnd-draggable {className ?? ''}"
