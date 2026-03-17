@@ -1,5 +1,5 @@
-import type { DragState } from './drag-state.svelte.js'
-import { DOMHelper } from './dom-helper.js'
+import type { DragState } from '../controller/drag-state.svelte.js'
+import { DOMHelper } from '../dom/dom-helper.js'
 
 export class TranslationCalculator {
 	constructor(private state: DragState) {}

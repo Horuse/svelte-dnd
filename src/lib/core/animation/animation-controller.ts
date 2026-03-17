@@ -1,7 +1,7 @@
-import type { DragState } from './drag-state.svelte.js'
-import type { DropZone } from '../types.js'
-import { ReturnAnimationStrategy } from './animation/strategies/return-animation.js'
-import { DropAnimationStrategy } from './animation/strategies/drop-animation.js'
+import type { DragState } from '../controller/drag-state.svelte.js'
+import type { DropZone } from '../../types.js'
+import { ReturnAnimationStrategy } from './strategies/return-animation.js'
+import { DropAnimationStrategy } from './strategies/drop-animation.js'
 
 export class AnimationController {
 	constructor(private state: DragState) {}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { getContext, onDestroy, setContext } from 'svelte'
 	import type { DndDirection } from '../types.js'
-	import type { DragController } from '../core/drag-controller.svelte.js'
+	import type { DragController } from '../core/controller/drag-controller.svelte.js'
 	import type { Snippet } from 'svelte'
 
 	interface Props {

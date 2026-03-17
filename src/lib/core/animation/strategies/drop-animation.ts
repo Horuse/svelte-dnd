@@ -1,7 +1,7 @@
 import type { AnimationStrategy } from './animation-strategy.js'
-import type { DragState } from '../../drag-state.svelte.js'
+import type { DragState } from '../../controller/drag-state.svelte.js'
 import type { DropZone } from '../../../types.js'
-import { DOMHelper } from '../../dom-helper.js'
+import { DOMHelper } from '../../dom/dom-helper.js'
 
 const ANIMATION_DURATION = 250
 const easing = {

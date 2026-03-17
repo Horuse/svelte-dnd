@@ -1,5 +1,5 @@
 import { slide, scale } from 'svelte/transition'
-import type { DragController } from '../core/drag-controller.svelte.js'
+import type { DragController } from '../core/controller/drag-controller.svelte.js'
 
 export function createConditionalSlide(dndManager: DragController) {
 	return function conditionalSlide(node: HTMLElement, options: any) {

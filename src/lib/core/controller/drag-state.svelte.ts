@@ -1,4 +1,4 @@
-import type { DropZone, DropPreview } from '../types.js'
+import type { DropZone, DropPreview } from '../../types.js'
 
 export class DragState {
 	isDragging = $state(false)

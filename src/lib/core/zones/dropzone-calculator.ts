@@ -1,6 +1,6 @@
-import type { DropZone, DropPreview, DndDirection } from '../types.js'
-import type { DragState } from './drag-state.svelte.js'
-import { DOMHelper } from './dom-helper.js'
+import type { DropZone, DropPreview, DndDirection } from '../../types.js'
+import type { DragState } from '../controller/drag-state.svelte.js'
+import { DOMHelper } from '../dom/dom-helper.js'
 
 export class DropZoneCalculator {
 

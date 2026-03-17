@@ -1,13 +1,13 @@
 import { DragState } from './drag-state.svelte.js'
-import { AnimationController } from './animation-controller.js'
-import { ScrollController } from './scroll-controller.js'
-import { DropZoneCalculator } from './dropzone-calculator.js'
-import { DOMHelper } from './dom-helper.js'
+import { AnimationController } from '../animation/animation-controller.js'
+import { ScrollController } from '../scroll/scroll-controller.js'
+import { DropZoneCalculator } from '../zones/dropzone-calculator.js'
+import { DOMHelper } from '../dom/dom-helper.js'
 import { DragEventEmitter } from './drag-event-emitter.js'
-import { TranslationCalculator } from './translation-calculator.svelte.js'
-import type { DndDragEvent, DndDropEvent, DropZone, DndDirection, DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback } from '../types.js'
+import { TranslationCalculator } from '../zones/translation-calculator.svelte.js'
+import type { DndDragEvent, DndDropEvent, DropZone, DndDirection, DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback } from '../../types.js'
 
-export type { DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback } from '../types.js'
+export type { DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback } from '../../types.js'
 
 export class DragController {
 	private state = new DragState()

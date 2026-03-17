@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { getContext } from 'svelte'
 	import type { DndDragEvent } from '../types.js'
-	import type { DragController } from '../core/drag-controller.svelte.js'
+	import type { DragController } from '../core/controller/drag-controller.svelte.js'
 	import type { Snippet } from 'svelte'
 	import DndPreview from './DndPreview.svelte'
 

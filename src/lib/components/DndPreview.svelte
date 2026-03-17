@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getContext } from 'svelte'
-	import type { DragController } from '../core/drag-controller.svelte'
+	import type { DragController } from '../core/controller/drag-controller.svelte'
 
 	interface Props {
 		containerId: string

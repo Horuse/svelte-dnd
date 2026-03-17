@@ -1,4 +1,4 @@
-import type { DragState } from './drag-state.svelte.js'
+import type { DragState } from '../controller/drag-state.svelte.js'
 
 export interface ScrollOptions {
 	onZoneRefresh?: () => void

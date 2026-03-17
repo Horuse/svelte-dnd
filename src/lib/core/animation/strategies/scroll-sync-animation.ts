@@ -1,6 +1,6 @@
 import type { AnimationStrategy } from './animation-strategy.js'
-import type { DragState } from '../../drag-state.svelte.js'
-import { DOMHelper } from '../../dom-helper.js'
+import type { DragState } from '../../controller/drag-state.svelte.js'
+import { DOMHelper } from '../../dom/dom-helper.js'
 import { ScrollSyncCalculator } from '../scroll-sync-calculator.js'
 import { getDirectionAdapter } from '../direction-adapter.js'
 

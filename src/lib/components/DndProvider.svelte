@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { setContext, onDestroy, untrack } from 'svelte'
-	import { DragController } from '../core/drag-controller.svelte.js'
+	import { DragController } from '../core/controller/drag-controller.svelte.js'
 	import type { GhostSnippet } from '../types.js'
 	import type { Snippet } from 'svelte'
 
