@@ -43,10 +43,7 @@ export class DropHandler {
 		if (!element || disabled || !dndController) return
 		if (dndController.element?.contains(element)) return
 
-		const zones = dndController.calculateDropZones(id, element, direction, mode)
-		const existingZones = dndController.dropZones || []
-		const mergedZones = dndController.mergeDropZones(existingZones, zones, id)
-		dndController.registerDropZones(mergedZones)
+		dndController.refreshContainerZones(id, element, direction, mode)
 	}
 
 	private handleScroll = () => {

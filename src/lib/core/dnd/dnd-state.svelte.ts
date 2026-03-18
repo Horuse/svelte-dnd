@@ -1,159 +1,67 @@
 import type { DropZone, DropPreview } from '../../types.js'
+import type { DragSession } from './drag-session.js'
 
 export class DndState {
-	isDragging = $state(false)
-	dragElement = $state<HTMLElement | null>(null)
-	draggedItemId = $state<string | null>(null)
-	draggedItemType = $state<string | null>(null)
-	draggedItemData = $state<Record<string, any> | undefined>(undefined)
-	currentTransform = $state<{ x: number; y: number } | null>(null)
-	elementSize = $state<{ width: number; height: number } | null>(null)
-	dragSlotSize = $state<{ width: number; height: number } | null>(null)
-	originalPosition = $state<{ x: number; y: number } | null>(null)
-	isAnimating = $state(false)
+	session = $state<DragSession | null>(null)
 	dropZones = $state<DropZone[]>([])
-	currentDropPreview = $state<DropPreview | null>(null)
 	showDebugZones = $state(false)
 	isPerformingDrop = $state(false)
 	shouldSkipDropPreviewAnimation = $state(false)
-	originContainerId = $state<string | null>(null)
-	originPosition = $state(0)
+	isAnimating = $state(false)
 
-	get dragging() {
-		return this.isDragging
+	// --- Getters (same public API as before) ---
+
+	get dragging() { return this.session !== null }
+	get element() { return this.session?.element ?? null }
+	get transform() { return this.session?.ghostTransform ?? null }
+	get draggedItem() { return this.session?.itemId ?? null }
+	get draggedType() { return this.session?.draggedItemType ?? null }
+	get draggedItemData() { return this.session?.itemData }
+	get size() { return this.session?.ghostSize ?? null }
+	get elementSize() { return this.session?.ghostSize ?? null }
+	get animating() { return this.isAnimating }
+	get dropPreview() { return this.session?.dropPreview ?? null }
+	get zones() { return this.dropZones }
+	get debugZones() { return this.showDebugZones }
+	get performingDrop() { return this.isPerformingDrop }
+	get skipDropPreviewAnimation() { return this.shouldSkipDropPreviewAnimation }
+	get originContainerId() { return this.session?.originContainerId ?? null }
+	get originPosition() { return this.session?.originPosition ?? 0 }
+	get dragSlotSize() { return this.session?.slotSize ?? null }
+	get originalPosition() {
+		const r = this.session?.startRect
+		return r ? { x: r.left, y: r.top } : null
 	}
 
-	get element() {
-		return this.dragElement
+	// --- Session management ---
+
+	startSession(session: DragSession): void {
+		this.session = session
 	}
 
-	get transform() {
-		return this.currentTransform
+	endSession(): void {
+		this.session = null
 	}
 
-	get draggedItem() {
-		return this.draggedItemId
+	// --- Setters that mutate current session or direct fields ---
+
+	setTransform(transform: { x: number; y: number } | null): void {
+		if (this.session && transform) this.session.ghostTransform = transform
 	}
 
-	get draggedType() {
-		return this.draggedItemType
+	setDropPreview(preview: DropPreview | null): void {
+		if (this.session) this.session.dropPreview = preview
 	}
 
-	get size() {
-		return this.elementSize
-	}
+	setAnimating(value: boolean): void { this.isAnimating = value }
+	setDropZones(zones: DropZone[]): void { this.dropZones = zones }
+	setPerformingDrop(value: boolean): void { this.isPerformingDrop = value }
+	setSkipDropPreviewAnimation(value: boolean): void { this.shouldSkipDropPreviewAnimation = value }
+	toggleDebugZones(): void { this.showDebugZones = !this.showDebugZones }
 
-	get animating() {
-		return this.isAnimating
-	}
-
-	get dropPreview() {
-		return this.currentDropPreview
-	}
-
-	get zones() {
-		return this.dropZones
-	}
-
-	get debugZones() {
-		return this.showDebugZones
-	}
-
-	get performingDrop() {
-		return this.isPerformingDrop
-	}
-
-	get skipDropPreviewAnimation() {
-		return this.shouldSkipDropPreviewAnimation
-	}
-
-	setDragging(value: boolean) {
-		this.isDragging = value
-	}
-
-	setElement(element: HTMLElement | null) {
-		this.dragElement = element
-	}
-
-	setDraggedItemId(id: string | null) {
-		this.draggedItemId = id
-	}
-
-	setDraggedItemType(type: string | null) {
-		this.draggedItemType = type
-	}
-
-	setDraggedItemData(data: Record<string, any> | undefined) {
-		this.draggedItemData = data
-	}
-
-	setTransform(transform: { x: number; y: number } | null) {
-		this.currentTransform = transform
-	}
-
-	setElementSize(size: { width: number; height: number } | null) {
-		this.elementSize = size
-	}
-
-	setDragSlotSize(size: { width: number; height: number } | null) {
-		this.dragSlotSize = size
-		console.log(size)
-	}
-
-	setOriginalPosition(position: { x: number; y: number } | null) {
-		this.originalPosition = position
-	}
-
-	setAnimating(value: boolean) {
-		this.isAnimating = value
-	}
-
-	setDropZones(zones: DropZone[]) {
-		this.dropZones = zones
-	}
-
-	setDropPreview(preview: DropPreview | null) {
-		this.currentDropPreview = preview
-	}
-
-	setDebugZones(value: boolean) {
-		this.showDebugZones = value
-	}
-
-	setPerformingDrop(value: boolean) {
-		this.isPerformingDrop = value
-	}
-
-	setSkipDropPreviewAnimation(value: boolean) {
-		this.shouldSkipDropPreviewAnimation = value
-	}
-
-	setOriginContainerId(id: string | null) {
-		this.originContainerId = id
-	}
-
-	setOriginPosition(position: number) {
-		this.originPosition = position
-	}
-
-	toggleDebugZones() {
-		this.showDebugZones = !this.showDebugZones
-	}
-
-	reset() {
-		this.isDragging = false
-		this.dragElement = null
-		this.currentTransform = null
-		this.draggedItemId = null
-		this.draggedItemType = null
-		this.draggedItemData = undefined
-		this.elementSize = null
-		this.dragSlotSize = null
-		this.originalPosition = null
+	reset(): void {
+		this.session = null
 		this.isAnimating = false
-		this.originContainerId = null
-		this.originPosition = 0
 		this.dropZones = []
-		this.currentDropPreview = null
 	}
 }

@@ -1,11 +1,17 @@
 import { DndState } from './dnd-state.svelte.js'
-import { AnimationController } from '../animation/animation-controller.js'
 import { ScrollController } from '../scroll/scroll-controller.js'
-import { DropZoneCalculator } from '../zones/dropzone-calculator.js'
 import { DOMHelper } from '../utils/dom-helper.js'
 import { DndEventEmitter } from './dnd-event-emitter.js'
-import { TranslationCalculator } from '../zones/translation-calculator.svelte.js'
-import type { DndDragEvent, DndDropEvent, DropZone, DndDirection, DndMode, DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback } from '../../types.js'
+import { TranslationEngine } from '../zones/translation-engine.svelte.js'
+import { ContainerRegistry } from '../containers/container-registry.js'
+import { SortableContainerStrategy } from '../containers/strategies/sortable-container-strategy.js'
+import { TargetContainerStrategy } from '../containers/strategies/target-container-strategy.js'
+import { DropResolver } from '../zones/drop-resolver.js'
+import { AnimationPipeline } from '../animation/steps/animation-pipeline.js'
+import { GhostToTargetStep } from '../animation/steps/ghost-to-target-step.js'
+import { GhostReturnStep } from '../animation/steps/ghost-return-step.js'
+import type { DragSession } from './drag-session.js'
+import type { DropZone, DndDirection, DndMode, DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback, DropPreview } from '../../types.js'
 
 export type { DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback } from '../../types.js'
 
@@ -16,7 +22,7 @@ export type { DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidated
  *
  * @example
  * ```ts
- * const controller = new DragController()
+ * const controller = new DndController()
  *
  * controller.onDrop((sourceId, sourceData, targetContainerId, position) => {
  *   // reorder / move items in your data model
@@ -25,20 +31,20 @@ export type { DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidated
  */
 export class DndController {
 	private state = new DndState()
-	private animationController = new AnimationController(this.state)
+	private registry = new ContainerRegistry()
 	private scrollController = new ScrollController(this.state, {
 		onZoneRefresh: () => this.eventEmitter.notifyZonesInvalidated(),
 		onMouseUpdate: (x, y) => this.updateMousePosition(x, y)
 	})
-	private droppableDataRegistry = new Map<string, Record<string, any>>()
-	private dropZoneCalculator = new DropZoneCalculator(this.state, this.droppableDataRegistry)
 	private eventEmitter = new DndEventEmitter()
-	private translationCalc = new TranslationCalculator(this.state)
+	private translationEngine = new TranslationEngine(this.state, this.registry)
+	private dropResolver = new DropResolver(this.state, this.registry)
+	private currentAnimation: AnimationPipeline | null = null
 
 	// --- Reactive state (read-only) ---
 
 	/** CSS translate offsets for each draggable item during an active drag. Keyed by item id. */
-	get translations() { return this.translationCalc.translations }
+	get translations() { return this.translationEngine.translations }
 
 	/** `true` while the user is dragging an item. */
 	get dragging() { return this.state.dragging }
@@ -73,7 +79,7 @@ export class DndController {
 	get debugZones() { return this.state.debugZones }
 
 	/** Drop zones filtered to only those that accept the currently dragged item type. */
-	get filteredDropZones() { return this.dropZoneCalculator.filteredZones }
+	get filteredDropZones() { return this.dropResolver.filteredZones }
 
 	/** `true` while the drop animation is in progress. */
 	get performingDrop() { return this.state.performingDrop }
@@ -81,7 +87,6 @@ export class DndController {
 	get skipDropPreviewAnimation() { return this.state.skipDropPreviewAnimation }
 
 	// --- Event subscriptions ---
-	// Each method returns an unsubscribe function: `const off = controller.onDrop(...); off()`
 
 	/** Fired when a drag begins. */
 	onDragStart(cb: DragStartCallback)               { return this.eventEmitter.onDragStart(cb) }
@@ -109,11 +114,11 @@ export class DndController {
 	}
 
 	registerDroppableData(id: string, data: Record<string, any>) {
-		this.droppableDataRegistry.set(id, data)
+		this.registry.registerData(id, data)
 	}
 
 	unregisterDroppableData(id: string) {
-		this.droppableDataRegistry.delete(id)
+		this.registry.unregisterContainer(id)
 	}
 
 	startDrag(
@@ -124,31 +129,35 @@ export class DndController {
 	) {
 		const rect = element.getBoundingClientRect()
 
+		let originContainerId = ''
+		let originPosition = 0
+		let slotSize: { width: number; height: number } | null = null
+
 		const containerEl = element.closest<HTMLElement>('[data-dnd-drop-id]')
 		if (containerEl) {
 			const containerId = containerEl.getAttribute('data-dnd-drop-id')!
 			const items = DOMHelper.findDraggableItemsInContainer(containerEl)
 			const position = items.indexOf(element)
-			this.state.setOriginContainerId(containerId)
-			this.state.setOriginPosition(position >= 0 ? position : 0)
-			this.state.setDragSlotSize(DOMHelper.calculateSlotSize(element, items))
+			originContainerId = containerId
+			originPosition = position >= 0 ? position : 0
+			slotSize = DOMHelper.calculateSlotSize(element, items)
 		}
 
-		this.state.setDragging(true)
-		this.state.setElement(element)
-		this.state.setDraggedItemId(itemId)
-		this.state.setDraggedItemType(data?.type || null)
-		this.state.setDraggedItemData(data)
-		this.state.setTransform(initialPosition)
-		this.state.setElementSize({
-			width: element.offsetWidth,
-			height: element.offsetHeight
-		})
-		this.state.setOriginalPosition({
-			x: rect.left,
-			y: rect.top
-		})
+		const session: DragSession = {
+			itemId,
+			itemData: data,
+			element,
+			originContainerId,
+			originPosition,
+			startRect: rect,
+			ghostTransform: initialPosition,
+			dropPreview: null,
+			ghostSize: { width: element.offsetWidth, height: element.offsetHeight },
+			slotSize,
+			draggedItemType: data?.type ?? null
+		}
 
+		this.state.startSession(session)
 		this.state.setSkipDropPreviewAnimation(true)
 		this.eventEmitter.notifyDragStart(itemId)
 	}
@@ -160,21 +169,9 @@ export class DndController {
 	updateMousePosition(mouseX: number, mouseY: number) {
 		if (this.state.dragging) {
 			const ghostCenter = this.getGhostCenter()
-			this.dropZoneCalculator.updateDropPreview(ghostCenter)
+			this.updateDropPreview(ghostCenter)
 			this.scrollController.handleAutoScroll(mouseX, mouseY)
 		}
-	}
-
-	private getGhostCenter(): { x: number; y: number } {
-		const transform = this.state.transform
-		const size = this.state.elementSize
-		if (transform && size) {
-			return {
-				x: transform.x + size.width / 2,
-				y: transform.y + size.height / 2
-			}
-		}
-		return this.state.transform ?? { x: 0, y: 0 }
 	}
 
 	performDrop(
@@ -190,7 +187,7 @@ export class DndController {
 		this.state.setPerformingDrop(true)
 
 		if (targetZone && this.state.element && this.state.transform) {
-			this.animationController.animateToTarget(targetZone, () => {
+			this.animate(new GhostToTargetStep(this.state, targetZone), () => {
 				this.eventEmitter.notifyDrop(sourceId, sourceData, targetContainerId, position)
 				this.finalizeDragEnd(sourceId)
 			})
@@ -203,22 +200,24 @@ export class DndController {
 	/** Cancel the current drag and animate the ghost back to its origin. */
 	endDrag(shouldAnimate = true) {
 		const itemId = this.state.draggedItem
+		const session = this.state.session
 
-		if (shouldAnimate && this.state.originContainerId !== null) {
+		if (shouldAnimate && session?.originContainerId) {
 			this.state.setDropPreview({
-				containerId: this.state.originContainerId,
-				position: this.state.originPosition,
+				containerId: session.originContainerId,
+				position: session.originPosition,
 				visible: true,
-				draggedElementHeight: this.state.elementSize?.height,
-				draggedElementWidth: this.state.elementSize?.width
+				draggedElementHeight: session.ghostSize.height,
+				draggedElementWidth: session.ghostSize.width
 			})
 		}
 
-		if (shouldAnimate && this.state.element && this.state.transform) {
+		if (shouldAnimate && session) {
 			requestAnimationFrame(() => {
-				this.animationController.animateReturn(() => {
-					this.finalizeDragEnd(itemId)
-				})
+				this.animate(
+					new GhostReturnStep(this.state, this.state.originContainerId, this.state.originPosition),
+					() => this.finalizeDragEnd(itemId)
+				)
 			})
 		} else {
 			this.finalizeDragEnd(itemId)
@@ -229,30 +228,155 @@ export class DndController {
 		}, 100)
 	}
 
-	registerDropZones(zones: DropZone[]) {
-		this.state.setDropZones(zones)
-	}
-
-	calculateDropZones(
+	/**
+	 * Register a container's drop zones and strategy.
+	 * Called by DropHandler on drag start and scroll.
+	 */
+	refreshContainerZones(
 		containerId: string,
 		containerElement: HTMLElement,
 		direction: DndDirection = 'vertical',
 		mode: DndMode = 'sortable'
-	): DropZone[] {
-		return this.dropZoneCalculator.calculateDropZones(containerId, containerElement, direction, mode)
-	}
+	) {
+		const strategy = mode === 'target'
+			? new TargetContainerStrategy(this.state)
+			: new SortableContainerStrategy(this.state)
 
-	mergeDropZones(
-		existingZones: DropZone[],
-		newZones: DropZone[],
-		containerId: string
-	): DropZone[] {
-		return this.dropZoneCalculator.mergeZones(existingZones, newZones, containerId)
+		this.registry.registerContainer(containerId, containerElement, strategy)
+
+		const newZones = strategy.calculateDropZones(containerId, containerElement, this.state.session)
+		const otherZones = this.state.zones.filter((z) => z.containerId !== containerId)
+		this.state.setDropZones([...otherZones, ...newZones])
 	}
 
 	/** Toggle visual overlay of drop zones — useful for debugging layout. */
 	toggleDebugZones() {
 		this.state.toggleDebugZones()
+	}
+
+	/**
+	 * Animate an item's ghost from its current DOM position (in `fromContainerId`) to
+	 * `toPosition` inside `toContainerId`, without firing any events or mutating data.
+	 *
+	 * Use this to show a visual "return" effect after programmatically rejecting a drop.
+	 */
+	simulateReturn(
+		itemId: string,
+		fromContainerId: string,
+		toContainerId: string,
+		toPosition: number
+	): Promise<void> {
+		return new Promise<void>((resolve) => {
+			const fromContainer = DOMHelper.findContainer(fromContainerId)
+			if (!fromContainer) { resolve(); return }
+
+			const items = DOMHelper.findDraggableItemsInContainer(fromContainer)
+			const element = items.find((el) => el.getAttribute('data-dnd-drag-id') === itemId) ?? null
+			if (!element) { resolve(); return }
+
+			const rect = element.getBoundingClientRect()
+			const positionInFrom = items.indexOf(element)
+
+			const session: DragSession = {
+				itemId,
+				itemData: undefined,
+				element,
+				originContainerId: fromContainerId,
+				originPosition: positionInFrom >= 0 ? positionInFrom : 0,
+				startRect: rect,
+				ghostTransform: { x: rect.left, y: rect.top },
+				dropPreview: {
+					containerId: toContainerId,
+					position: toPosition,
+					visible: true,
+					draggedElementHeight: element.offsetHeight,
+					draggedElementWidth: element.offsetWidth
+				},
+				ghostSize: { width: element.offsetWidth, height: element.offsetHeight },
+				slotSize: DOMHelper.calculateSlotSize(element, items),
+				draggedItemType: null
+			}
+
+			this.state.startSession(session)
+			this.state.setSkipDropPreviewAnimation(true)
+			this.state.setPerformingDrop(true)
+
+			// Synthetic zone — GhostToTargetStep finds the actual placeholder slot via DOM
+			const targetZone: DropZone = {
+				containerId: toContainerId,
+				position: toPosition,
+				direction: 'vertical',
+				rect: { x: 0, y: 0, width: 0, height: 0 }
+			}
+
+			// Wait one frame for DndPreview to render the placeholder at toContainerId/toPosition
+			requestAnimationFrame(() => {
+				this.animate(new GhostToTargetStep(this.state, targetZone), () => {
+					this.finalizeDragEnd(null)
+					resolve()
+				})
+			})
+		})
+	}
+
+	// --- Private ---
+
+	private animate(step: GhostToTargetStep | GhostReturnStep, onComplete: () => void): void {
+		this.currentAnimation?.cancel()
+		const pipeline = AnimationPipeline.chain(step)
+		this.currentAnimation = pipeline
+		pipeline.execute().then(() => {
+			this.currentAnimation = null
+			onComplete()
+		})
+	}
+
+	private getGhostCenter(): { x: number; y: number } {
+		const transform = this.state.transform
+		const size = this.state.elementSize
+		if (transform && size) {
+			return {
+				x: transform.x + size.width / 2,
+				y: transform.y + size.height / 2
+			}
+		}
+		return this.state.transform ?? { x: 0, y: 0 }
+	}
+
+	private updateDropPreview(mousePos: { x: number; y: number }) {
+		if (!this.state.dragging) {
+			this.state.setDropPreview(null)
+			return
+		}
+
+		const targetZone = this.dropResolver.findZoneAt(mousePos)
+
+		if (targetZone) {
+			const preview: DropPreview = {
+				containerId: targetZone.containerId,
+				position: targetZone.position,
+				visible: true,
+				draggedElementHeight: this.state.size?.height,
+				draggedElementWidth: this.state.size?.width
+			}
+			this.state.setDropPreview(preview)
+
+			if (this.state.skipDropPreviewAnimation) {
+				requestAnimationFrame(() => {
+					this.state.setSkipDropPreviewAnimation(false)
+				})
+			}
+		} else {
+			const current = this.state.dropPreview
+			if (current?.visible) {
+				this.state.setDropPreview({ ...current, visible: false })
+				setTimeout(() => {
+					if (this.state.dropPreview && !this.state.dropPreview.visible) {
+						this.state.setDropPreview(null)
+					}
+				}, 300)
+			}
+		}
 	}
 
 	private finalizeDragEnd(itemId: string | null) {
@@ -274,8 +398,9 @@ export class DndController {
 
 	/** Release all resources. Call when the `DndProvider` is destroyed. */
 	destroy() {
+		this.currentAnimation?.cancel()
 		this.scrollController.destroy()
-		this.droppableDataRegistry.clear()
+		this.registry.dataMap.clear()
 		this.eventEmitter.destroy()
 	}
 }
