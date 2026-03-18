@@ -83,6 +83,19 @@ export class DndSimulator {
 			const rect = element.getBoundingClientRect()
 			const positionInFrom = items.indexOf(element)
 
+			// For cross-container moves prefer slot size from the target container so the
+			// gap (e.g. space-y-2) is included. Fall back to the source element's own size.
+			let slotSize = DOMHelper.calculateSlotSize(element, items)
+			if (toContainerId !== fromContainerId) {
+				const toContainer = DOMHelper.findContainer(toContainerId)
+				if (toContainer) {
+					const toItems = DOMHelper.findDraggableItemsInContainer(toContainer)
+					if (toItems.length > 0) {
+						slotSize = DOMHelper.calculateSlotSize(toItems[0], toItems)
+					}
+				}
+			}
+
 			const session: DragSession = {
 				itemId,
 				itemData: undefined,
@@ -99,7 +112,7 @@ export class DndSimulator {
 					draggedElementWidth: element.offsetWidth
 				},
 				ghostSize: { width: element.offsetWidth, height: element.offsetHeight },
-				slotSize: DOMHelper.calculateSlotSize(element, items),
+				slotSize,
 				draggedItemType: null,
 				source: 'programmatic'
 			}
