@@ -58,7 +58,8 @@
 	const performingDrop = $derived(dndController?.performingDrop ?? false)
 	const isGhostActive = $derived(
 		handler.isDragging ||
-		(dndController?.animatingReturn === true && dndController?.draggedItem === id)
+		(dndController?.animatingReturn === true && dndController?.draggedItem === id) ||
+		(dndController?.performingDrop === true && dndController?.draggedItem === id)
 	)
 
 	onDestroy(() => handler.destroy())

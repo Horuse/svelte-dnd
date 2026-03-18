@@ -10,6 +10,7 @@ import { DropResolver } from '../zones/drop-resolver.js'
 import { AnimationPipeline } from '../animation/steps/animation-pipeline.js'
 import { GhostToTargetStep } from '../animation/steps/ghost-to-target-step.js'
 import { GhostReturnStep } from '../animation/steps/ghost-return-step.js'
+import { DndSimulator } from './dnd-simulator.js'
 import type { DragSession } from './drag-session.js'
 import type { DropZone, DndDirection, DndMode, DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback, DropPreview } from '../../types.js'
 
@@ -40,6 +41,7 @@ export class DndController {
 	private translationEngine = new TranslationEngine(this.state, this.registry)
 	private dropResolver = new DropResolver(this.state, this.registry)
 	private currentAnimation: AnimationPipeline | null = null
+	private simulator = new DndSimulator(this.state, this.registry)
 
 	// --- Reactive state (read-only) ---
 
@@ -254,69 +256,14 @@ export class DndController {
 		this.state.toggleDebugZones()
 	}
 
-	/**
-	 * Animate an item's ghost from its current DOM position (in `fromContainerId`) to
-	 * `toPosition` inside `toContainerId`, without firing any events or mutating data.
-	 *
-	 * Use this to show a visual "return" effect after programmatically rejecting a drop.
-	 */
-	simulateReturn(
-		itemId: string,
-		fromContainerId: string,
-		toContainerId: string,
-		toPosition: number
-	): Promise<void> {
-		return new Promise<void>((resolve) => {
-			const fromContainer = DOMHelper.findContainer(fromContainerId)
-			if (!fromContainer) { resolve(); return }
+	/** Delegates to {@link DndSimulator.simulateReturn}. */
+	simulateReturn(itemId: string, fromContainerId: string, toContainerId: string, toPosition: number): Promise<void> {
+		return this.simulator.simulateReturn(itemId, fromContainerId, toContainerId, toPosition)
+	}
 
-			const items = DOMHelper.findDraggableItemsInContainer(fromContainer)
-			const element = items.find((el) => el.getAttribute('data-dnd-drag-id') === itemId) ?? null
-			if (!element) { resolve(); return }
-
-			const rect = element.getBoundingClientRect()
-			const positionInFrom = items.indexOf(element)
-
-			const session: DragSession = {
-				itemId,
-				itemData: undefined,
-				element,
-				originContainerId: fromContainerId,
-				originPosition: positionInFrom >= 0 ? positionInFrom : 0,
-				startRect: rect,
-				ghostTransform: { x: rect.left, y: rect.top },
-				dropPreview: {
-					containerId: toContainerId,
-					position: toPosition,
-					visible: true,
-					draggedElementHeight: element.offsetHeight,
-					draggedElementWidth: element.offsetWidth
-				},
-				ghostSize: { width: element.offsetWidth, height: element.offsetHeight },
-				slotSize: DOMHelper.calculateSlotSize(element, items),
-				draggedItemType: null
-			}
-
-			this.state.startSession(session)
-			this.state.setSkipDropPreviewAnimation(true)
-			this.state.setPerformingDrop(true)
-
-			// Synthetic zone — GhostToTargetStep finds the actual placeholder slot via DOM
-			const targetZone: DropZone = {
-				containerId: toContainerId,
-				position: toPosition,
-				direction: 'vertical',
-				rect: { x: 0, y: 0, width: 0, height: 0 }
-			}
-
-			// Wait one frame for DndPreview to render the placeholder at toContainerId/toPosition
-			requestAnimationFrame(() => {
-				this.animate(new GhostToTargetStep(this.state, targetZone), () => {
-					this.finalizeDragEnd(null)
-					resolve()
-				})
-			})
-		})
+	/** Delegates to {@link DndSimulator.simulateDrop}. */
+	simulateDrop(itemId: string, fromContainerId: string, toContainerId: string, toPosition: number): Promise<void> {
+		return this.simulator.simulateDrop(itemId, fromContainerId, toContainerId, toPosition)
 	}
 
 	// --- Private ---

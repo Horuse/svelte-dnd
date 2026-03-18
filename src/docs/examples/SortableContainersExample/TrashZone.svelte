@@ -9,6 +9,7 @@
 		id: string
 		label: string
 		columnId: string
+		position: number
 	}
 
 	interface TrashItem {
@@ -62,13 +63,20 @@
 		item.rafId = requestAnimationFrame(tick)
 	})
 
-	function cancelDelete(item: TrashItem) {
+	async function cancelDelete(item: TrashItem) {
 		if (item.rafId !== null) cancelAnimationFrame(item.rafId)
 		const idx = items.findIndex(i => i.task.id === item.task.id)
-		if (idx !== -1) {
-			onRestore(item.task)
-			items.splice(idx, 1)
+		if (idx === -1) return
+
+		try {
+			await controller.simulateReturn(item.task.id, 'trash-zone', item.task.columnId, item.task.position)
+		} catch {
+			// element not found or drag in progress — restore without animation
 		}
+
+		onRestore(item.task)
+		const currentIdx = items.findIndex(i => i.task.id === item.task.id)
+		if (currentIdx !== -1) items.splice(currentIdx, 1)
 	}
 
 	onDestroy(() => {
@@ -138,6 +146,18 @@
 	data={{ accepts: 'task' }}
 	class="fixed bottom-5 w-20 h-20 rounded-full backdrop-blur-sm flex items-center justify-center z-[1000] transition-all duration-300 ease-out right-5 {!isDragging ? 'opacity-0 scale-75 pointer-events-none' : 'opacity-100 scale-100'} {isHovering ? 'bg-red-500/90 scale-110 shadow-[0_0_20px_rgba(239,68,68,0.5)]' : 'bg-neutral-400/70'}"
 >
+	<!-- Hidden ghost anchors for simulateReturn -->
+	{#each items as item (item.task.id)}
+		<div
+			data-dnd-draggable-item
+			data-dnd-drag-id={item.task.id}
+			class="drag-item px-4 gap-3"
+			style="position:absolute;opacity:0;pointer-events:none;width:var(--ghost-width,288px)"
+		>
+			<span class="truncate">{item.task.label}</span>
+		</div>
+	{/each}
+
 	<div class="text-white transition-transform duration-200 {isHovering ? 'scale-110' : ''}">
 		<svg class="size-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 			<path

@@ -86,13 +86,28 @@
 
 		const [task] = col.tasks.splice(taskIndex, 1);
 		columns = columns.map(c => c.id === columnId ? { ...c, tasks: [...c.tasks] } : c);
-		return { id: task.id, label: task.label, columnId };
+		return { id: task.id, label: task.label, columnId, position: taskIndex };
 	}
 
-	function handleRestore(task: { id: string; label: string; columnId: string }) {
+	function handleRestore(task: { id: string; label: string; columnId: string; position: number }) {
 		const col = columns.find(c => c.id === task.columnId);
 		if (!col) return;
-		col.tasks.push({ id: task.id, label: task.label });
+		col.tasks.splice(task.position, 0, { id: task.id, label: task.label });
+		columns = [...columns];
+	}
+
+	async function moveBacklogToInProgress() {
+		const backlog = columns.find(c => c.id === 'backlog');
+		const inProgress = columns.find(c => c.id === 'in-progress');
+		if (!backlog || backlog.tasks.length === 0 || !inProgress) return;
+
+		const task = backlog.tasks[0];
+		const toPosition = inProgress.tasks.length;
+
+		await controller.simulateDrop(task.id, 'backlog', 'in-progress', toPosition);
+
+		backlog.tasks.splice(0, 1);
+		inProgress.tasks.splice(toPosition, 0, task);
 		columns = [...columns];
 	}
 </script>
@@ -102,6 +117,9 @@
 	<button class="black-button p-2 px-6" onclick={() => controller.toggleDebugZones()}>Show debug zones</button>
 	<p>- To see, start dragging</p>
 </div>
+
+<button class="black-button p-2 px-6" onclick={moveBacklogToInProgress}>Move backlog[0] → In Progress</button>
+
 
 <DndProvider {controller}>
 	<DndDroppable id="board" direction="horizontal" data={{ accepts: 'column' }} class="flex flex-row h-125 overflow-x-auto space-x-4 w-full">
