@@ -97,6 +97,7 @@ export class DndState {
 
 	setDragSlotSize(size: { width: number; height: number } | null) {
 		this.dragSlotSize = size
+		console.log(size)
 	}
 
 	setOriginalPosition(position: { x: number; y: number } | null) {

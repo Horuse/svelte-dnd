@@ -30,16 +30,24 @@ export class PreviewHandler {
 		}
 	}
 
-	hide() {
+	hide(instant = false) {
 		if (this.showTimer) { clearTimeout(this.showTimer); this.showTimer = null }
 		this.revealed = false
-		this.instant = false
 
-		this.collapseTimer = setTimeout(() => {
+		if (instant) {
+			if (this.collapseTimer) { clearTimeout(this.collapseTimer); this.collapseTimer = null }
+			this.instant = true
 			this.height = 0
 			this.width = 0
-			this.collapseTimer = null
-		}, 200)
+			requestAnimationFrame(() => { this.instant = false })
+		} else {
+			this.instant = false
+			this.collapseTimer = setTimeout(() => {
+				this.height = 0
+				this.width = 0
+				this.collapseTimer = null
+			}, 200)
+		}
 	}
 
 	destroy() {

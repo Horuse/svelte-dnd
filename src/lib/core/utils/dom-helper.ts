@@ -99,7 +99,11 @@ export class DOMHelper {
 				height: elementRect.top - prevRect.top
 			}
 		} else {
-			return { width: element.offsetWidth, height: element.offsetHeight }
+			const styles = getComputedStyle(element)
+			return {
+				width: element.offsetWidth + parseFloat(styles.marginLeft) + parseFloat(styles.marginRight),
+				height: element.offsetHeight + parseFloat(styles.marginTop) + parseFloat(styles.marginBottom)
+			}
 		}
 	}
 }

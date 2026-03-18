@@ -88,29 +88,13 @@
 		borderRafId = requestAnimationFrame(animate)
 		return () => cancelAnimationFrame(borderRafId)
 	})
-
-	// Position toggle
-	type Side = 'left' | 'right'
-	let side = $state<Side>('left')
-
-	onMount(() => {
-		const saved = localStorage.getItem('trash-zone-side') as Side | null
-		if (saved === 'left' || saved === 'right') side = saved
-	})
-
-	function toggleSide() {
-		side = side === 'left' ? 'right' : 'left'
-		localStorage.setItem('trash-zone-side', side)
-	}
 </script>
 
 <!-- Undo panel -->
 {#if items.length > 0}
 	<div
 		transition:fly={{ y: 20, duration: 300, easing: backOut }}
-		class="absolute p-3 shadow-2xl bg-foreground border-2 border-primary rounded-2xl overflow-hidden bottom-28 z-[60] flex flex-col gap-3 w-80"
-		class:left-5={side === 'left'}
-		class:right-5={side === 'right'}
+		class="absolute p-3 shadow-2xl right-5 bg-foreground  rounded-2xl overflow-hidden bottom-5 z-[60] flex flex-col gap-3 w-80"
 	>
 		<svg class="absolute stroke-second-active inset-0 pointer-events-none" width="100%" height="100%">
 			<rect
@@ -132,7 +116,7 @@
 					class="absolute inset-0 bg-red-500/10 pointer-events-none"
 					style="width: {item.progress}%"
 				></div>
-				<span class="truncate text-sm flex-1 relative z-10">{item.task.label}</span>
+				<span class="truncate text-sm flex-1 text-neutral-500 relative z-10">{item.task.label}</span>
 				<button
 					class="black-button text-xs px-3 py-1 shrink-0 relative z-10"
 					onclick={() => cancelDelete(item)}
@@ -143,17 +127,6 @@
 		{/each}
 
 		<p class="text-xs text-neutral-500 px-1">Items will be permanently deleted when the bar empties.</p>
-
-		<button class="black-button p-2 gap-2 text-xs" onclick={toggleSide}>
-			{side === 'left' ? 'Move to right' : 'Move to left'}
-			<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				{#if side === 'left'}
-					<path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
-				{:else}
-					<path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round"/>
-				{/if}
-			</svg>
-		</button>
 	</div>
 {/if}
 
@@ -163,7 +136,7 @@
 	mode="target"
 	overlap={0}
 	data={{ accepts: 'task' }}
-	class="fixed bottom-5 w-20 h-20 rounded-full backdrop-blur-sm flex items-center justify-center z-[1000] transition-all duration-300 ease-out {side === 'left' ? 'left-5' : 'right-5'} {!isDragging ? 'opacity-0 scale-75 pointer-events-none' : 'opacity-100 scale-100'} {isHovering ? 'bg-red-500/90 scale-110 shadow-[0_0_20px_rgba(239,68,68,0.5)]' : 'bg-neutral-400/70'}"
+	class="fixed bottom-5 w-20 h-20 rounded-full backdrop-blur-sm flex items-center justify-center z-[1000] transition-all duration-300 ease-out right-5 {!isDragging ? 'opacity-0 scale-75 pointer-events-none' : 'opacity-100 scale-100'} {isHovering ? 'bg-red-500/90 scale-110 shadow-[0_0_20px_rgba(239,68,68,0.5)]' : 'bg-neutral-400/70'}"
 >
 	<div class="text-white transition-transform duration-200 {isHovering ? 'scale-110' : ''}">
 		<svg class="size-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

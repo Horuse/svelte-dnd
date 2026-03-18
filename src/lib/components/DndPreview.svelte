@@ -23,7 +23,7 @@
 
 	$effect(() => {
 		if (visible) handler.show(dndManager)
-		else handler.hide()
+		else handler.hide(dndManager?.performingDrop ?? false)
 	})
 
 	onDestroy(() => handler.destroy())

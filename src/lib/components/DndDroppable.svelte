@@ -57,10 +57,18 @@
 	// Tail preview: handles position = items.length (drop after the last item in cross-container drags).
 	// DndDraggable renders previews for positions 0..M-1; position M is never covered by an item wrapper.
 	// tailPosition stays -1 (inactive) unless this container is the current drop target.
+	// We keep the component always mounted so it can animate out properly — using -1 as
+	// an "inactive" position that never matches any real dropPreview.position.
 	const tailPosition = $derived.by(() => {
 		if (!dndController?.dropPreview?.visible || dndController.dropPreview.containerId !== id) return -1
 		if (!element) return -1
 		return element.querySelectorAll('[data-dnd-draggable-item]').length
+	})
+
+	// Keep the last valid tail position so the preview knows its size while animating out.
+	let lastValidTailPosition = $state(0)
+	$effect(() => {
+		if (tailPosition >= 0) lastValidTailPosition = tailPosition
 	})
 </script>
 
@@ -75,9 +83,9 @@
 	data-dnd-scroll
 >
 	{@render children()}
-	{#if tailPosition >= 0 && mode === 'sortable'}
+	{#if mode === 'sortable'}
 		<div style="position: relative">
-			<DndPreview containerId={id} position={tailPosition} />
+			<DndPreview containerId={id} position={tailPosition >= 0 ? tailPosition : lastValidTailPosition} />
 		</div>
 	{/if}
 </div>
