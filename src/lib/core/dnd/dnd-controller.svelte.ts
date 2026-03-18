@@ -88,6 +88,9 @@ export class DndController {
 
 	get skipDropPreviewAnimation() { return this.state.skipDropPreviewAnimation }
 
+	/** `'user'` during real drag, `'programmatic'` during simulation. */
+	get dragSource() { return this.state.dragSource }
+
 	// --- Event subscriptions ---
 
 	/** Fired when a drag begins. */
@@ -156,7 +159,8 @@ export class DndController {
 			dropPreview: null,
 			ghostSize: { width: element.offsetWidth, height: element.offsetHeight },
 			slotSize,
-			draggedItemType: data?.type ?? null
+			draggedItemType: data?.type ?? null,
+			source: 'user'
 		}
 
 		this.state.startSession(session)

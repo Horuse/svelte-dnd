@@ -27,7 +27,7 @@
 
 	const controller = getContext<DndController>('dnd')
 
-	const isDragging = $derived(controller?.dragging ?? false)
+	const isDragging = $derived((controller?.dragging ?? false) && controller?.dragSource === 'user')
 	const isHovering = $derived(controller?.dropPreview?.containerId === 'trash-zone')
 
 	const DELETE_DELAY = 5000
@@ -151,10 +151,12 @@
 		<div
 			data-dnd-draggable-item
 			data-dnd-drag-id={item.task.id}
-			class="drag-item px-4 gap-3"
-			style="position:absolute;opacity:0;pointer-events:none;width:var(--ghost-width,288px)"
+			style="position:absolute;opacity:0;pointer-events:none;width:260px"
 		>
-			<span class="truncate">{item.task.label}</span>
+			<div class="drag-item px-4 gap-3">
+				<span class="truncate">{item.task.label}</span>
+				<button data-dnd-no-drag class="black-button">Alert</button>
+			</div>
 		</div>
 	{/each}
 
@@ -168,3 +170,4 @@
 		</svg>
 	</div>
 </DndDroppable>
+

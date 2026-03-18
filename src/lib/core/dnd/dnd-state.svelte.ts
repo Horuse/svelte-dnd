@@ -28,6 +28,7 @@ export class DndState {
 	get originContainerId() { return this.session?.originContainerId ?? null }
 	get originPosition() { return this.session?.originPosition ?? 0 }
 	get dragSlotSize() { return this.session?.slotSize ?? null }
+	get dragSource() { return this.session?.source ?? null }
 	get originalPosition() {
 		const r = this.session?.startRect
 		return r ? { x: r.left, y: r.top } : null

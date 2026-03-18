@@ -100,7 +100,8 @@ export class DndSimulator {
 				},
 				ghostSize: { width: element.offsetWidth, height: element.offsetHeight },
 				slotSize: DOMHelper.calculateSlotSize(element, items),
-				draggedItemType: null
+				draggedItemType: null,
+				source: 'programmatic'
 			}
 
 			// Register containers so TranslationEngine can compute item shifts

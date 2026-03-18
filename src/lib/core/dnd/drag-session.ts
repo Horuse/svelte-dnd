@@ -1,5 +1,7 @@
 import type { DropPreview } from '../../types.js'
 
+export type DragSource = 'user' | 'programmatic'
+
 export interface DragSession {
 	itemId: string
 	itemData: Record<string, any> | undefined
@@ -12,4 +14,5 @@ export interface DragSession {
 	ghostSize: { width: number; height: number }
 	slotSize: { width: number; height: number } | null
 	draggedItemType: string | null
+	source: DragSource
 }
