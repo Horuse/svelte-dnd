@@ -135,10 +135,10 @@ export class ReturnAnimationStrategy implements AnimationStrategy {
 		const container = DOMHelper.findContainer(containerId)
 		if (!container) return fallback
 
-		const placeholder = DOMHelper.findPlaceholder(container, position)
-		if (!placeholder) return fallback
+		const slotWrapper = DOMHelper.findPlaceholderSlot(container, position)
+		if (!slotWrapper) return fallback
 
-		const rect = placeholder.getBoundingClientRect()
+		const rect = slotWrapper.getBoundingClientRect()
 		return { x: rect.left, y: rect.top }
 	}
 }

@@ -205,7 +205,6 @@ export class DndController {
 		const itemId = this.state.draggedItem
 
 		if (shouldAnimate && this.state.originContainerId !== null) {
-			this.state.setSkipDropPreviewAnimation(true)
 			this.state.setDropPreview({
 				containerId: this.state.originContainerId,
 				position: this.state.originPosition,

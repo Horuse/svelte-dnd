@@ -35,6 +35,12 @@ export class DOMHelper {
 		return null
 	}
 
+	static findPlaceholderSlot(container: HTMLElement, position: number): HTMLElement | null {
+		const placeholder = DOMHelper.findPlaceholder(container, position)
+		if (!placeholder) return null
+		return placeholder.parentElement ?? placeholder
+	}
+
 	// Draggable items queries
 	static findDraggableItems(container: HTMLElement): HTMLElement[] {
 		return Array.from(container.querySelectorAll(SELECTORS.draggableItems))

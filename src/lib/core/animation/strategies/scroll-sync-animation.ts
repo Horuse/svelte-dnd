@@ -24,13 +24,13 @@ export class ScrollSyncAnimationStrategy implements AnimationStrategy {
 			return
 		}
 
-		const placeholder = DOMHelper.findPlaceholder(container, this.position)
-		if (!placeholder) {
+		const slotWrapper = DOMHelper.findPlaceholderSlot(container, this.position)
+		if (!slotWrapper) {
 			// Retry next frame if placeholder not rendered yet
 			requestAnimationFrame(() => {
-				const retryPlaceholder = DOMHelper.findPlaceholder(container, this.position)
-				if (retryPlaceholder) {
-					this.executeScrollSync(container, retryPlaceholder, onComplete)
+				const retrySlot = DOMHelper.findPlaceholderSlot(container, this.position)
+				if (retrySlot) {
+					this.executeScrollSync(container, retrySlot, onComplete)
 				} else {
 					onComplete?.()
 				}
@@ -38,12 +38,12 @@ export class ScrollSyncAnimationStrategy implements AnimationStrategy {
 			return
 		}
 
-		this.executeScrollSync(container, placeholder, onComplete)
+		this.executeScrollSync(container, slotWrapper, onComplete)
 	}
 
 	private executeScrollSync(
 		container: HTMLElement,
-		placeholder: HTMLElement,
+		slotWrapper: HTMLElement,
 		onComplete?: () => void
 	): void {
 		this.state.setAnimating(true)
@@ -53,7 +53,7 @@ export class ScrollSyncAnimationStrategy implements AnimationStrategy {
 
 		const startScroll = adapter.getScroll(container)
 		const startGhostPos = { ...this.state.transform! }
-		const placeholderRect = placeholder.getBoundingClientRect()
+		const placeholderRect = slotWrapper.getBoundingClientRect()
 
 		const expectedSize =
 			direction === 'horizontal'
@@ -61,7 +61,7 @@ export class ScrollSyncAnimationStrategy implements AnimationStrategy {
 				: this.state.dropPreview?.draggedElementHeight || this.state.elementSize?.height || 0
 
 		const { targetScroll, scrollDelta } = this.scrollCalc.calculateScrollTarget({
-			placeholder,
+			placeholder: slotWrapper,
 			container,
 			expectedSize,
 			direction
@@ -78,7 +78,7 @@ export class ScrollSyncAnimationStrategy implements AnimationStrategy {
 
 		this.runScrollAnimation({
 			container,
-			placeholder,
+			placeholder: slotWrapper,
 			adapter,
 			startScroll,
 			targetScroll,
