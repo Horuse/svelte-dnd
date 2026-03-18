@@ -99,6 +99,18 @@ export class DOMHelper {
 				height: elementRect.top - prevRect.top
 			}
 		} else {
+			// No draggable neighbors — try the next DOM sibling of the wrapper div
+			// (the always-mounted tail preview wrapper in DndDroppable) to capture gap/margin.
+			const wrapperEl = element.parentElement
+			const nextSibling = wrapperEl?.nextElementSibling as HTMLElement | null
+			if (nextSibling) {
+				const wrapperRect = wrapperEl!.getBoundingClientRect()
+				const siblingRect = nextSibling.getBoundingClientRect()
+				return {
+					width: siblingRect.left - wrapperRect.left || element.offsetWidth,
+					height: siblingRect.top - wrapperRect.top || element.offsetHeight
+				}
+			}
 			const styles = getComputedStyle(element)
 			return {
 				width: element.offsetWidth + parseFloat(styles.marginLeft) + parseFloat(styles.marginRight),
