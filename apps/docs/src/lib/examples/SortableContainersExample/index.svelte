@@ -112,43 +112,49 @@
 	}
 </script>
 
-<div class="flex bg-foreground px-6 items-center gap-6 text-neutral-500 p-3 rounded-xl">
-	<span>Debug: {controller.debugZones}</span>
-	<button class="black-button p-2 px-6" onclick={() => controller.toggleDebugZones()}>Show debug zones</button>
-	<p>- To see, start dragging</p>
+<div class="flex flex-col relative items-start gap-6">
+	<div class="flex bg-foreground px-5 flex-col items-start gap-6 text-neutral-500 p-4 rounded-3xl border border-primary">
+		<h1 class="text-theme text-xl">Control panel</h1>
+		<div class="flex items-center gap-6">
+
+			<button class="black-button p-2 px-6" onclick={() => controller.toggleDebugZones()}>Show debug zones</button>
+			<p>- To see, start dragging</p>
+		</div>
+
+		<button class="black-button p-2 px-6" onclick={moveBacklogToInProgress}>Move backlog[0] → In Progress</button>
+	</div>
+
+
+
+	<DndProvider {controller}>
+		<DndDroppable id="board" direction="horizontal" data={{ accepts: 'column' }} class="flex flex-row h-125 overflow-x-auto space-x-4 w-full">
+			{#each columns as column, colIndex (column.id)}
+				<DndDraggable class="h-full" id={column.id} data={{ type: 'column' }} position={colIndex}>
+					<div class="flex flex-col h-full shrink-0 w-72 bg-foreground border-2 border-primary rounded-2xl">
+						<h2 data-dnd-handle class="column-header text-lg p-4 font-semibold text-neutral-500 cursor-grab">
+							<span class="drag-handle">&#x2630;</span>
+							{column.title}
+						</h2>
+						<!-- svelte-ignore a11y_no_static_element_interactions -->
+						<DndDroppable id={column.id} direction="vertical" data={{ accepts: 'task' }} class="space-y-2 p-3 h-full overflow-auto border-t-2 border-primary pt-3">
+							{#each column.tasks as task, taskIndex (task.id)}
+								<DndDraggable id={task.id} data={{ type: 'task', label: task.label, columnId: column.id }} position={taskIndex}>
+									<div class="drag-item px-4 gap-3">
+										<span class="truncate">{task.label}</span>
+										<button data-dnd-no-drag class="black-button" onclick={() => alert('Test')}>Alert</button>
+									</div>
+								</DndDraggable>
+							{/each}
+						</DndDroppable>
+					</div>
+				</DndDraggable>
+			{/each}
+		</DndDroppable>
+
+		<TrashZone onRemove={handleRemove} onRestore={handleRestore} />
+	</DndProvider>
+
 </div>
-
-<button class="black-button p-2 px-6" onclick={moveBacklogToInProgress}>Move backlog[0] → In Progress</button>
-
-
-<DndProvider {controller}>
-	<DndDroppable id="board" direction="horizontal" data={{ accepts: 'column' }} class="flex flex-row h-125 overflow-x-auto space-x-4 w-full">
-		{#each columns as column, colIndex (column.id)}
-			<DndDraggable class="h-full" id={column.id} data={{ type: 'column' }} position={colIndex}>
-				<div class="flex flex-col h-full shrink-0 w-72 bg-foreground border-2 border-primary rounded-2xl">
-					<h2 data-dnd-handle class="column-header text-lg p-4 font-semibold text-neutral-500 cursor-grab">
-						<span class="drag-handle">&#x2630;</span>
-						{column.title}
-					</h2>
-					<!-- svelte-ignore a11y_no_static_element_interactions -->
-					<DndDroppable id={column.id} direction="vertical" data={{ accepts: 'task' }} class="space-y-2 p-3 h-full overflow-auto border-t-2 border-primary pt-3">
-						{#each column.tasks as task, taskIndex (task.id)}
-							<DndDraggable id={task.id} data={{ type: 'task', label: task.label, columnId: column.id }} position={taskIndex}>
-								<div class="drag-item px-4 gap-3">
-									<span class="truncate">{task.label}</span>
-									<button data-dnd-no-drag class="black-button" onclick={() => alert('Test')}>Alert</button>
-								</div>
-							</DndDraggable>
-						{/each}
-					</DndDroppable>
-				</div>
-			</DndDraggable>
-		{/each}
-	</DndDroppable>
-
-	<TrashZone onRemove={handleRemove} onRestore={handleRestore} />
-</DndProvider>
-
 <style>
 	.column-header {
 		display: flex;

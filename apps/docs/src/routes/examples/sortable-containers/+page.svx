@@ -10,4 +10,19 @@ Drag a container by its header to reorder columns horizontally. Drag tasks withi
 
 The existing drop zone calculator filters `[data-dnd-draggable-item]` elements by their closest `[data-dnd-drop-id]` parent, so nested droppables work correctly without extra configuration.
 
-[view code](https://github.com/Horuse/svelte-dnd/blob/main/src/routes/examples/sortable-containers/%2Bpage.svelte)
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components';
+	import SortableContainersExampleCode from "$lib/examples/SortableContainersExample/index.svelte?raw";
+	import SortableContainersExample from "$lib/examples/SortableContainersExample/index.svelte";
+
+    import TrashZoneCode from "$lib/examples/SortableContainersExample/TrashZone.svelte?raw";
+</script>
+
+<ComponentPreview
+	sources={[
+		{ name: "SortableContainersExample.svelte", code: SortableContainersExampleCode, language: "svelte" },
+		{ name: "TrashZone.svelte", code: TrashZoneCode, language: "svelte" }
+	]}
+>
+    <SortableContainersExample/>
+</ComponentPreview>

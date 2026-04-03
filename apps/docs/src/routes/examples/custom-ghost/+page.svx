@@ -6,4 +6,16 @@ Pass a `ghost` snippet to `DndProvider` to replace the default cloned element wi
 
 Each column wrapper sets its own `--dnd-preview-bg`, `--dnd-preview-border`, and `--dnd-preview-border-radius` values. Because `DndPreview` reads these properties from its nearest ancestor, the preview automatically adopts the target container's style as you drag between columns.
 
-[view code](https://github.com/Horuse/svelte-dnd/blob/main/src/routes/examples/custom-ghost/%2Bpage.svelte)
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components';
+	import CustomGhostExampleCode from "$lib/examples/CustomGhostExample.svelte?raw";
+	import CustomGhostExample from "$lib/examples/CustomGhostExample.svelte";
+</script>
+
+<ComponentPreview
+	sources={[
+		{ name: "CustomGhostExample.svelte", code: CustomGhostExampleCode, language: "svelte" }
+	]}
+>
+    <CustomGhostExample/>
+</ComponentPreview>

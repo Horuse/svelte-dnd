@@ -1,16 +1,24 @@
+---
+title: MDSVEX Structure Components
+name: Structure Components
+description: Reference samples for table and step-based components, including InstallationTabs.
+category: Reference
+order: 20
+---
+
+<script>
+    import InstallTabs from '$lib/components/InstallTabs.svelte'
+    import Step from '$lib/components/markdown/Step.svelte'
+    import Steps from '$lib/components/markdown/Steps.svelte'
+</script>
+
 # Getting Started
 
 ## Installation
 
-```bash
+<InstallTabs pkg="@horuse/svelte-dnd">
 bun add @horuse/svelte-dnd
-```
-
-Or with npm:
-
-```bash
-npm install @horuse/svelte-dnd
-```
+</InstallTabs>
 
 ## Basic Example
 
@@ -57,9 +65,24 @@ A minimal working drag-and-drop setup requires three components: `DndProvider`, 
 
 ## How It Works
 
-1. **DndProvider** wraps your app and creates a `DndController` context.
-2. **DndDroppable** defines a container where items can be dropped. Set `direction` to `"vertical"`, `"horizontal"`, or `"grid"`.
-3. **DndDraggable** wraps each draggable item. Each must have a unique `id` and a `position` matching its index in the list.
-4. **Drop previews are automatic** — `DndDraggable` renders its own preview at `position`, and `DndDroppable` renders the tail preview (after the last item). You never need to place `DndPreview` manually.
-5. **The dragged item is hidden automatically** — the `.dnd-draggable--dragging` class sets `opacity: 0` so only the ghost follows the cursor. No manual filtering needed.
-6. Use `controller.onDrop()` to handle reordering logic when an item is dropped.
+<Steps>
+	<Step title="DndProvider">
+		wraps your app and creates a `DndController` context.
+	</Step>
+
+	<Step title="DndDroppable">
+		defines a container where items can be dropped. Set `direction` to `"vertical"`, `"horizontal"`, or `"grid"`.
+	</Step>
+
+	<Step title="DndDraggable">
+		wraps each draggable item. Each must have a unique `id` and a `position` matching its index in the list.
+	</Step>
+
+	<Step>
+    	The dragged item is hidden automatically** — the `.dnd-draggable--dragging` class sets `opacity: 0` so only the ghost follows the cursor. No manual filtering needed.
+    </Step>
+
+    <Step>
+        Use `controller.onDrop()` to handle reordering logic when an item is dropped.
+    </Step>
+</Steps>

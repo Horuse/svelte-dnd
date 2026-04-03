@@ -6,4 +6,16 @@ This example uses 50 items to demonstrate **auto-scroll** near the container edg
 
 The `onDrop` callback receives the drop `position` — splice the source item out and insert it at the new position.
 
-[view code](https://github.com/Horuse/svelte-dnd/blob/main/src/routes/examples/vertical/%2Bpage.svelte)
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components';
+	import VerticalExampleCode from "$lib/examples/VerticalExample.svelte?raw";
+	import VerticalExample from "$lib/examples/VerticalExample.svelte";
+</script>
+
+<ComponentPreview
+	sources={[
+		{ name: "VerticalExample.svelte", code: VerticalExampleCode, language: "svelte" }
+	]}
+>
+    <VerticalExample/>
+</ComponentPreview>

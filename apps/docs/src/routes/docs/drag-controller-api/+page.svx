@@ -174,21 +174,13 @@ These methods are used internally by `DndDroppable` but can be called directly f
 
 | Method | Description |
 |--------|-------------|
-| `refreshContainerZones(containerId, element, direction?, mode?)` | Recalculate and register drop zones for a container |
-| `registerDroppableData(id, data)` | Register container data |
-| `unregisterDroppableData(id)` | Unregister container data |
+| `controller.refreshContainerZones(containerId, element, direction?, mode?)` | Recalculate and register drop zones for a container |
+| `controller.registerDroppableData(id, data)` | Register container data |
+| `controller.unregisterDroppableData(id)` | Unregister container data |
 
 ## Types
 
 ```ts
-interface DropPreview {
-    containerId: string;
-    position: number;
-    visible: boolean;
-    draggedElementHeight?: number;
-    draggedElementWidth?: number;
-}
-
 interface DropZone {
     containerId: string;
     position: number;

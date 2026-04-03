@@ -1,0 +1,45 @@
+# DndProvider
+
+Wraps your drag-and-drop area and provides the `DndController` context to all child components.
+
+### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `controller` | `DndController` | auto-created | Optional pre-created controller instance |
+
+### Snippets
+
+| Snippet | Props | Description |
+|---------|-------|-------------|
+| `ghost` | `GhostSnippetProps` | Custom ghost element renderer during drag. If omitted, the dragged element's `innerHTML` is cloned as the ghost |
+
+### GhostSnippetProps
+
+```ts
+interface GhostSnippetProps {
+    element: HTMLElement;
+    data?: Record<string, any>;
+    itemId: string;
+}
+```
+
+### CSS Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `--dnd-ghost-z-index` | `9999` | Z-index of the ghost element |
+| `--dnd-ghost-opacity` | `0.8` | Opacity of the ghost element |
+| `--dnd-ghost-scale` | `1` | Scale of the ghost element |
+| `--dnd-ghost-rotation` | `3deg` | Rotation applied to the ghost while dragging |
+| `--dnd-ghost-rotation-duration` | `200ms` | Duration of the rotation transition |
+
+```svelte
+<DndProvider {controller}>
+  {#snippet ghost({ element, data, itemId })}
+    <div class="custom-ghost">{data?.label}</div>
+  {/snippet}
+
+  <!-- your content -->
+</DndProvider>
+```

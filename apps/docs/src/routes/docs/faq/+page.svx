@@ -44,7 +44,7 @@ Multiple handles are supported — just add the attribute to each element:
 
 Auto-scroll activates for any element that has the `data-dnd-scroll` attribute **and** `overflow: auto` or `overflow: scroll`, when the pointer is near its edge during a drag.
 
-`DndDroppable` adds `data-dnd-scroll` automatically, so its own scrolling works out of the box.
+! `DndDroppable` adds `data-dnd-scroll` automatically, so its own scrolling works out of the box.
 
 If you have an **external** scrollable wrapper around several droppables (e.g. a horizontal kanban board), add `data-dnd-scroll` manually:
 
