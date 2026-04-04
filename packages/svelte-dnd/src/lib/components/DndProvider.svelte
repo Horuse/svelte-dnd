@@ -17,6 +17,17 @@
 
 	let rotated = $state(false)
 
+	function cloneContent(node: HTMLElement, source: HTMLElement) {
+		const doClone = (src: HTMLElement) => {
+			node.replaceChildren(...Array.from(src.childNodes).map(n => n.cloneNode(true)))
+		}
+		doClone(source)
+		return {
+			update: doClone,
+			destroy() {}
+		}
+	}
+
 	$effect(() => {
 		if (dragController.dragging) {
 			rotated = false
@@ -73,7 +84,7 @@
 				itemId: dragController.draggedItem
 			})}
 		{:else}
-			{@html dragController.element.innerHTML}
+			<div style="display: contents" use:cloneContent={dragController.element}></div>
 		{/if}
 	</div>
 {/if}

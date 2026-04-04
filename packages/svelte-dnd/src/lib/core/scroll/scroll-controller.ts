@@ -6,7 +6,7 @@ export interface ScrollOptions {
 }
 
 export class ScrollController {
-	private scrollIntervals = new Map<HTMLElement, number>()
+	private scrollFrames = new Map<HTMLElement, number>()
 	private lastMousePosition = { x: 0, y: 0 }
 
 	constructor(
@@ -24,10 +24,10 @@ export class ScrollController {
 	}
 
 	private clearInvalidIntervals(validContainers: HTMLElement[]) {
-		for (const [container, intervalId] of this.scrollIntervals) {
+		for (const [container, frameId] of this.scrollFrames) {
 			if (!validContainers.includes(container)) {
-				clearInterval(intervalId)
-				this.scrollIntervals.delete(container)
+				cancelAnimationFrame(frameId)
+				this.scrollFrames.delete(container)
 			}
 		}
 	}
@@ -36,9 +36,9 @@ export class ScrollController {
 		containers.forEach((container) => {
 			const scrollConfig = this.calculateScrollConfig(container)
 
-			if (scrollConfig.shouldScroll && !this.scrollIntervals.has(container)) {
+			if (scrollConfig.shouldScroll && !this.scrollFrames.has(container)) {
 				this.startScrolling(container)
-			} else if (!scrollConfig.shouldScroll && this.scrollIntervals.has(container)) {
+			} else if (!scrollConfig.shouldScroll && this.scrollFrames.has(container)) {
 				this.stopScrolling(container)
 			}
 		})
@@ -97,8 +97,20 @@ export class ScrollController {
 	}
 
 	private startScrolling(container: HTMLElement) {
-		const intervalId = setInterval(() => {
+		let lastTime = 0
+
+		const tick = (time: number) => {
+			if (!this.scrollFrames.has(container)) return
+
+			const delta = lastTime ? time - lastTime : 16
+			lastTime = time
+
 			const config = this.calculateScrollConfig(container)
+
+			if (!config.shouldScroll) {
+				this.stopScrolling(container)
+				return
+			}
 
 			let scrolledX = false
 			let scrolledY = false
@@ -122,31 +134,36 @@ export class ScrollController {
 			}
 
 			if (scrolledX || scrolledY) {
+				const scale = delta / 16
 				container.scrollBy({
 					top: scrolledY
 						? config.directionY === 'up'
-							? -config.speedY
-							: config.speedY
+							? -config.speedY * scale
+							: config.speedY * scale
 						: 0,
 					left: scrolledX
 						? config.directionX === 'left'
-							? -config.speedX
-							: config.speedX
+							? -config.speedX * scale
+							: config.speedX * scale
 						: 0,
 					behavior: 'auto'
 				})
 				this.scheduleRefresh()
 			}
-		}, 16)
 
-		this.scrollIntervals.set(container, intervalId as unknown as number)
+			const frameId = requestAnimationFrame(tick)
+			this.scrollFrames.set(container, frameId)
+		}
+
+		const frameId = requestAnimationFrame(tick)
+		this.scrollFrames.set(container, frameId)
 	}
 
 	private stopScrolling(container: HTMLElement) {
-		const intervalId = this.scrollIntervals.get(container)
-		if (intervalId) {
-			clearInterval(intervalId)
-			this.scrollIntervals.delete(container)
+		const frameId = this.scrollFrames.get(container)
+		if (frameId) {
+			cancelAnimationFrame(frameId)
+			this.scrollFrames.delete(container)
 		}
 	}
 
@@ -185,10 +202,10 @@ export class ScrollController {
 	}
 
 	clearAll() {
-		for (const [, intervalId] of this.scrollIntervals) {
-			clearInterval(intervalId)
+		for (const [, frameId] of this.scrollFrames) {
+			cancelAnimationFrame(frameId)
 		}
-		this.scrollIntervals.clear()
+		this.scrollFrames.clear()
 	}
 
 	destroy() {

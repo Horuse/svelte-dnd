@@ -10,6 +10,7 @@ import { DropResolver } from '../zones/drop-resolver.js'
 import { AnimationPipeline } from '../animation/steps/animation-pipeline.js'
 import { GhostToTargetStep } from '../animation/steps/ghost-to-target-step.js'
 import { GhostReturnStep } from '../animation/steps/ghost-return-step.js'
+import type { AnimationStep } from '../animation/steps/animation-step.js'
 import { DndSimulator } from './dnd-simulator.js'
 import type { DragSession } from './drag-session.js'
 import type { DropZone, DndDirection, DndMode, DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback, DropPreview } from '../../types.js'
@@ -33,6 +34,8 @@ export type { DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidated
 export class DndController {
 	private state = new DndState()
 	private registry = new ContainerRegistry()
+	private sortableStrategy = new SortableContainerStrategy(this.state)
+	private targetStrategy = new TargetContainerStrategy(this.state)
 	private scrollController = new ScrollController(this.state, {
 		onZoneRefresh: () => this.eventEmitter.notifyZonesInvalidated(),
 		onMouseUpdate: (x, y) => this.updateMousePosition(x, y)
@@ -244,9 +247,7 @@ export class DndController {
 		direction: DndDirection = 'vertical',
 		mode: DndMode = 'sortable'
 	) {
-		const strategy = mode === 'target'
-			? new TargetContainerStrategy(this.state)
-			: new SortableContainerStrategy(this.state)
+		const strategy = mode === 'target' ? this.targetStrategy : this.sortableStrategy
 
 		this.registry.registerContainer(containerId, containerElement, strategy)
 
@@ -272,7 +273,7 @@ export class DndController {
 
 	// --- Private ---
 
-	private animate(step: GhostToTargetStep | GhostReturnStep, onComplete: () => void): void {
+	private animate(step: AnimationStep, onComplete: () => void): void {
 		this.currentAnimation?.cancel()
 		const pipeline = AnimationPipeline.chain(step)
 		this.currentAnimation = pipeline
@@ -351,7 +352,7 @@ export class DndController {
 	destroy() {
 		this.currentAnimation?.cancel()
 		this.scrollController.destroy()
-		this.registry.dataMap.clear()
+		this.registry.clearAll()
 		this.eventEmitter.destroy()
 	}
 }

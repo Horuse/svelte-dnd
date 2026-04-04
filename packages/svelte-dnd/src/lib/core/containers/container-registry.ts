@@ -7,7 +7,7 @@ interface ContainerEntry {
 
 export class ContainerRegistry {
 	private containers = new Map<string, ContainerEntry>()
-	readonly dataMap = new Map<string, Record<string, any>>()
+	private dataMap = new Map<string, Record<string, any>>()
 
 	registerContainer(id: string, element: HTMLElement, strategy: ContainerStrategy): void {
 		this.containers.set(id, { element, strategy })
@@ -16,6 +16,10 @@ export class ContainerRegistry {
 	unregisterContainer(id: string): void {
 		this.containers.delete(id)
 		this.dataMap.delete(id)
+	}
+
+	clearAll(): void {
+		this.dataMap.clear()
 	}
 
 	registerData(id: string, data: Record<string, any>): void {
