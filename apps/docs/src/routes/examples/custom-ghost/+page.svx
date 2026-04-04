@@ -4,7 +4,32 @@ This example combines two features: a **custom ghost** snippet and **scoped prev
 
 Pass a `ghost` snippet to `DndProvider` to replace the default cloned element with a custom drag ghost. The snippet receives `{ element, data, itemId }` — use `data` to render a colored card that differs from the list item.
 
+```svelte
+<DndProvider {controller}>
+    {#snippet ghost({ data, itemId })}
+        <div class="my-ghost" style="background: {data?.color};">
+            {data?.label ?? itemId}
+        </div>
+    {/snippet}
+
+    <!-- your DnD content -->
+</DndProvider>
+```
+
+The snippet props are typed as `GhostSnippetProps`:
+
+```ts
+import type { GhostSnippetProps } from '@horuse/svelte-dnd';
+
+interface GhostSnippetProps {
+    element: HTMLElement;           // original DOM element being dragged
+    data?: Record<string, unknown>; // data passed to DndDraggable
+    itemId: string;                 // id of the dragged item
+}
+```
+
 Each column wrapper sets its own `--dnd-preview-bg`, `--dnd-preview-border`, and `--dnd-preview-border-radius` values. Because `DndPreview` reads these properties from its nearest ancestor, the preview automatically adopts the target container's style as you drag between columns.
+
 
 <script lang="ts">
 	import { ComponentPreview } from '$lib/components';

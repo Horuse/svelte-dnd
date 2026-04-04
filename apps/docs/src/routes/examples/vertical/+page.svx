@@ -2,7 +2,18 @@
 
 The simplest setup — a single `DndDroppable` with `direction="vertical"` (the default).
 
-This example uses 50 items to demonstrate **auto-scroll** near the container edges. A `DndPreview` is placed before each item and one after the last item to show where the dragged item will land.
+This example uses 50 items to demonstrate **auto-scroll** near the container edges. Use the **Scroll config** panel to tune auto-scroll behaviour in real time via `controller.setScrollConfig()`:
+
+- **Scroll zone ratio** — how close to the edge (as a fraction of container height) the cursor must be to trigger scrolling
+- **Max speed** — maximum scroll speed in px/frame at 60 fps
+
+```ts
+// set once at creation
+const controller = new DndController({ scrollZoneRatio: 0.2, maxSpeed: 15 });
+
+// or update at any time
+controller.setScrollConfig({ maxSpeed: 50 });
+```
 
 The `onDrop` callback receives the drop `position` — splice the source item out and insert it at the new position.
 

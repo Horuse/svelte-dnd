@@ -11,7 +11,7 @@ Automatically renders a `DndPreview` placeholder at its position - you do not ne
 | `id` | `string` | **required** | Unique identifier for this draggable item |
 | `position` | `number` | **required** | Index of this item within its container |
 | `type` | `string` | `undefined` | Item type used for filtering — matched against `accepts` on `DndDroppable` |
-| `data` | `Record<string, any>` | `{}` | Arbitrary data passed to drop callbacks |
+| `data` | `Record<string, unknown>` | `{}` | Arbitrary data passed to drop callbacks |
 | `disabled` | `boolean` | `false` | Disables dragging when `true` |
 | `dragDelay` | `number` | `300` | Delay in ms before drag starts on touch devices. During the delay, finger movement scrolls the container. |
 | `scrollCancelThreshold` | `number` | `8` | Max movement in px during `dragDelay` before the gesture is treated as a scroll instead of a drag |
@@ -64,12 +64,12 @@ export interface DndDragEvent {
 	source: {
 		id: string
 		element: HTMLElement
-		data?: Record<string, any>
+		data?: Record<string, unknown>
 	}
 	target?: {
 		id: string
 		element: HTMLElement
-		data?: Record<string, any>
+		data?: Record<string, unknown>
 	} | null
 	transform: {
 		x: number

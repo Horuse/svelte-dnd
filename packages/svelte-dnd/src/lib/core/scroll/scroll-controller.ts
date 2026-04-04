@@ -1,6 +1,13 @@
 import type { DndState } from '../dnd/dnd-state.svelte.js'
 
-export interface ScrollOptions {
+export interface ScrollConfig {
+	/** Fraction of container size that acts as scroll trigger zone. Default: 0.3 */
+	scrollZoneRatio?: number
+	/** Maximum scroll speed in pixels per frame (at 60fps). Default: 30 */
+	maxSpeed?: number
+}
+
+export interface ScrollOptions extends ScrollConfig {
 	onZoneRefresh?: () => void
 	onMouseUpdate?: (x: number, y: number) => void
 }
@@ -47,8 +54,9 @@ export class ScrollController {
 	private calculateScrollConfig(container: HTMLElement) {
 		const rect = container.getBoundingClientRect()
 		const { x: mouseX, y: mouseY } = this.lastMousePosition
-		const scrollZoneY = rect.height * 0.3
-		const scrollZoneX = rect.width * 0.3
+		const ratio = this.options.scrollZoneRatio ?? 0.3
+		const scrollZoneY = rect.height * ratio
+		const scrollZoneX = rect.width * ratio
 
 		const distanceFromTop = mouseY - rect.top
 		const distanceFromBottom = rect.bottom - mouseY
@@ -87,13 +95,16 @@ export class ScrollController {
 	}
 
 	private calculateSpeed(proximityRatio: number): number {
+		const maxSpeed = this.options.maxSpeed ?? 30
+		let base: number
 		if (proximityRatio < 0.33) {
-			return 2 + proximityRatio * 3 * 6
+			base = 2 + proximityRatio * 3 * 6
 		} else if (proximityRatio < 0.66) {
-			return 8 + (proximityRatio - 0.33) * 3 * 10
+			base = 8 + (proximityRatio - 0.33) * 3 * 10
 		} else {
-			return 18 + (proximityRatio - 0.66) * 3 * 12
+			base = 18 + (proximityRatio - 0.66) * 3 * 12
 		}
+		return base * (maxSpeed / 30)
 	}
 
 	private startScrolling(container: HTMLElement) {
@@ -199,6 +210,10 @@ export class ScrollController {
 		}
 
 		return containers
+	}
+
+	updateConfig(config: ScrollConfig) {
+		this.options = { ...this.options, ...config }
 	}
 
 	clearAll() {

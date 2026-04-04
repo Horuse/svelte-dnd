@@ -38,10 +38,11 @@ These properties control the placeholder that appears at potential drop position
 
 | Property | Default | Description |
 |----------|---------|-------------|
-| `--dnd-preview-transition-duration` | `200ms` | Height transition speed of the preview |
-| `--dnd-preview-bg` | `rgba(0, 0, 0, 0.05)` | Background color of the preview indicator |
-| `--dnd-preview-border` | `2px dashed rgba(0, 0, 0, 0.2)` | Border style of the preview indicator |
-| `--dnd-preview-border-radius` | `8px` | Border radius of the preview indicator |
+| `--dnd-preview-duration-in` | `200ms` | Transition duration when preview appears |
+| `--dnd-preview-duration-out` | `200ms` | Transition duration when preview disappears |
+| `--dnd-preview-bg` | `rgba(99, 102, 241, 0.15)` | Background color of the preview indicator |
+| `--dnd-preview-border` | `2px dashed rgba(99, 102, 241, 0.4)` | Border style of the preview indicator |
+| `--dnd-preview-border-radius` | `1rem` | Border radius of the preview indicator |
 
 ## Customization Examples
 

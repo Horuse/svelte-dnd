@@ -19,7 +19,7 @@ Wraps your drag-and-drop area and provides the `DndController` context to all ch
 ```ts
 interface GhostSnippetProps {
     element: HTMLElement;
-    data?: Record<string, any>;
+    data?: Record<string, unknown>;
     itemId: string;
 }
 ```

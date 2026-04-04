@@ -63,16 +63,16 @@ If you have an **external** scrollable wrapper around several droppables (e.g. a
 
 ## How do I restrict which items can be dropped into a container?
 
-Set a `type` on each `DndDraggable` and an `accepts` list on each `DndDroppable`:
+Set a `type` on each `DndDraggable` and an `accepts` prop on each `DndDroppable`:
 
 ```svelte
-<DndDraggable data={{ type: 'task' }} ...>Task</DndDraggable>
+<DndDraggable id={item.id} {position} type="task">Task</DndDraggable>
 
 <!-- Only accepts 'task' items -->
-<DndDroppable data={{ accepts: 'task' }} ...>...</DndDroppable>
+<DndDroppable id="tasks" accepts="task">...</DndDroppable>
 
 <!-- Accepts multiple types -->
-<DndDroppable data={{ accepts: ['task', 'card'] }} ...>...</DndDroppable>
+<DndDroppable id="mixed" accepts={['task', 'card']}>...</DndDroppable>
 ```
 
 ---
@@ -104,9 +104,9 @@ Pass a `ghost` snippet to `DndProvider`. The snippet receives `{ element, data, 
 
 ```svelte
 <DndProvider {controller}>
-  {#snippet ghost({ element, data })}
+  {#snippet ghost({ data, itemId })}
     <div class="my-ghost">
-      {data.label}
+      {data?.label ?? itemId}
     </div>
   {/snippet}
 
@@ -163,6 +163,25 @@ Call `controller.toggleDebugZones()` — blue overlays will appear on all drop z
 ```
 
 See the [CSS Custom Properties & Classes](/docs/css-custom-props) page for the classes used by the overlay elements.
+
+---
+
+## How do I tune auto-scroll speed or zone size?
+
+Pass `ScrollConfig` to the `DndController` constructor, or call `setScrollConfig()` at any time:
+
+```ts
+// at creation
+const controller = new DndController({ scrollZoneRatio: 0.2, maxSpeed: 15 });
+
+// or later
+controller.setScrollConfig({ maxSpeed: 50 });
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `scrollZoneRatio` | `0.3` | Fraction of container size that triggers scroll |
+| `maxSpeed` | `30` | Max scroll speed in px/frame at 60fps |
 
 ---
 

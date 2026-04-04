@@ -1,5 +1,5 @@
 import { DndState } from './dnd-state.svelte.js'
-import { ScrollController } from '../scroll/scroll-controller.js'
+import { ScrollController, type ScrollConfig } from '../scroll/scroll-controller.js'
 import { DOMHelper } from '../utils/dom-helper.js'
 import { DndEventEmitter } from './dnd-event-emitter.js'
 import { TranslationEngine } from '../zones/translation-engine.svelte.js'
@@ -36,16 +36,21 @@ export class DndController {
 	private registry = new ContainerRegistry()
 	private sortableStrategy = new SortableContainerStrategy(this.state)
 	private targetStrategy = new TargetContainerStrategy(this.state)
-	private scrollController = new ScrollController(this.state, {
-		onZoneRefresh: () => this.eventEmitter.notifyZonesInvalidated(),
-		onMouseUpdate: (x, y) => this.updateMousePosition(x, y)
-	})
 	private eventEmitter = new DndEventEmitter()
 	private translationEngine = new TranslationEngine(this.state, this.registry)
 	private dropResolver = new DropResolver(this.state, this.registry)
 	private currentAnimation: AnimationPipeline | null = null
 	private simulator = new DndSimulator(this.state, this.registry)
 	private hidePreviewTimeout: ReturnType<typeof setTimeout> | null = null
+	private scrollController: ScrollController
+
+	constructor(scrollConfig: ScrollConfig = {}) {
+		this.scrollController = new ScrollController(this.state, {
+			...scrollConfig,
+			onZoneRefresh: () => this.eventEmitter.notifyZonesInvalidated(),
+			onMouseUpdate: (x, y) => this.updateMousePosition(x, y)
+		})
+	}
 
 	// --- Reactive state (read-only) ---
 
@@ -256,6 +261,11 @@ export class DndController {
 		const newZones = strategy.calculateDropZones(containerId, containerElement, this.state.session)
 		const otherZones = this.state.zones.filter((z) => z.containerId !== containerId)
 		this.state.setDropZones([...otherZones, ...newZones])
+	}
+
+	/** Update auto-scroll config at runtime. Changes take effect on the next scroll tick. */
+	setScrollConfig(config: ScrollConfig) {
+		this.scrollController.updateConfig(config)
 	}
 
 	/** Toggle visual overlay of drop zones — useful for debugging layout. */

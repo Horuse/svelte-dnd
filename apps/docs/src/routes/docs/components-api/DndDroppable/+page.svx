@@ -7,7 +7,7 @@ Defines a container that accepts draggable items. Automatically registers drop z
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `id` | `string` | **required** | Unique container identifier |
-| `data` | `Record<string, any>` | `{}` | Arbitrary container metadata passed to drop callbacks |
+| `data` | `Record<string, unknown>` | `{}` | Arbitrary container metadata passed to drop callbacks |
 | `accepts` | `string \| string[]` | `undefined` | Item type(s) this container accepts. If omitted, accepts everything. See [Type filtering](#type-filtering) |
 | `disabled` | `boolean` | `false` | Disables dropping when `true`. Also sets `opacity: 0.5; pointer-events: none` |
 | `direction` | `DndDirection` | `'vertical'` | Layout direction: `'vertical'` \| `'horizontal'` \| `'grid'` |
@@ -33,7 +33,7 @@ Defines a container that accepts draggable items. Automatically registers drop z
 
 ### Type filtering
 
-Use the `accepts` prop to control which item types can be dropped into this container. Item types come from the `data.type` field of `DndDraggable`.
+Use the `accepts` prop to control which item types can be dropped into this container. Item types come from the `type` prop of `DndDraggable`.
 
 ```svelte
 <!-- Only accepts items with data.type === 'task' -->
@@ -95,12 +95,12 @@ export interface DndDropEvent {
 	source: {
 		id: string
 		element: HTMLElement
-		data?: Record<string, any>
+		data?: Record<string, unknown>
 	}
 	target: {
 		id: string
 		element: HTMLElement
-		data?: Record<string, any>
+		data?: Record<string, unknown>
 	} | null
 }
 ```

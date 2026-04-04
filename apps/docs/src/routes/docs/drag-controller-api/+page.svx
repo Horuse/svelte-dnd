@@ -6,8 +6,15 @@ The `DndController` is the core engine that manages all drag-and-drop state and 
 
 ```ts
 import { DndController } from '@horuse/svelte-dnd';
+import type { ScrollConfig } from '@horuse/svelte-dnd';
 
 const controller = new DndController();
+
+// With custom scroll config:
+const controller = new DndController({
+    scrollZoneRatio: 0.2, // trigger zone = 20% of container height/width (default: 0.3)
+    maxSpeed: 20,          // max scroll speed in px/frame at 60fps (default: 30)
+});
 ```
 
 Pass it to the provider via the `controller` prop:
@@ -31,7 +38,7 @@ All getters are Svelte 5 reactive (`$state` / `$derived` internally).
 | `transform` | `{ x: number; y: number } \| null` | Current ghost position |
 | `draggedItem` | `string \| null` | ID of the item being dragged |
 | `draggedType` | `string \| null` | Type of the dragged item (from `data.type`) |
-| `draggedItemData` | `Record<string, any> \| undefined` | Data attached to the dragged item |
+| `draggedItemData` | `Record<string, unknown> \| undefined` | Data attached to the dragged item |
 | `size` | `{ width: number; height: number } \| null` | Size of the dragged element |
 | `animatingReturn` | `boolean` | Whether the ghost is animating back to origin |
 | `dropPreview` | `DropPreview \| null` | Current drop preview state |
@@ -97,7 +104,7 @@ controller.startDrag(
     element: HTMLElement,
     itemId: string,
     initialPosition: { x: number; y: number },
-    data?: Record<string, any>
+    data?: Record<string, unknown>
 ): void
 ```
 
@@ -124,7 +131,7 @@ Updates the mouse position for drop zone detection and auto-scroll.
 ```ts
 controller.performDrop(
     sourceId: string,
-    sourceData: any,
+    sourceData: Record<string, unknown> | undefined,
     targetContainerId: string,
     position: number
 ): void
@@ -187,6 +194,13 @@ interface DropZone {
     direction: DndDirection;
     itemId?: string;
     rect: { x: number; y: number; width: number; height: number };
+}
+
+interface ScrollConfig {
+    /** Fraction of container size that triggers auto-scroll. Default: 0.3 */
+    scrollZoneRatio?: number;
+    /** Maximum scroll speed in px/frame at 60fps. Default: 30 */
+    maxSpeed?: number;
 }
 
 type DndDirection = 'vertical' | 'horizontal' | 'grid';
