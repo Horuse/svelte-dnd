@@ -63,8 +63,6 @@ export class DndState {
 	reset(): void {
 		this.session = null
 		this.isAnimating = false
-		this.isPerformingDrop = false
-		this.shouldSkipDropPreviewAnimation = false
 		this.dropZones = []
 	}
 }
