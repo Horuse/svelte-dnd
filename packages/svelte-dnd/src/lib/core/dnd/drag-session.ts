@@ -4,7 +4,7 @@ export type DragSource = 'user' | 'programmatic'
 
 export interface DragSession {
 	itemId: string
-	itemData: Record<string, any> | undefined
+	itemData: Record<string, unknown> | undefined
 	element: HTMLElement
 	originContainerId: string
 	originPosition: number

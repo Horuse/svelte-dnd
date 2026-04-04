@@ -9,7 +9,7 @@
 	interface Props {
 		id: string
 		type?: string
-		data?: Record<string, any>
+		data?: Record<string, unknown>
 		disabled?: boolean
 		onDragStart?: (event: DndDragEvent) => void
 		onDrag?: (event: DndDragEvent) => void

@@ -11,7 +11,7 @@ interface DragHandlerCallbacks {
 interface DragHandlerOptions {
 	id: string
 	type: string | undefined
-	data: Record<string, any>
+	data: Record<string, unknown>
 	dragDelay: number
 	scrollCancelThreshold: number
 	dndController: DndController | undefined

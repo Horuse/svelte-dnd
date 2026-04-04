@@ -7,12 +7,12 @@ export interface DndDragEvent {
 	source: {
 		id: string
 		element: HTMLElement
-		data?: Record<string, any>
+		data?: Record<string, unknown>
 	}
 	target?: {
 		id: string
 		element: HTMLElement
-		data?: Record<string, any>
+		data?: Record<string, unknown>
 	} | null
 	transform: {
 		x: number
@@ -24,12 +24,12 @@ export interface DndDropEvent {
 	source: {
 		id: string
 		element: HTMLElement
-		data?: Record<string, any>
+		data?: Record<string, unknown>
 	}
 	target: {
 		id: string
 		element: HTMLElement
-		data?: Record<string, any>
+		data?: Record<string, unknown>
 	} | null
 }
 
@@ -56,7 +56,7 @@ export interface DropPreview {
 
 export interface GhostSnippetProps {
 	element: HTMLElement
-	data?: Record<string, any>
+	data?: Record<string, unknown>
 	itemId: string
 }
 
@@ -66,7 +66,7 @@ export type DragStartCallback = (itemId: string) => void
 export type DragEndCallback = (itemId: string) => void
 export type DropCallback = (
 	sourceId: string,
-	sourceData: any,
+	sourceData: Record<string, unknown> | undefined,
 	targetContainerId: string,
 	position: number
 ) => void

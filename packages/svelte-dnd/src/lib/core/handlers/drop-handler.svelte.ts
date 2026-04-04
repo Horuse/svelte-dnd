@@ -3,7 +3,7 @@ import type { DndController } from '../dnd/dnd-controller.svelte.js'
 
 interface DroppableHandlerOptions {
 	id: string
-	data: Record<string, any>
+	data: Record<string, unknown>
 	disabled: boolean
 	direction: DndDirection
 	mode: DndMode

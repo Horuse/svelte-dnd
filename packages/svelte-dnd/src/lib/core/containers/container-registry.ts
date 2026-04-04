@@ -7,7 +7,7 @@ interface ContainerEntry {
 
 export class ContainerRegistry {
 	private containers = new Map<string, ContainerEntry>()
-	private dataMap = new Map<string, Record<string, any>>()
+	private dataMap = new Map<string, Record<string, unknown>>()
 	private acceptsMap = new Map<string, string | string[]>()
 
 	registerContainer(id: string, element: HTMLElement, strategy: ContainerStrategy): void {
@@ -25,7 +25,7 @@ export class ContainerRegistry {
 		this.acceptsMap.clear()
 	}
 
-	registerData(id: string, data: Record<string, any>): void {
+	registerData(id: string, data: Record<string, unknown>): void {
 		this.dataMap.set(id, data)
 	}
 
@@ -38,7 +38,7 @@ export class ContainerRegistry {
 		return this.containers.get(id)?.strategy
 	}
 
-	getData(id: string): Record<string, any> | undefined {
+	getData(id: string): Record<string, unknown> | undefined {
 		return this.dataMap.get(id)
 	}
 

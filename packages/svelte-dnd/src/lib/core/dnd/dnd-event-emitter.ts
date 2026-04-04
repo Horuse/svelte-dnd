@@ -29,7 +29,7 @@ export class DndEventEmitter {
 		this.dragEndCallbacks.forEach(cb => cb(itemId))
 	}
 
-	notifyDrop(sourceId: string, sourceData: any, targetContainerId: string, position: number) {
+	notifyDrop(sourceId: string, sourceData: Record<string, unknown> | undefined, targetContainerId: string, position: number) {
 		this.dropCallbacks.forEach(cb => cb(sourceId, sourceData, targetContainerId, position))
 	}
 

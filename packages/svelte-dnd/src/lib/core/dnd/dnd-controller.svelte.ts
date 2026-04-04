@@ -121,7 +121,7 @@ export class DndController {
 		this.state.setSkipDropPreviewAnimation(value)
 	}
 
-	registerDroppableData(id: string, data: Record<string, any>) {
+	registerDroppableData(id: string, data: Record<string, unknown>) {
 		this.registry.registerData(id, data)
 	}
 
@@ -137,7 +137,7 @@ export class DndController {
 		element: HTMLElement,
 		itemId: string,
 		initialPosition: { x: number; y: number },
-		data?: Record<string, any>,
+		data?: Record<string, unknown>,
 		type?: string
 	) {
 		const rect = element.getBoundingClientRect()
@@ -190,7 +190,7 @@ export class DndController {
 
 	performDrop(
 		sourceId: string,
-		sourceData: any,
+		sourceData: Record<string, unknown> | undefined,
 		targetContainerId: string,
 		position: number
 	) {

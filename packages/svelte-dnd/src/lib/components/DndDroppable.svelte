@@ -8,7 +8,7 @@
 
 	interface Props {
 		id: string
-		data?: Record<string, any>
+		data?: Record<string, unknown>
 		disabled?: boolean
 		direction?: DndDirection
 		/**
