@@ -1,5 +1,6 @@
 import type { DndDirection, DndMode } from '../../types.js'
 import type { DndController } from '../dnd/dnd-controller.svelte.js'
+import { isBrowser } from '../utils/dom-helper.js'
 
 interface DroppableHandlerOptions {
 	id: string
@@ -58,6 +59,7 @@ export class DropHandler {
 	}
 
 	private setupScrollListeners() {
+		if (!isBrowser) return
 		const element = this.getElement()
 		let parent = element?.parentElement
 		while (parent) {
@@ -76,7 +78,7 @@ export class DropHandler {
 
 	private cleanupScrollListeners() {
 		this.scrollListeners.forEach((el) => el.removeEventListener('scroll', this.handleScroll))
-		window.removeEventListener('scroll', this.handleScroll)
+		if (isBrowser) window.removeEventListener('scroll', this.handleScroll)
 		this.scrollListeners = []
 		if (this.scrollTimeout) {
 			clearTimeout(this.scrollTimeout)

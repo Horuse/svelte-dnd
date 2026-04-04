@@ -1,6 +1,7 @@
 import type { DndDragEvent } from '../../types.js'
 import type { DndController } from '../dnd/dnd-controller.svelte.js'
 import { TouchScroll } from '../scroll/touch-scroll.js'
+import { isBrowser } from '../utils/dom-helper.js'
 
 interface DragHandlerCallbacks {
 	onDragStart?: (event: DndDragEvent) => void
@@ -241,12 +242,14 @@ export class DragHandler {
 	}
 
 	private addWindowListeners() {
+		if (!isBrowser) return
 		window.addEventListener('pointermove', this.handleWindowPointerMove)
 		window.addEventListener('pointerup', this.handleWindowPointerUp)
 		window.addEventListener('pointercancel', this.handleWindowPointerCancel)
 	}
 
 	private removeWindowListeners() {
+		if (!isBrowser) return
 		window.removeEventListener('pointermove', this.handleWindowPointerMove)
 		window.removeEventListener('pointerup', this.handleWindowPointerUp)
 		window.removeEventListener('pointercancel', this.handleWindowPointerCancel)

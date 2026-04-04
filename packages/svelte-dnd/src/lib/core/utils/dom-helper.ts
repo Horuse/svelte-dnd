@@ -3,6 +3,8 @@
  * Used internally by the library; exposed for advanced custom implementations.
  */
 
+export const isBrowser = typeof window !== 'undefined'
+
 // DOM selectors
 const SELECTORS = {
 	container: (id: string) => `[data-dnd-drop-id="${id}"]`,
