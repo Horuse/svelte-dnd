@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { setContext, onDestroy, untrack } from 'svelte'
 	import { DndController } from '../core/dnd/dnd-controller.svelte.js'
+	import type { PreviewConfig } from '../core/handlers/preview-handler.svelte.js'
+	import type { ScrollConfig } from '../core/scroll/scroll-controller.js'
 	import type { GhostSnippet } from '../types.js'
 	import type { Snippet } from 'svelte'
 
@@ -8,11 +10,13 @@
 		children: Snippet
 		controller?: DndController
 		ghost?: GhostSnippet
+		scrollConfig?: ScrollConfig
+		previewConfig?: PreviewConfig
 	}
 
 	let { children, ghost, ...rest }: Props = $props()
 
-	const dragController = untrack(() => rest.controller) ?? new DndController()
+	const dragController = untrack(() => rest.controller) ?? new DndController(untrack(() => rest.scrollConfig), untrack(() => rest.previewConfig))
 	const ownsController = untrack(() => !rest.controller)
 
 	let rotated = $state(false)

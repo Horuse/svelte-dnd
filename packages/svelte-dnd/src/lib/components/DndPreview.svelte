@@ -1,18 +1,24 @@
 <script lang="ts">
 	import { getContext, onDestroy } from 'svelte'
 	import type { DndController } from '../core/dnd/dnd-controller.svelte'
-	import { PreviewHandler } from '../core/handlers/preview-handler.svelte.js'
+	import { PreviewHandler, type PreviewConfig } from '../core/handlers/preview-handler.svelte.js'
 
 	interface Props {
 		containerId: string
 		position: number
 		class?: string
+		previewConfig?: PreviewConfig
 	}
 
-	let { containerId, position, class: className = '' }: Props = $props()
+	let { containerId, position, class: className = '', previewConfig }: Props = $props()
 
 	const dndManager = getContext<DndController>('dnd')
 	const handler = new PreviewHandler()
+
+	$effect(() => {
+		handler.showDelay = previewConfig?.showDelay ?? dndManager?.previewShowDelay ?? 300
+		handler.collapseDelay = previewConfig?.collapseDelay ?? dndManager?.previewCollapseDelay ?? 200
+	})
 
 	const visible = $derived(
 		!!dndManager?.dropPreview &&

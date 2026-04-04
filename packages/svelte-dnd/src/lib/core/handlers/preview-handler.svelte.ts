@@ -1,11 +1,21 @@
 import { untrack } from 'svelte'
 import type { DndController } from '../dnd/dnd-controller.svelte.js'
 
+export interface PreviewConfig {
+	/** Debounce delay (ms) before revealing the preview slot. Default: 300 */
+	showDelay?: number
+	/** Delay (ms) before collapsing the slot — should match --dnd-preview-duration-out. Default: 200 */
+	collapseDelay?: number
+}
+
 export class PreviewHandler {
 	height = $state(0)
 	width = $state(0)
 	revealed = $state(false)
 	instant = $state(false)
+
+	showDelay = 300
+	collapseDelay = 200
 
 	private showTimer: ReturnType<typeof setTimeout> | null = null
 	private collapseTimer: ReturnType<typeof setTimeout> | null = null
@@ -26,7 +36,7 @@ export class PreviewHandler {
 			this.showTimer = setTimeout(() => {
 				this.revealed = true
 				this.showTimer = null
-			}, 300)
+			}, this.showDelay)
 		}
 	}
 
@@ -46,7 +56,7 @@ export class PreviewHandler {
 				this.height = 0
 				this.width = 0
 				this.collapseTimer = null
-			}, 200)
+			}, this.collapseDelay)
 		}
 	}
 

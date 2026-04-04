@@ -7,6 +7,8 @@ Wraps your drag-and-drop area and provides the `DndController` context to all ch
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `controller` | `DndController` | auto-created | Optional pre-created controller instance |
+| `scrollConfig` | `ScrollConfig` | `{}` | Auto-scroll config — shorthand when you don't need a controller reference |
+| `previewConfig` | `PreviewConfig` | `{}` | Drop preview animation delays — shorthand when you don't need a controller reference |
 
 ### Snippets
 

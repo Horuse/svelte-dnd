@@ -1,0 +1,25 @@
+# Configs
+
+Live demo for `scrollConfig` and `previewConfig`. Use the sliders to tune behaviour in real time via `controller.setScrollConfig()` and `controller.setPreviewConfig()`.
+
+**Scroll config** controls auto-scroll near container edges:
+- **Scroll zone ratio** — fraction of container height/width that triggers scrolling
+- **Max speed** — maximum scroll speed in px/frame at 60 fps
+
+**Preview config** controls drop slot animation timing:
+- **Show delay** — debounce before the slot appears (helps avoid flickering on rapid moves)
+- **Collapse delay** — how long before the slot collapses after hiding; should match `--dnd-preview-duration-out`
+
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components';
+	import ConfigsExampleCode from "$lib/examples/ConfigsExample.svelte?raw";
+	import ConfigsExample from "$lib/examples/ConfigsExample.svelte";
+</script>
+
+<ComponentPreview
+	sources={[
+		{ name: "ConfigsExample.svelte", code: ConfigsExampleCode, language: "svelte" }
+	]}
+>
+	<ConfigsExample />
+</ComponentPreview>

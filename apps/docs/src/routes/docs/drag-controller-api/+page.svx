@@ -6,7 +6,7 @@ The `DndController` is the core engine that manages all drag-and-drop state and 
 
 ```ts
 import { DndController } from '@horuse/svelte-dnd';
-import type { ScrollConfig } from '@horuse/svelte-dnd';
+import type { ScrollConfig, PreviewConfig } from '@horuse/svelte-dnd';
 
 const controller = new DndController();
 
@@ -14,6 +14,12 @@ const controller = new DndController();
 const controller = new DndController({
     scrollZoneRatio: 0.2, // trigger zone = 20% of container height/width (default: 0.3)
     maxSpeed: 20,          // max scroll speed in px/frame at 60fps (default: 30)
+});
+
+// With custom preview config:
+const controller = new DndController({}, {
+    showDelay: 150,     // ms before preview slot appears (default: 300)
+    collapseDelay: 400, // ms before slot collapses — should match --dnd-preview-duration-out (default: 200)
 });
 ```
 
@@ -147,6 +153,20 @@ controller.endDrag(shouldAnimate?: boolean): void
 
 Ends the drag. When `shouldAnimate` is `true` (default), the ghost animates back to its origin.
 
+### setPreviewConfig
+
+```ts
+controller.setPreviewConfig(config: PreviewConfig): void
+```
+
+Updates preview animation delays at runtime.
+
+```ts
+controller.setPreviewConfig({ showDelay: 150, collapseDelay: 400 });
+```
+
+> **Note:** `collapseDelay` should match your `--dnd-preview-duration-out` CSS variable so the slot collapses only after the CSS transition finishes.
+
 ### setSkipDropPreviewAnimation
 
 ```ts
@@ -203,7 +223,16 @@ interface ScrollConfig {
     maxSpeed?: number;
 }
 
+interface PreviewConfig {
+    /** Debounce delay (ms) before revealing the preview slot. Default: 300 */
+    showDelay?: number;
+    /** Delay (ms) before collapsing the slot — should match --dnd-preview-duration-out. Default: 200 */
+    collapseDelay?: number;
+}
+
 type DndDirection = 'vertical' | 'horizontal' | 'grid';
 type DndMode = 'sortable' | 'target';
 type DragSource = 'user' | 'programmatic';
 ```
+
+See the [Configs](/examples/configs) example for a live demo of both `scrollConfig` and `previewConfig` sliders.

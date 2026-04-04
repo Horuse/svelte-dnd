@@ -1,5 +1,6 @@
 import { DndState } from './dnd-state.svelte.js'
 import { ScrollController, type ScrollConfig } from '../scroll/scroll-controller.js'
+import { type PreviewConfig } from '../handlers/preview-handler.svelte.js'
 import { DOMHelper } from '../utils/dom-helper.js'
 import { DndEventEmitter } from './dnd-event-emitter.js'
 import { TranslationEngine } from '../zones/translation-engine.svelte.js'
@@ -43,8 +44,12 @@ export class DndController {
 	private simulator = new DndSimulator(this.state, this.registry)
 	private hidePreviewTimeout: ReturnType<typeof setTimeout> | null = null
 	private scrollController: ScrollController
+	previewShowDelay = 300
+	previewCollapseDelay = 200
 
-	constructor(scrollConfig: ScrollConfig = {}) {
+	constructor(scrollConfig: ScrollConfig = {}, previewConfig: PreviewConfig = {}) {
+		if (previewConfig.showDelay !== undefined) this.previewShowDelay = previewConfig.showDelay
+		if (previewConfig.collapseDelay !== undefined) this.previewCollapseDelay = previewConfig.collapseDelay
 		this.scrollController = new ScrollController(this.state, {
 			...scrollConfig,
 			onZoneRefresh: () => this.eventEmitter.notifyZonesInvalidated(),
@@ -266,6 +271,12 @@ export class DndController {
 	/** Update auto-scroll config at runtime. Changes take effect on the next scroll tick. */
 	setScrollConfig(config: ScrollConfig) {
 		this.scrollController.updateConfig(config)
+	}
+
+	/** Update preview animation delays at runtime. */
+	setPreviewConfig(config: PreviewConfig) {
+		if (config.showDelay !== undefined) this.previewShowDelay = config.showDelay
+		if (config.collapseDelay !== undefined) this.previewCollapseDelay = config.collapseDelay
 	}
 
 	/** Toggle visual overlay of drop zones — useful for debugging layout. */

@@ -9,7 +9,8 @@
 		{ href: '/examples/horizontal', label: 'Horizontal List' },
 		{ href: '/examples/multi-container', label: 'Multi Container' },
 		{ href: '/examples/custom-ghost', label: 'Custom Ghost' },
-		{ href: '/examples/sortable-containers', label: 'Sortable Containers' }
+		{ href: '/examples/sortable-containers', label: 'Sortable Containers' },
+		{ href: '/examples/configs', label: 'Configs' }
 	];
 
 	type NavLink = {
