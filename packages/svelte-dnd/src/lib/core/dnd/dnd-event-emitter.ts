@@ -1,9 +1,10 @@
-import type { DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback } from '../../types.js'
+import type { DragStartCallback, DragEndCallback, DropCallback, DropCancelledCallback, ZonesInvalidatedCallback } from '../../types.js'
 
 export class DndEventEmitter {
 	private dragStartCallbacks = new Set<DragStartCallback>()
 	private dragEndCallbacks = new Set<DragEndCallback>()
 	private dropCallbacks = new Set<DropCallback>()
+	private dropCancelledCallbacks = new Set<DropCancelledCallback>()
 	private zonesInvalidatedCallbacks = new Set<ZonesInvalidatedCallback>()
 
 	onDragStart(cb: DragStartCallback) {
@@ -21,6 +22,11 @@ export class DndEventEmitter {
 		return () => this.dropCallbacks.delete(cb)
 	}
 
+	onDropCancelled(cb: DropCancelledCallback) {
+		this.dropCancelledCallbacks.add(cb)
+		return () => this.dropCancelledCallbacks.delete(cb)
+	}
+
 	notifyDragStart(itemId: string) {
 		this.dragStartCallbacks.forEach(cb => cb(itemId))
 	}
@@ -31,6 +37,10 @@ export class DndEventEmitter {
 
 	notifyDrop(sourceId: string, sourceData: Record<string, unknown> | undefined, targetContainerId: string, position: number) {
 		this.dropCallbacks.forEach(cb => cb(sourceId, sourceData, targetContainerId, position))
+	}
+
+	notifyDropCancelled(itemId: string) {
+		this.dropCancelledCallbacks.forEach(cb => cb(itemId))
 	}
 
 	onZonesInvalidated(cb: ZonesInvalidatedCallback) {
@@ -46,6 +56,7 @@ export class DndEventEmitter {
 		this.dragStartCallbacks.clear()
 		this.dragEndCallbacks.clear()
 		this.dropCallbacks.clear()
+		this.dropCancelledCallbacks.clear()
 		this.zonesInvalidatedCallbacks.clear()
 	}
 }

@@ -71,9 +71,21 @@ const unsubscribe = controller.onDragStart((itemId: string) => {
 
 ### onDragEnd
 
+Fired when a drag ends — regardless of whether it was dropped or cancelled.
+
 ```ts
 controller.onDragEnd((itemId: string) => {
     console.log('Stopped dragging:', itemId);
+});
+```
+
+### onDropCancelled
+
+Fired when a drag is cancelled — the ghost returns to origin and no drop occurred. Use this to distinguish a cancel from a successful drop.
+
+```ts
+controller.onDropCancelled((itemId: string) => {
+    console.log('Drag cancelled:', itemId);
 });
 ```
 
@@ -230,6 +242,10 @@ interface PreviewConfig {
     collapseDelay?: number;
 }
 
+type DragStartCallback = (itemId: string) => void;
+type DragEndCallback = (itemId: string) => void;
+type DropCancelledCallback = (itemId: string) => void;
+type DropCallback = (sourceId: string, sourceData: Record<string, unknown> | undefined, targetContainerId: string, position: number) => void;
 type DndDirection = 'vertical' | 'horizontal' | 'grid';
 type DndMode = 'sortable' | 'target';
 type DragSource = 'user' | 'programmatic';

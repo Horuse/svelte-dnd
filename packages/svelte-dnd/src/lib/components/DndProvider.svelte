@@ -21,6 +21,17 @@
 
 	let rotated = $state(false)
 
+	/**
+	 * Fallback ghost renderer — clones the dragged element's DOM via `cloneNode(true)`.
+	 *
+	 * Limitations: `cloneNode` copies the static DOM only. The following are NOT preserved:
+	 * - Svelte component state and reactivity
+	 * - Event listeners
+	 * - `<canvas>` content
+	 * - `<input>` / `<textarea>` `.value` (only the `value` attribute is cloned, not the live property)
+	 *
+	 * For anything beyond a static visual copy, use the `ghost` snippet instead.
+	 */
 	function cloneContent(node: HTMLElement, source: HTMLElement) {
 		const doClone = (src: HTMLElement) => {
 			node.replaceChildren(...Array.from(src.childNodes).map(n => n.cloneNode(true)))

@@ -14,9 +14,9 @@ import { GhostReturnStep } from '../animation/steps/ghost-return-step.js'
 import type { AnimationStep } from '../animation/steps/animation-step.js'
 import { DndSimulator } from './dnd-simulator.js'
 import type { DragSession } from './drag-session.js'
-import type { DropZone, DndDirection, DndMode, DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback, DropPreview } from '../../types.js'
+import type { DropZone, DndDirection, DndMode, DragStartCallback, DragEndCallback, DropCallback, DropCancelledCallback, ZonesInvalidatedCallback, DropPreview } from '../../types.js'
 
-export type { DragStartCallback, DragEndCallback, DropCallback, ZonesInvalidatedCallback } from '../../types.js'
+export type { DragStartCallback, DragEndCallback, DropCallback, DropCancelledCallback, ZonesInvalidatedCallback } from '../../types.js'
 
 /**
  * Central controller for drag-and-drop. Create one instance and pass it to
@@ -112,6 +112,9 @@ export class DndController {
 
 	/** Fired when a drag ends (drop or cancel). */
 	onDragEnd(cb: DragEndCallback)                   { return this.eventEmitter.onDragEnd(cb) }
+
+	/** Fired when a drag is cancelled (ghost returns to origin, no drop occurred). */
+	onDropCancelled(cb: DropCancelledCallback)        { return this.eventEmitter.onDropCancelled(cb) }
 
 	/**
 	 * Fired when an item is successfully dropped into a container.
@@ -226,6 +229,8 @@ export class DndController {
 	endDrag(shouldAnimate = true) {
 		const itemId = this.state.draggedItem
 		const session = this.state.session
+
+		if (itemId) this.eventEmitter.notifyDropCancelled(itemId)
 
 		if (shouldAnimate && session?.originContainerId) {
 			this.state.setDropPreview({
