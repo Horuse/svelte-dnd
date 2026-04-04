@@ -48,6 +48,22 @@
 
 	const dndController = getContext<DndController>('dnd')
 	const getContainerId = getContext<(() => string)>('dnd-container-id')
+	const positionRegistry = getContext<Map<number, string> | undefined>('dnd-position-registry')
+
+	$effect(() => {
+		if (!dndController?.debug) return
+		if (!Number.isInteger(position) || position < 0) {
+			console.warn(`[svelte-dnd] DndDraggable "${id}": invalid position ${position}. Must be a non-negative integer.`)
+		}
+		if (positionRegistry) {
+			const existing = positionRegistry.get(position)
+			if (existing !== undefined && existing !== id) {
+				console.warn(`[svelte-dnd] DndDraggable "${id}": duplicate position ${position} — already used by "${existing}". Reordering will be unpredictable.`)
+			}
+			positionRegistry.set(position, id)
+			return () => { if (positionRegistry.get(position) === id) positionRegistry.delete(position) }
+		}
+	})
 
 	let element = $state<HTMLElement | undefined>(undefined)
 

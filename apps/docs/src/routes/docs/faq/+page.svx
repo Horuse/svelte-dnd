@@ -168,11 +168,11 @@ See the [CSS Custom Properties & Classes](/docs/css-custom-props) page for the c
 
 ## How do I tune auto-scroll speed or zone size?
 
-Pass `ScrollConfig` to the `DndController` constructor, or call `setScrollConfig()` at any time:
+Pass `scroll` config to the `DndController` constructor, or call `setScrollConfig()` at any time:
 
 ```ts
 // at creation
-const controller = new DndController({ scrollZoneRatio: 0.2, maxSpeed: 15 });
+const controller = new DndController({ scroll: { scrollZoneRatio: 0.2, maxSpeed: 15 } });
 
 // or later
 controller.setScrollConfig({ maxSpeed: 50 });

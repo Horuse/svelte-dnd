@@ -1,6 +1,12 @@
 import { DndState } from './dnd-state.svelte.js'
 import { ScrollController, type ScrollConfig } from '../scroll/scroll-controller.js'
 import { type PreviewConfig } from '../handlers/preview-handler.svelte.js'
+
+export interface DndControllerConfig {
+	scroll?: ScrollConfig
+	preview?: PreviewConfig
+	debug?: boolean
+}
 import { DOMHelper } from '../utils/dom-helper.js'
 import { DndEventEmitter } from './dnd-event-emitter.js'
 import { TranslationEngine } from '../zones/translation-engine.svelte.js'
@@ -46,12 +52,14 @@ export class DndController {
 	private scrollController: ScrollController
 	previewShowDelay = 300
 	previewCollapseDelay = 200
+	debug = false
 
-	constructor(scrollConfig: ScrollConfig = {}, previewConfig: PreviewConfig = {}) {
-		if (previewConfig.showDelay !== undefined) this.previewShowDelay = previewConfig.showDelay
-		if (previewConfig.collapseDelay !== undefined) this.previewCollapseDelay = previewConfig.collapseDelay
+	constructor({ scroll = {}, preview = {}, debug = false }: DndControllerConfig = {}) {
+		this.debug = debug
+		if (preview.showDelay !== undefined) this.previewShowDelay = preview.showDelay
+		if (preview.collapseDelay !== undefined) this.previewCollapseDelay = preview.collapseDelay
 		this.scrollController = new ScrollController(this.state, {
-			...scrollConfig,
+			...scroll,
 			onZoneRefresh: () => this.eventEmitter.notifyZonesInvalidated(),
 			onMouseUpdate: (x, y) => this.updateMousePosition(x, y)
 		})
