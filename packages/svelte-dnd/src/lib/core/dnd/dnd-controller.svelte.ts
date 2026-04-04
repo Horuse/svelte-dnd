@@ -1,18 +1,20 @@
 import { DndState } from './dnd-state.svelte.js'
 import { ScrollController, type ScrollConfig } from '../scroll/scroll-controller.js'
 import { type PreviewConfig } from '../handlers/preview-handler.svelte.js'
-
-export interface DndControllerConfig {
-	scroll?: ScrollConfig
-	preview?: PreviewConfig
-	debug?: boolean
-}
 import { DOMHelper } from '../utils/dom-helper.js'
 import { DndEventEmitter } from './dnd-event-emitter.js'
 import { TranslationEngine } from '../zones/translation-engine.svelte.js'
 import { ContainerRegistry } from '../containers/container-registry.js'
 import { SortableContainerStrategy } from '../containers/strategies/sortable-container-strategy.js'
 import { TargetContainerStrategy } from '../containers/strategies/target-container-strategy.js'
+import type { ContainerStrategy } from '../containers/strategies/container-strategy.js'
+
+export interface DndControllerConfig {
+	scroll?: ScrollConfig
+	preview?: PreviewConfig
+	debug?: boolean
+	strategies?: ContainerStrategy[]
+}
 import { DropResolver } from '../zones/drop-resolver.js'
 import { AnimationPipeline } from '../animation/steps/animation-pipeline.js'
 import { GhostToTargetStep } from '../animation/steps/ghost-to-target-step.js'
@@ -41,8 +43,7 @@ export type { DragStartCallback, DragEndCallback, DropCallback, DropCancelledCal
 export class DndController {
 	private state = new DndState()
 	private registry = new ContainerRegistry()
-	private sortableStrategy = new SortableContainerStrategy(this.state)
-	private targetStrategy = new TargetContainerStrategy(this.state)
+	private strategyMap = new Map<string, ContainerStrategy>()
 	private eventEmitter = new DndEventEmitter()
 	private translationEngine = new TranslationEngine(this.state, this.registry)
 	private dropResolver = new DropResolver(this.state, this.registry)
@@ -54,10 +55,15 @@ export class DndController {
 	previewCollapseDelay = 200
 	debug = false
 
-	constructor({ scroll = {}, preview = {}, debug = false }: DndControllerConfig = {}) {
+	constructor({ scroll = {}, preview = {}, debug = false, strategies = [] }: DndControllerConfig = {}) {
 		this.debug = debug
 		if (preview.showDelay !== undefined) this.previewShowDelay = preview.showDelay
 		if (preview.collapseDelay !== undefined) this.previewCollapseDelay = preview.collapseDelay
+		this.strategyMap.set('sortable', new SortableContainerStrategy(this.state))
+		this.strategyMap.set('target', new TargetContainerStrategy(this.state))
+		for (const strategy of strategies) {
+			this.strategyMap.set(strategy.mode, strategy)
+		}
 		this.scrollController = new ScrollController(this.state, {
 			...scroll,
 			onZoneRefresh: () => this.eventEmitter.notifyZonesInvalidated(),
@@ -272,7 +278,7 @@ export class DndController {
 		direction: DndDirection = 'vertical',
 		mode: DndMode = 'sortable'
 	) {
-		const strategy = mode === 'target' ? this.targetStrategy : this.sortableStrategy
+		const strategy = this.strategyMap.get(mode) ?? this.strategyMap.get('sortable')!
 
 		this.registry.registerContainer(containerId, containerElement, strategy)
 
