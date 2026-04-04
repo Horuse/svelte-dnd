@@ -8,6 +8,7 @@
 
 	interface Props {
 		id: string
+		type?: string
 		data?: Record<string, any>
 		disabled?: boolean
 		onDragStart?: (event: DndDragEvent) => void
@@ -32,6 +33,7 @@
 
 	let {
 		id,
+		type = undefined,
 		data = {},
 		disabled = false,
 		class: className,
@@ -51,7 +53,7 @@
 
 	const handler = new DragHandler(
 		() => element,
-		() => ({ id, data, dragDelay, scrollCancelThreshold, dndController, callbacks: { onDragStart, onDrag, onDragEnd } })
+		() => ({ id, type, data, dragDelay, scrollCancelThreshold, dndController, callbacks: { onDragStart, onDrag, onDragEnd } })
 	)
 
 	const translate = $derived(dndController?.translations.get(id) ?? { x: 0, y: 0 })
@@ -75,6 +77,8 @@
 		class:dnd-draggable--disabled={disabled}
 		role="button"
 		tabindex={disabled ? -1 : 0}
+		aria-grabbed={isGhostActive}
+		aria-roledescription="draggable item"
 		data-dnd-drag-id={id}
 		data-dnd-draggable-item
 		style="transform: translate3d({translate.x}px, {translate.y}px, 0); transition: {isGhostActive || performingDrop ? 'none' : 'transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)'}"

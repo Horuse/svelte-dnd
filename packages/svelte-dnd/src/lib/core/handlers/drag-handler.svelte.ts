@@ -10,6 +10,7 @@ interface DragHandlerCallbacks {
 
 interface DragHandlerOptions {
 	id: string
+	type: string | undefined
 	data: Record<string, any>
 	dragDelay: number
 	scrollCancelThreshold: number
@@ -219,13 +220,13 @@ export class DragHandler {
 		}
 		this.addWindowListeners()
 
-		const { id, data, dndController, callbacks } = this.getOptions()
+		const { id, type, data, dndController, callbacks } = this.getOptions()
 		const initialTransform = {
 			x: clientX - this.dragOffset.x,
 			y: clientY - this.dragOffset.y
 		}
 
-		dndController?.startDrag(element, id, initialTransform, data)
+		dndController?.startDrag(element, id, initialTransform, data, type)
 		dndController?.updateMousePosition?.(clientX, clientY)
 
 		callbacks.onDragStart?.({

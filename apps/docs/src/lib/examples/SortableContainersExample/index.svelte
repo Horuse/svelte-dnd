@@ -38,7 +38,7 @@
 	controller.onDrop((sourceId: string, sourceData: any, targetContainerId: string, position: number) => {
 		if (targetContainerId === 'trash-zone') return
 
-		if (sourceData.type === 'column') {
+		if (columns.some((col) => col.id === sourceId)) {
 			const fromIndex = columns.findIndex((col) => col.id === sourceId);
 			if (fromIndex === -1) return;
 
@@ -127,18 +127,18 @@
 
 
 	<DndProvider {controller}>
-		<DndDroppable id="board" direction="horizontal" data={{ accepts: 'column' }} class="flex flex-row h-125 overflow-x-auto space-x-4 w-full">
+		<DndDroppable id="board" direction="horizontal" accepts="column" class="flex flex-row h-125 overflow-x-auto space-x-4 w-full">
 			{#each columns as column, colIndex (column.id)}
-				<DndDraggable class="h-full" id={column.id} data={{ type: 'column' }} position={colIndex}>
+				<DndDraggable class="h-full" id={column.id} type="column" position={colIndex}>
 					<div class="flex flex-col h-full shrink-0 w-72 bg-foreground border-2 border-primary rounded-2xl">
 						<h2 data-dnd-handle class="column-header text-lg p-4 font-semibold text-neutral-500 cursor-grab">
 							<span class="drag-handle">&#x2630;</span>
 							{column.title}
 						</h2>
 						<!-- svelte-ignore a11y_no_static_element_interactions -->
-						<DndDroppable id={column.id} direction="vertical" data={{ accepts: 'task' }} class="space-y-2 p-3 h-full overflow-auto border-t-2 border-primary pt-3">
+						<DndDroppable id={column.id} direction="vertical" accepts="task" class="space-y-2 p-3 h-full overflow-auto border-t-2 border-primary pt-3">
 							{#each column.tasks as task, taskIndex (task.id)}
-								<DndDraggable id={task.id} data={{ type: 'task', label: task.label, columnId: column.id }} position={taskIndex}>
+								<DndDraggable id={task.id} type="task" data={{ label: task.label, columnId: column.id }} position={taskIndex}>
 									<div class="drag-item px-4 gap-3">
 										<span class="truncate">{task.label}</span>
 										<button data-dnd-no-drag class="black-button" onclick={() => alert('Test')}>Alert</button>

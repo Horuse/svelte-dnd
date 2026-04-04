@@ -7,7 +7,8 @@ Defines a container that accepts draggable items. Automatically registers drop z
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `id` | `string` | **required** | Unique container identifier |
-| `data` | `Record<string, any>` | `{}` | Container data (supports `accepts` for type filtering) |
+| `data` | `Record<string, any>` | `{}` | Arbitrary container metadata passed to drop callbacks |
+| `accepts` | `string \| string[]` | `undefined` | Item type(s) this container accepts. If omitted, accepts everything. See [Type filtering](#type-filtering) |
 | `disabled` | `boolean` | `false` | Disables dropping when `true`. Also sets `opacity: 0.5; pointer-events: none` |
 | `direction` | `DndDirection` | `'vertical'` | Layout direction: `'vertical'` \| `'horizontal'` \| `'grid'` |
 | `mode` | `DndMode` | `'sortable'` | `'sortable'` — position-based drop zones with insert previews. `'target'` — single drop zone covering the whole container, no previews |
@@ -32,14 +33,22 @@ Defines a container that accepts draggable items. Automatically registers drop z
 
 ### Type filtering
 
-Use the `accepts` field in `data` to control which items can be dropped:
+Use the `accepts` prop to control which item types can be dropped into this container. Item types come from the `data.type` field of `DndDraggable`.
 
 ```svelte
 <!-- Only accepts items with data.type === 'task' -->
-<DndDroppable id="tasks" data={{ accepts: 'task' }}>
+<DndDroppable id="tasks" accepts="task">
 
 <!-- Accepts multiple types -->
-<DndDroppable id="mixed" data={{ accepts: ['task', 'card'] }}>
+<DndDroppable id="mixed" accepts={['task', 'card']}>
+```
+
+On the draggable side, set the `type` prop:
+
+```svelte
+<DndDraggable id={item.id} {position} type="task">
+  {item.label}
+</DndDraggable>
 ```
 
 ---

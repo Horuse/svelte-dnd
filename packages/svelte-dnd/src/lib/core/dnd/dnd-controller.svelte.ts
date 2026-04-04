@@ -125,6 +125,10 @@ export class DndController {
 		this.registry.registerData(id, data)
 	}
 
+	registerDroppableAccepts(id: string, accepts: string | string[] | undefined) {
+		this.registry.registerAccepts(id, accepts)
+	}
+
 	unregisterDroppableData(id: string) {
 		this.registry.unregisterContainer(id)
 	}
@@ -133,7 +137,8 @@ export class DndController {
 		element: HTMLElement,
 		itemId: string,
 		initialPosition: { x: number; y: number },
-		data?: Record<string, any>
+		data?: Record<string, any>,
+		type?: string
 	) {
 		const rect = element.getBoundingClientRect()
 
@@ -162,7 +167,7 @@ export class DndController {
 			dropPreview: null,
 			ghostSize: { width: element.offsetWidth, height: element.offsetHeight },
 			slotSize,
-			draggedItemType: data?.type ?? null,
+			draggedItemType: type ?? null,
 			source: 'user'
 		}
 
@@ -231,10 +236,6 @@ export class DndController {
 		} else {
 			this.finalizeDragEnd(itemId)
 		}
-
-		setTimeout(() => {
-			this.state.setSkipDropPreviewAnimation(false)
-		}, 100)
 	}
 
 	/**

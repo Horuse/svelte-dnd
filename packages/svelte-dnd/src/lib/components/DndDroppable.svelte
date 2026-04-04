@@ -24,6 +24,8 @@
 		 * - `undefined` (default) — center-point detection (current behaviour)
 		 */
 		overlap?: number | string
+		/** Item type(s) this container accepts. If omitted, accepts everything. */
+		accepts?: string | string[]
 		children: Snippet
 		class?: string
 	}
@@ -35,6 +37,7 @@
 		direction = 'vertical',
 		mode = 'sortable',
 		overlap = undefined,
+		accepts = undefined,
 		children,
 		class: className
 	}: Props = $props()
@@ -45,6 +48,10 @@
 
 	$effect(() => {
 		if (dndController) dndController.registerDroppableData(id, data)
+	})
+
+	$effect(() => {
+		if (dndController) dndController.registerDroppableAccepts(id, accepts)
 	})
 
 	const handler = new DropHandler(
@@ -76,6 +83,7 @@
 	bind:this={element}
 	class="dnd-droppable {className ?? ''}"
 	class:dnd-droppable--disabled={disabled}
+	aria-dropeffect={disabled ? 'none' : 'move'}
 	data-dnd-drop-id={id}
 	data-dnd-direction={direction}
 	data-dnd-mode={mode}

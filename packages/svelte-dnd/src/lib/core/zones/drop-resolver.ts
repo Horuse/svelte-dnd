@@ -49,9 +49,7 @@ export class DropResolver {
 		if (!draggedType) return zones
 
 		return zones.filter((zone) => {
-			const data = this.registry.getData(zone.containerId)
-			if (!data) return true
-			const accepts = data.accepts || data.type
+			const accepts = this.registry.getAccepts(zone.containerId)
 			if (!accepts) return true
 			if (Array.isArray(accepts)) return accepts.includes(draggedType)
 			return accepts === draggedType
