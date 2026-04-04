@@ -118,7 +118,11 @@ export class DragHandler {
 		}
 	}
 
-	handlePointerUp = (_e: PointerEvent) => {
+	handlePointerUp = (e: PointerEvent) => {
+		const element = this.getElement()
+		if (element?.hasPointerCapture(e.pointerId)) {
+			element.releasePointerCapture(e.pointerId)
+		}
 		if (this.touchScroll.isScrolling) this.touchScroll.end()
 		if (this.isPotentialDrag) {
 			this.cancelLongPress()
