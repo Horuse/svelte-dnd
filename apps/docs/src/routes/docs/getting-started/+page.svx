@@ -1,0 +1,88 @@
+---
+title: MDSVEX Structure Components
+name: Structure Components
+description: Reference samples for table and step-based components, including InstallationTabs.
+category: Reference
+order: 20
+---
+
+<script>
+    import InstallTabs from '$lib/components/InstallTabs.svelte'
+    import Step from '$lib/components/markdown/Step.svelte'
+    import Steps from '$lib/components/markdown/Steps.svelte'
+</script>
+
+# Getting Started
+
+## Installation
+
+<InstallTabs pkg="@horuse/svelte-dnd">
+bun add @horuse/svelte-dnd
+</InstallTabs>
+
+## Basic Example
+
+A minimal working drag-and-drop setup requires three components: `DndProvider`, `DndDroppable`, and `DndDraggable`. Drop previews are rendered automatically — no manual placement needed.
+
+```svelte
+<script lang="ts">
+    import {
+        DndProvider,
+        DndDroppable,
+        DndDraggable,
+        DndController
+    } from '@horuse/svelte-dnd';
+
+    let items = $state([
+        { id: '1', label: 'First item' },
+        { id: '2', label: 'Second item' },
+        { id: '3', label: 'Third item' }
+    ]);
+
+    const controller = new DndController();
+
+    controller.onDrop((sourceId, sourceData, targetContainerId, position) => {
+        const fromIndex = items.findIndex((item) => item.id === sourceId);
+        if (fromIndex === -1) return;
+
+        const updated = [...items];
+        const [moved] = updated.splice(fromIndex, 1);
+        updated.splice(position, 0, moved);
+        items = updated;
+    });
+</script>
+
+<DndProvider {controller}>
+    <DndDroppable id="list" direction="vertical">
+        {#each items as item, index (item.id)}
+            <DndDraggable id={item.id} position={index}>
+                {item.label}
+            </DndDraggable>
+        {/each}
+    </DndDroppable>
+</DndProvider>
+```
+
+## How It Works
+
+<Steps>
+	<Step title="DndProvider">
+		wraps your app and creates a `DndController` context.
+	</Step>
+
+	<Step title="DndDroppable">
+		defines a container where items can be dropped. Set `direction` to `"vertical"`, `"horizontal"`, or `"grid"`.
+	</Step>
+
+	<Step title="DndDraggable">
+		wraps each draggable item. Each must have a unique `id` and a `position` matching its index in the list.
+	</Step>
+
+	<Step>
+    	The dragged item is hidden automatically** — the `.dnd-draggable--dragging` class sets `opacity: 0` so only the ghost follows the cursor. No manual filtering needed.
+    </Step>
+
+    <Step>
+        Use `controller.onDrop()` to handle reordering logic when an item is dropped.
+    </Step>
+</Steps>
