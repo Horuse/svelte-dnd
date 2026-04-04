@@ -48,7 +48,7 @@ export class DndController {
 	private translationEngine = new TranslationEngine(this.state, this.registry)
 	private dropResolver = new DropResolver(this.state, this.registry)
 	private currentAnimation: AnimationPipeline | null = null
-	private simulator = new DndSimulator(this.state, this.registry)
+	private simulator!: DndSimulator
 	private hidePreviewTimeout: ReturnType<typeof setTimeout> | null = null
 	private scrollController: ScrollController
 	previewShowDelay = 300
@@ -64,6 +64,7 @@ export class DndController {
 		for (const strategy of strategies) {
 			this.strategyMap.set(strategy.mode, strategy)
 		}
+		this.simulator = new DndSimulator(this.state, this.registry, this.strategyMap)
 		this.scrollController = new ScrollController(this.state, {
 			...scroll,
 			onZoneRefresh: () => this.eventEmitter.notifyZonesInvalidated(),

@@ -1,5 +1,6 @@
 import type { DndState } from './dnd-state.svelte.js'
 import type { ContainerRegistry } from '../containers/container-registry.js'
+import type { ContainerStrategy } from '../containers/strategies/container-strategy.js'
 import type { DragSession } from './drag-session.js'
 import type { DropZone, DndMode } from '../../types.js'
 import { DOMHelper } from '../utils/dom-helper.js'
@@ -7,12 +8,12 @@ import { AnimationPipeline } from '../animation/steps/animation-pipeline.js'
 import { GhostToTargetStep } from '../animation/steps/ghost-to-target-step.js'
 import { GhostReturnStep } from '../animation/steps/ghost-return-step.js'
 import { SortableContainerStrategy } from '../containers/strategies/sortable-container-strategy.js'
-import { TargetContainerStrategy } from '../containers/strategies/target-container-strategy.js'
 
 export class DndSimulator {
 	constructor(
 		private state: DndState,
-		private registry: ContainerRegistry
+		private registry: ContainerRegistry,
+		private strategyMap: Map<string, ContainerStrategy> = new Map()
 	) {}
 
 	/**
@@ -146,9 +147,7 @@ export class DndSimulator {
 	private ensureContainerRegistered(containerId: string, container: HTMLElement): void {
 		if (this.registry.getStrategy(containerId)) return
 		const mode = (container.getAttribute('data-dnd-mode') ?? 'sortable') as DndMode
-		const strategy = mode === 'target'
-			? new TargetContainerStrategy(this.state)
-			: new SortableContainerStrategy(this.state)
+		const strategy = this.strategyMap.get(mode) ?? new SortableContainerStrategy(this.state)
 		this.registry.registerContainer(containerId, container, strategy)
 	}
 
