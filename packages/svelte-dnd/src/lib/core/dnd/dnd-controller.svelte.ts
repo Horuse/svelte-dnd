@@ -45,6 +45,7 @@ export class DndController {
 	private dropResolver = new DropResolver(this.state, this.registry)
 	private currentAnimation: AnimationPipeline | null = null
 	private simulator = new DndSimulator(this.state, this.registry)
+	private hidePreviewTimeout: ReturnType<typeof setTimeout> | null = null
 
 	// --- Reactive state (read-only) ---
 
@@ -323,7 +324,9 @@ export class DndController {
 			const current = this.state.dropPreview
 			if (current?.visible) {
 				this.state.setDropPreview({ ...current, visible: false })
-				setTimeout(() => {
+				if (this.hidePreviewTimeout) clearTimeout(this.hidePreviewTimeout)
+				this.hidePreviewTimeout = setTimeout(() => {
+					this.hidePreviewTimeout = null
 					if (this.state.dropPreview && !this.state.dropPreview.visible) {
 						this.state.setDropPreview(null)
 					}
