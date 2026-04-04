@@ -162,6 +162,11 @@ export class DndController {
 		this.registry.unregisterContainer(id)
 	}
 
+	unregisterContainer(id: string) {
+		this.registry.unregisterContainer(id)
+		this.state.setDropZones(this.state.zones.filter((z) => z.containerId !== id))
+	}
+
 	startDrag(
 		element: HTMLElement,
 		itemId: string,
@@ -279,7 +284,11 @@ export class DndController {
 		direction: DndDirection = 'vertical',
 		mode: DndMode = 'sortable'
 	) {
-		const strategy = this.strategyMap.get(mode) ?? this.strategyMap.get('sortable')!
+		const strategy = this.strategyMap.get(mode) ?? (
+			this.debug && !['sortable', 'target'].includes(mode) &&
+				console.warn(`[svelte-dnd] Unknown mode "${mode}", falling back to "sortable". Did you forget to register a strategy?`),
+			this.strategyMap.get('sortable')!
+		)
 
 		this.registry.registerContainer(containerId, containerElement, strategy)
 

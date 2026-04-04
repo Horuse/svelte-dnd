@@ -90,6 +90,6 @@ export class DropHandler {
 		this.unsubscribeZonesInvalidated?.()
 		this.unsubscribeDragEnd?.()
 		const { id, dndController } = this.getOptions()
-		dndController?.unregisterDroppableData(id)
+		dndController?.unregisterContainer(id)
 	}
 }

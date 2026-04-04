@@ -6,8 +6,7 @@ Wraps your drag-and-drop area and provides the `DndController` context to all ch
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `controller` | `DndController` | auto-created | Optional pre-created controller instance |
-| `config` | `DndControllerConfig` | `{}` | Controller config — shorthand when you don't need a controller reference |
+| `controller` | `DndController` | auto-created | Optional pre-created controller instance. Configure it via its constructor — see [DndController API](/docs/drag-controller-api) |
 
 ### Snippets
 

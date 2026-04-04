@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { setContext, onDestroy, untrack } from 'svelte'
-	import { DndController, type DndControllerConfig } from '../core/dnd/dnd-controller.svelte.js'
+	import { DndController } from '../core/dnd/dnd-controller.svelte.js'
 	import type { GhostSnippet } from '../types.js'
 	import type { Snippet } from 'svelte'
 
@@ -8,12 +8,11 @@
 		children: Snippet
 		controller?: DndController
 		ghost?: GhostSnippet
-		config?: DndControllerConfig
 	}
 
 	let { children, ghost, ...rest }: Props = $props()
 
-	const dragController = untrack(() => rest.controller) ?? new DndController(untrack(() => rest.config))
+	const dragController = untrack(() => rest.controller) ?? new DndController()
 	const ownsController = untrack(() => !rest.controller)
 
 	let rotated = $state(false)

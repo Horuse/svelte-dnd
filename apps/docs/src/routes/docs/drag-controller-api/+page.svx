@@ -217,7 +217,7 @@ These methods are used internally by `DndDroppable` but can be called directly f
 |--------|-------------|
 | `controller.refreshContainerZones(containerId, element, direction?, mode?)` | Recalculate and register drop zones for a container |
 | `controller.registerDroppableData(id, data)` | Register container data |
-| `controller.unregisterDroppableData(id)` | Unregister container data |
+| `controller.unregisterContainer(id)` | Unregister container data and remove its drop zones |
 
 ## Types
 
