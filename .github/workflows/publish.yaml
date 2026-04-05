@@ -24,6 +24,11 @@ jobs:
               uses: oven-sh/setup-bun@v2
 
             - run: bun ci
-            - run: bun run build --if-present
-            - run: bunx npm publish --provenance
+            - run: bun run build
+            - run: |
+                TAG=""
+                if [[ "$GITHUB_REF_NAME" == *"-beta"* ]]; then TAG="--tag beta"; fi
+                if [[ "$GITHUB_REF_NAME" == *"-alpha"* ]]; then TAG="--tag alpha"; fi
+                if [[ "$GITHUB_REF_NAME" == *"-rc"* ]]; then TAG="--tag rc"; fi
+                bunx npm publish --provenance $TAG
               working-directory: packages/svelte-dnd
