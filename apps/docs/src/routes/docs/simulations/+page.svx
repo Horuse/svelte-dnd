@@ -1,3 +1,8 @@
+---
+title: Simulations
+description: Programmatically trigger drag animations with DndSimulator for undo/redo, onboarding, or demo sequences.
+---
+
 # Simulations
 
 The `DndSimulator` lets you trigger drag animations programmatically — without any user interaction and without firing drop events. Useful for undo/redo flows, onboarding tutorials, or demo sequences.

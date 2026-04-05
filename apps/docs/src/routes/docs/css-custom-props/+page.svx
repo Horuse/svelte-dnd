@@ -1,3 +1,8 @@
+---
+title: CSS Custom Properties & Classes
+description: Reference for all --dnd-* CSS custom properties and CSS classes used by the library.
+---
+
 # CSS Custom Properties & Classes
 
 All `--dnd-*` CSS custom properties can be set on any ancestor element to customize the look and feel of the drag-and-drop components.

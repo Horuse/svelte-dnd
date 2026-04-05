@@ -1,3 +1,8 @@
+---
+title: Custom Ghost
+description: Example combining a custom ghost snippet with scoped preview styling via CSS custom properties.
+---
+
 # Custom Ghost & Preview Styling
 
 This example combines two features: a **custom ghost** snippet and **scoped preview styling** via CSS custom properties.

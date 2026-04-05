@@ -1,3 +1,8 @@
+---
+title: DndController API
+description: Full API reference for DndController — reactive getters, event callbacks, methods, and types.
+---
+
 # DndController API
 
 The `DndController` is the core engine that manages all drag-and-drop state and logic. You can create one explicitly or let `DndProvider` create one automatically.
@@ -45,7 +50,7 @@ All getters are Svelte 5 reactive (`$state` / `$derived` internally).
 | `element` | `HTMLElement \| null` | The DOM element being dragged |
 | `transform` | `{ x: number; y: number } \| null` | Current ghost position |
 | `draggedItem` | `string \| null` | ID of the item being dragged |
-| `draggedType` | `string \| null` | Type of the dragged item (from `data.type`) |
+| `draggedType` | `string \| null` | Type of the dragged item (from the `type` prop on `DndDraggable`) |
 | `draggedItemData` | `Record<string, unknown> \| undefined` | Data attached to the dragged item |
 | `size` | `{ width: number; height: number } \| null` | Size of the dragged element |
 | `animatingReturn` | `boolean` | Whether the ghost is animating back to origin |
@@ -221,6 +226,8 @@ These methods are used internally by `DndDroppable` but can be called directly f
 
 ## Types
 
+All types below are exported from `@horuse/svelte-dnd`.
+
 ```ts
 interface DropZone {
     containerId: string;
@@ -230,22 +237,29 @@ interface DropZone {
     rect: { x: number; y: number; width: number; height: number };
 }
 
-interface DndControllerConfig {
-    scroll?: {
-        /** Fraction of container size that triggers auto-scroll. Default: 0.3 */
-        scrollZoneRatio?: number;
-        /** Maximum scroll speed in px/frame at 60fps. Default: 30 */
-        maxSpeed?: number;
-    };
-    preview?: {
-        /** Debounce delay (ms) before revealing the preview slot. Default: 300 */
-        showDelay?: number;
-        /** Delay (ms) before collapsing the slot — should match --dnd-preview-duration-out. Default: 200 */
-        collapseDelay?: number;
-    };
-    /** Enable position validation warnings. Default: false */
-    debug?: boolean;
+interface ScrollConfig {
+    /** Fraction of container size that triggers auto-scroll. Default: 0.3 */
+    scrollZoneRatio?: number;
+    /** Maximum scroll speed in px/frame at 60fps. Default: 30 */
+    maxSpeed?: number;
 }
+
+interface PreviewConfig {
+    /** Debounce delay (ms) before revealing the preview slot. Default: 300 */
+    showDelay?: number;
+    /** Delay (ms) before collapsing the slot — should match --dnd-preview-duration-out. Default: 200 */
+    collapseDelay?: number;
+}
+
+interface DndControllerConfig {
+    scroll?: ScrollConfig;
+    preview?: PreviewConfig;
+    /** Enable dev warnings (unknown strategy mode, etc.). Default: false */
+    debug?: boolean;
+    strategies?: (ContainerStrategy | StrategyFactory)[];
+}
+
+type StrategyFactory = (state: DndState) => ContainerStrategy;
 
 type DragStartCallback = (itemId: string) => void;
 type DragEndCallback = (itemId: string) => void;
@@ -262,36 +276,40 @@ See the [Configs](/examples/configs) example for a live demo of both `scroll` an
 
 You can replace or extend the built-in `'sortable'` and `'target'` strategies, or add entirely new modes by implementing the `ContainerStrategy` interface.
 
+The built-in strategies (`SortableContainerStrategy`, `TargetContainerStrategy`) receive `DndState` in their constructor. Since `DndState` is created inside `DndController`, pass a **factory function** when your strategy needs it — the controller will call it with the internal state:
+
 ```ts
 import {
     DndController,
+    SortableContainerStrategy,
     type ContainerStrategy,
+    type StrategyFactory,
     type DndState,
+    type DropZone,
+    type DndMode,
 } from '@horuse/svelte-dnd';
-import type { DropZone, DndMode } from '@horuse/svelte-dnd';
 
-class MasonryStrategy implements ContainerStrategy {
-    readonly mode: DndMode = 'masonry'
+class MasonryStrategy extends SortableContainerStrategy {
+    override readonly mode: DndMode = 'masonry'
 
-    calculateDropZones(containerId, container, session): DropZone[] {
-        // return custom drop zones
-    }
-
-    getTranslations(containerId, container, session) {
-        return new Map() // or custom item translations
-    }
-
-    getDropAnimation(session, targetZone) {
-        // return an AnimationStep
-    }
-
-    getReturnAnimation(session) {
-        // return an AnimationStep
+    override calculateDropZones(containerId: string, container: HTMLElement, session): DropZone[] {
+        // your masonry-specific zone calculation
+        return []
     }
 }
 
+const masonryFactory: StrategyFactory = (state) => new MasonryStrategy(state)
+
 const controller = new DndController({
-    strategies: [new MasonryStrategy()]
+    strategies: [masonryFactory]
+})
+```
+
+If your strategy doesn't need `DndState` (e.g. it only overrides `calculateDropZones` and delegates animations elsewhere), you can pass a plain instance directly:
+
+```ts
+const controller = new DndController({
+    strategies: [new SimpleStrategy()]
 })
 ```
 

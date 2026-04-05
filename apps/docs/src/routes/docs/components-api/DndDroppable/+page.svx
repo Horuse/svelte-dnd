@@ -1,3 +1,8 @@
+---
+title: DndDroppable
+description: API reference for the DndDroppable and DndPreview components — props, direction, mode, and type filtering.
+---
+
 # DndDroppable
 
 Defines a container that accepts draggable items. Automatically registers drop zones and renders a tail preview (drop after the last item) in `sortable` mode.

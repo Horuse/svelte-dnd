@@ -1,3 +1,8 @@
+---
+title: DndProvider
+description: API reference for the DndProvider component — props, ghost snippet, and CSS variables.
+---
+
 # DndProvider
 
 Wraps your drag-and-drop area and provides the `DndController` context to all child components.

@@ -1,3 +1,8 @@
+---
+title: HTML Attributes
+description: Reference for all data-dnd-* HTML attributes set and consumed by the library.
+---
+
 # HTML Attributes
 
 The library sets these attributes automatically — you don't need to add them manually. However, knowing them is useful for CSS targeting and debugging.

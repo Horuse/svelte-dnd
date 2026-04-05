@@ -1,3 +1,8 @@
+---
+title: Configs
+description: Live demo for tuning scroll and preview config at runtime via setScrollConfig and setPreviewConfig.
+---
+
 # Configs
 
 Live demo for `scrollConfig` and `previewConfig`. Use the sliders to tune behaviour in real time via `controller.setScrollConfig()` and `controller.setPreviewConfig()`.

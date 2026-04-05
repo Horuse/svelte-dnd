@@ -1,3 +1,8 @@
+---
+title: Vertical List
+description: Simple vertical sortable list demonstrating auto-scroll with 50 items.
+---
+
 # Vertical List
 
 The simplest setup — a single `DndDroppable` with `direction="vertical"` (the default).

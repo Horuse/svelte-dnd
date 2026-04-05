@@ -10,8 +10,8 @@ A drag-and-drop library for Svelte 5 with animated drop previews, auto-scroll, a
 ## Features
 
 - Vertical, horizontal layouts
-- Pointer & touch support - works seamlessly on mobile devices
-- Animated drop previews that follow the dragged item
+- Pointer & touch support — works seamlessly on mobile devices
+- Animated drop previews rendered automatically
 - Auto-scroll when dragging near container edges
 - Move items between multiple containers (kanban-style)
 - Custom ghost element via Svelte snippets
@@ -25,7 +25,7 @@ npm install @horuse/svelte-dnd
 
 ## Basic Example
 
-A minimal working drag-and-drop setup requires four components: `DndProvider`, `DndDroppable`, `DndDraggable`, and `DndPreview`.
+A minimal working drag-and-drop setup requires three components: `DndProvider`, `DndDroppable`, and `DndDraggable`. Drop previews are rendered automatically — no manual placement needed.
 
 ```svelte
 <script lang="ts">
@@ -33,10 +33,8 @@ A minimal working drag-and-drop setup requires four components: `DndProvider`, `
         DndProvider,
         DndDroppable,
         DndDraggable,
-        DndPreview,
-        DragController
+        DndController
     } from '@horuse/svelte-dnd';
-    import { onDestroy } from 'svelte';
 
     let items = $state([
         { id: '1', label: 'First item' },
@@ -44,21 +42,7 @@ A minimal working drag-and-drop setup requires four components: `DndProvider`, `
         { id: '3', label: 'Third item' }
     ]);
 
-    const controller = new DragController();
-    const dropPreview = $derived(controller.dropPreview);
-
-    // Hide the dragged item from the list during drag
-    let hiddenId = $state<string | null>(null);
-    const visibleItems = $derived(
-        items.filter((item) => item.id !== hiddenId)
-    );
-
-    const unsubStart = controller.onDragStart((id) => {
-        hiddenId = id;
-    });
-    const unsubEnd = controller.onDragEnd(() => {
-        hiddenId = null;
-    });
+    const controller = new DndController();
 
     controller.onDrop((sourceId, sourceData, targetContainerId, position) => {
         const fromIndex = items.findIndex((item) => item.id === sourceId);
@@ -69,46 +53,26 @@ A minimal working drag-and-drop setup requires four components: `DndProvider`, `
         updated.splice(position, 0, moved);
         items = updated;
     });
-
-    onDestroy(() => {
-        unsubStart();
-        unsubEnd();
-    });
 </script>
 
 <DndProvider {controller}>
     <DndDroppable id="list" direction="vertical">
-        {#each visibleItems as item, index (item.id)}
-            <DndPreview
-                containerId="list"
-                position={index}
-                show={dropPreview?.containerId === 'list'
-                && dropPreview?.position === index}
-            />
-
-            <DndDraggable id={item.id}>
+        {#each items as item, index (item.id)}
+            <DndDraggable id={item.id} position={index}>
                 {item.label}
             </DndDraggable>
         {/each}
-
-        <DndPreview
-            containerId="list"
-            position={visibleItems.length}
-            show={dropPreview?.containerId === 'list'
-            && dropPreview?.position === visibleItems.length}
-        />
     </DndDroppable>
 </DndProvider>
 ```
 
 ## How It Works
 
-1. **DndProvider** wraps your app and creates a `DragController` context.
+1. **DndProvider** wraps your app and provides the `DndController` context to all child components.
 2. **DndDroppable** defines a container where items can be dropped. Set `direction` to `"vertical"` or `"horizontal"`.
-3. **DndDraggable** wraps each draggable item. Each must have a unique `id`.
-4. **DndPreview** renders a placeholder at each potential drop position. Place one before each item and one after the last item.
-5. **Hide the dragged item** — subscribe to `onDragStart` / `onDragEnd` and filter out the dragged item from the rendered list. This removes the original element from the DOM flow so only the ghost follows the cursor.
-6. Use `controller.onDrop()` to handle reordering logic when an item is dropped.
+3. **DndDraggable** wraps each draggable item. Each must have a unique `id` and a `position` matching its index in the list.
+4. **The dragged item is hidden automatically** — the `.dnd-draggable--dragging` class sets `opacity: 0` so only the ghost follows the cursor. No manual filtering needed.
+5. Use `controller.onDrop()` to handle reordering logic when an item is dropped.
 
 ## Documentation
 

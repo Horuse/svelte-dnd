@@ -9,11 +9,13 @@ import { SortableContainerStrategy } from '../containers/strategies/sortable-con
 import { TargetContainerStrategy } from '../containers/strategies/target-container-strategy.js'
 import type { ContainerStrategy } from '../containers/strategies/container-strategy.js'
 
+export type StrategyFactory = (state: DndState) => ContainerStrategy
+
 export interface DndControllerConfig {
 	scroll?: ScrollConfig
 	preview?: PreviewConfig
 	debug?: boolean
-	strategies?: ContainerStrategy[]
+	strategies?: (ContainerStrategy | StrategyFactory)[]
 }
 import { DropResolver } from '../zones/drop-resolver.js'
 import { AnimationPipeline } from '../animation/steps/animation-pipeline.js'
@@ -61,7 +63,8 @@ export class DndController {
 		if (preview.collapseDelay !== undefined) this.previewCollapseDelay = preview.collapseDelay
 		this.strategyMap.set('sortable', new SortableContainerStrategy(this.state))
 		this.strategyMap.set('target', new TargetContainerStrategy(this.state))
-		for (const strategy of strategies) {
+		for (const entry of strategies) {
+			const strategy = typeof entry === 'function' ? entry(this.state) : entry
 			this.strategyMap.set(strategy.mode, strategy)
 		}
 		this.simulator = new DndSimulator(this.state, this.registry, this.strategyMap)

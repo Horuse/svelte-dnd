@@ -22,3 +22,6 @@ export { default as Th } from './Th.svelte';
 export { default as Thead } from './Thead.svelte';
 export { default as Tr } from './Tr.svelte';
 export { default as UnorderedList } from './UnorderedList.svelte';
+
+export { default as Warning } from './Warning.svelte';
+export { default as Info } from './Info.svelte';

@@ -1,3 +1,8 @@
+---
+title: Horizontal List
+description: Horizontal sortable list using direction="horizontal" on DndDroppable.
+---
+
 # Horizontal List
 
 Set `direction="horizontal"` on both `DndDroppable` and `DndPreview`.

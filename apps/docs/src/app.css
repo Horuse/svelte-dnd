@@ -152,6 +152,19 @@
             @apply bg-primary-hover border-primary-hover-border
         }
     }
+
+
+    .warning-block {
+        @apply text-sm flex flex-col dark:border-amber-500/20 dark:text-amber-500 border-amber-500/50 border-dashed border gap-2 bg-amber-500/10 p-4 rounded-xl text-amber-500;
+    }
+
+    .info-block {
+        @apply text-sm flex flex-col dark:border-blue-500/20 border-blue-500/50 border-dashed border gap-2 bg-blue-500/10 p-4 rounded-xl text-blue-500;
+    }
+
+    .warning-block a {
+        @apply underline underline-offset-2 hover:text-amber-600;
+    }
 }
 
 .prose {

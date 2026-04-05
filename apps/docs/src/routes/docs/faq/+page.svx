@@ -1,3 +1,8 @@
+---
+title: FAQ
+description: Common questions and answers about @horuse/svelte-dnd usage, configuration, and known limitations.
+---
+
 # FAQ
 
 Common questions
@@ -9,7 +14,7 @@ Common questions
 Add `data-dnd-no-drag` attribute to the element so that it behaves as usual and does not start dragging the element.
 
 ```svelte
-<DndDraggable class="drag-item" id={task.id} position={index} data={{ type: 'task' }}>
+<DndDraggable id={task.id} position={index} type="task">
     <button data-dnd-no-drag onclick={() => alert("Test")}>Alert</button>
     {task.label}
 </DndDraggable>
@@ -44,7 +49,7 @@ Multiple handles are supported — just add the attribute to each element:
 
 Auto-scroll activates for any element that has the `data-dnd-scroll` attribute **and** `overflow: auto` or `overflow: scroll`, when the pointer is near its edge during a drag.
 
-! `DndDroppable` adds `data-dnd-scroll` automatically, so its own scrolling works out of the box.
+> `DndDroppable` adds `data-dnd-scroll` automatically, so its own scrolling works out of the box.
 
 If you have an **external** scrollable wrapper around several droppables (e.g. a horizontal kanban board), add `data-dnd-scroll` manually:
 

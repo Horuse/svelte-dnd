@@ -1,24 +1,26 @@
 ---
-title: MDSVEX Structure Components
-name: Structure Components
-description: Reference samples for table and step-based components, including InstallationTabs.
-category: Reference
-order: 20
+title: Getting Started
+description: Installation and basic setup of @horuse/svelte-dnd
 ---
 
 <script>
     import InstallTabs from '$lib/components/InstallTabs.svelte'
     import Step from '$lib/components/markdown/Step.svelte'
     import Steps from '$lib/components/markdown/Steps.svelte'
+     import Warning from '$lib/components/markdown/Warning.svelte'
 </script>
 
 # Getting Started
 
 ## Installation
 
-<InstallTabs pkg="@horuse/svelte-dnd">
-bun add @horuse/svelte-dnd
+<InstallTabs pkg="@horuse/svelte-dnd@1.0.0-beta.1">
+bun add @horuse/svelte-dnd@1.0.0-beta.1
 </InstallTabs>
+
+<Warning>
+This is a beta release. The API is unstable and may change significantly between versions.
+</Warning>
 
 ## Basic Example
 
@@ -71,7 +73,7 @@ A minimal working drag-and-drop setup requires three components: `DndProvider`, 
 	</Step>
 
 	<Step title="DndDroppable">
-		defines a container where items can be dropped. Set `direction` to `"vertical"`, `"horizontal"`, or `"grid"`.
+		defines a container where items can be dropped. Set `direction` to `"vertical"`, `"horizontal"`.
 	</Step>
 
 	<Step title="DndDraggable">
@@ -79,7 +81,7 @@ A minimal working drag-and-drop setup requires three components: `DndProvider`, 
 	</Step>
 
 	<Step>
-    	The dragged item is hidden automatically** — the `.dnd-draggable--dragging` class sets `opacity: 0` so only the ghost follows the cursor. No manual filtering needed.
+    	The dragged item is hidden automatically — the `.dnd-draggable--dragging` class sets `opacity: 0` so only the ghost follows the cursor. No manual filtering needed.
     </Step>
 
     <Step>

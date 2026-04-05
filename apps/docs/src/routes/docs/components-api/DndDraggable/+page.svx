@@ -1,3 +1,8 @@
+---
+title: DndDraggable
+description: API reference for the DndDraggable component — props, events, CSS variables, and drag handle attributes.
+---
+
 # DndDraggable
 
 Wraps a single draggable element. Must be inside a `DndDroppable` which must be inside a `DndProvider`.
