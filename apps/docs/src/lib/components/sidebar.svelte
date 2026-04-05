@@ -35,6 +35,13 @@
 		{ href: '/docs/simulations', label: 'Simulations' },
 		{ href: '/docs/html-attributes', label: 'HTML Attributes' },
 		{ href: '/docs/faq', label: 'FAQ' },
+	{
+		href: '/docs/migrations',
+		label: 'Migrations',
+		children: [
+			{ href: '/docs/migrations/v0.3.0', label: 'From v0.3.0' },
+		]
+	},
 	];
 
 	function isActive(href: string): boolean {

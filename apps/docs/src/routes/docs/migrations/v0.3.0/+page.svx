@@ -1,0 +1,170 @@
+---
+title: Migrating from v0.3.0
+description: How to migrate to @horuse/svelte-dnd v1 from v0.3.0
+---
+
+<script>
+    import Warning from '$lib/components/markdown/Warning.svelte'
+</script>
+
+# Migrating from v0.3.0
+
+<Warning>
+v1 is a complete rewrite. There is no incremental upgrade path — you will need to rewrite your DnD setup using the new API.
+</Warning>
+
+## The biggest change: no manual boilerplate
+
+In v0.3.0 a basic sortable list required significant boilerplate:
+
+```svelte
+<!-- v0.3.0 -->
+<script>
+    const controller = new DragController();
+    const dropPreview = $derived(controller.dropPreview);
+
+    let hiddenId = $state(null);
+    const visibleItems = $derived(items.filter(i => i.id !== hiddenId));
+
+    const unsubStart = controller.onDragStart((id) => { hiddenId = id });
+    const unsubEnd = controller.onDragEnd(() => { hiddenId = null });
+
+    onDestroy(() => { unsubStart(); unsubEnd(); });
+</script>
+
+<DndProvider {controller}>
+    <DndDroppable id="list" direction="vertical">
+        {#each visibleItems as item, index (item.id)}
+            <DndPreview
+                containerId="list"
+                position={index}
+                show={dropPreview?.containerId === 'list' && dropPreview?.position === index}
+            />
+            <DndDraggable id={item.id}>{item.label}</DndDraggable>
+        {/each}
+        <DndPreview
+            containerId="list"
+            position={visibleItems.length}
+            show={dropPreview?.containerId === 'list' && dropPreview?.position === visibleItems.length}
+        />
+    </DndDroppable>
+</DndProvider>
+```
+
+In v1 all of this is handled automatically:
+
+```svelte
+<!-- v1 -->
+<script>
+    const controller = new DndController();
+    controller.onDrop((sourceId, _, targetContainerId, position) => { /* reorder */ });
+</script>
+
+<DndProvider {controller}>
+    <DndDroppable id="list" direction="vertical">
+        {#each items as item, index (item.id)}
+            <DndDraggable id={item.id} position={index}>{item.label}</DndDraggable>
+        {/each}
+    </DndDroppable>
+</DndProvider>
+```
+
+- `DndPreview` is rendered automatically — remove all manual placements
+- The dragged item is hidden automatically via CSS — remove `hiddenId` / `visibleItems`
+- No `onDestroy` unsubscribe needed — callbacks are cleaned up automatically
+
+## Controller rename
+
+`DragController` → `DndController`.
+
+```ts
+// before
+import { DragController } from '@horuse/svelte-dnd'
+const controller = new DragController()
+
+// after
+import { DndController } from '@horuse/svelte-dnd'
+const controller = new DndController()
+```
+
+v1 also accepts an optional config object:
+
+```ts
+const controller = new DndController({
+    scroll: { zoneRatio: 0.3, maxSpeed: 30 },
+    preview: { showDelay: 300, collapseDelay: 200 },
+    debug: false
+})
+```
+
+## DndDraggable
+
+`position` is now a **required** prop. Pass the item's index explicitly.
+
+```svelte
+<!-- before -->
+<DndDraggable id={item.id}>
+
+<!-- after -->
+<DndDraggable id={item.id} position={index}>
+```
+
+New optional props: `type`, `dragDelay`, `scrollCancelThreshold`.
+
+## DndDroppable
+
+Type filtering moved from `data` to dedicated props:
+
+```svelte
+<!-- before -->
+<DndDraggable id={item.id} data={{ type: 'task' }}>
+<DndDroppable id="list" data={{ accepts: 'task' }}>
+<DndDroppable id="list" data={{ accepts: ['task', 'card'] }}>
+
+<!-- after -->
+<DndDraggable id={item.id} type="task" position={index}>
+<DndDroppable id="list" accepts="task">
+<DndDroppable id="list" accepts={['task', 'card']}>
+```
+
+New optional props: `mode`, `overlap`.
+
+```svelte
+<!-- non-sortable drop zone (e.g. trash, board column) -->
+<DndDroppable id="trash" mode="target">
+```
+
+## Auto-scroll
+
+In v0.3.0 you had to manually add `data-dnd-scroll` to external scrollable wrappers. This is still the case in v1 — no change here.
+
+## DndPreview
+
+`DndPreview` is now internal — **remove all manual placements** from your templates. Do not import or use it directly.
+
+## onDragStart / onDragEnd unsubscribe
+
+In v0.3.0 these returned an unsubscribe function you had to call in `onDestroy`. In v1 callbacks are cleaned up automatically when the controller is destroyed — no `onDestroy` needed.
+
+```ts
+// before
+const unsub = controller.onDragStart((id) => { ... });
+onDestroy(() => unsub());
+
+// after
+controller.onDragStart((id) => { ... });
+```
+
+## New callback: onDropCancelled
+
+```ts
+controller.onDropCancelled((itemId) => {
+    // drag ended without a drop
+})
+```
+
+## TypeScript
+
+`DragController` type is removed — use `DndController`.
+
+New exports: `DndControllerConfig`, `ScrollConfig`, `PreviewConfig`, `StrategyFactory`, `DndMode`, `DragSource`.
