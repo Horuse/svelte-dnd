@@ -1,1 +1,1 @@
-packages/package/README.md
+packages/svelte-dnd/README.md
