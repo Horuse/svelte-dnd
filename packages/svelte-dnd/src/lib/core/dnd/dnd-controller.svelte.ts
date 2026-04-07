@@ -1,15 +1,20 @@
 import { DndState } from './dnd-state.svelte.js'
 import { ScrollController, type ScrollConfig } from '../scroll/scroll-controller.js'
 import { type PreviewConfig } from '../handlers/preview-handler.svelte.js'
-import { DOMHelper } from '../utils/dom-helper.js'
 import { DndEventEmitter } from './dnd-event-emitter.js'
 import { TranslationEngine } from '../zones/translation-engine.svelte.js'
 import { ContainerRegistry } from '../containers/container-registry.js'
+import { ContainerRegistrar } from '../containers/container-registrar.js'
 import { SortableContainerStrategy } from '../containers/strategies/sortable-container-strategy.js'
 import { TargetContainerStrategy } from '../containers/strategies/target-container-strategy.js'
 import type { ContainerStrategy } from '../containers/strategies/container-strategy.js'
 import type { SensorDescriptor } from '../sensors/sensor.js'
 import type { CollisionAlgorithm } from '../collision/collision-algorithm.js'
+import { DropResolver } from '../zones/drop-resolver.js'
+import { DropAnimationCoordinator } from '../animation/drop-animation-coordinator.js'
+import { DragSessionManager } from './drag-session-manager.js'
+import { DndSimulator } from './dnd-simulator.js'
+import type { DropZone, DndDirection, DndMode, DragStartCallback, DragEndCallback, DropCallback, DropCancelledCallback, ZonesInvalidatedCallback } from '../../types.js'
 
 export type StrategyFactory = (state: DndState) => ContainerStrategy
 
@@ -21,14 +26,6 @@ export interface DndControllerConfig {
 	sensors?: SensorDescriptor[]
 	collision?: CollisionAlgorithm
 }
-import { DropResolver } from '../zones/drop-resolver.js'
-import { AnimationPipeline } from '../animation/steps/animation-pipeline.js'
-import { GhostToTargetStep } from '../animation/steps/ghost-to-target-step.js'
-import { GhostReturnStep } from '../animation/steps/ghost-return-step.js'
-import type { AnimationStep } from '../animation/steps/animation-step.js'
-import { DndSimulator } from './dnd-simulator.js'
-import type { DragSession } from './drag-session.js'
-import type { DropZone, DndDirection, DndMode, DragStartCallback, DragEndCallback, DropCallback, DropCancelledCallback, ZonesInvalidatedCallback, DropPreview } from '../../types.js'
 
 export type { DragStartCallback, DragEndCallback, DropCallback, DropCancelledCallback, ZonesInvalidatedCallback } from '../../types.js'
 
@@ -51,35 +48,57 @@ export class DndController {
 	private registry = new ContainerRegistry()
 	private strategyMap = new Map<string, ContainerStrategy>()
 	private eventEmitter = new DndEventEmitter()
-	private translationEngine = new TranslationEngine(this.state, this.registry)
-	private dropResolver!: DropResolver
-	private currentAnimation: AnimationPipeline | null = null
-	private simulator!: DndSimulator
-	private hidePreviewTimeout: ReturnType<typeof setTimeout> | null = null
+	private translationEngine: TranslationEngine
+	private dropResolver: DropResolver
 	private scrollController: ScrollController
-	previewShowDelay = 300
-	previewCollapseDelay = 200
+	private animationCoordinator: DropAnimationCoordinator
+	private sessionManager: DragSessionManager
+	private registrar: ContainerRegistrar
+	private simulator: DndSimulator
+
 	debug = false
 	sensors: SensorDescriptor[] | undefined = undefined
 
 	constructor({ scroll = {}, preview = {}, debug = false, strategies = [], sensors, collision }: DndControllerConfig = {}) {
 		this.debug = debug
 		this.sensors = sensors
-		this.dropResolver = new DropResolver(this.state, this.registry, collision)
-		if (preview.showDelay !== undefined) this.previewShowDelay = preview.showDelay
-		if (preview.collapseDelay !== undefined) this.previewCollapseDelay = preview.collapseDelay
+
 		this.strategyMap.set('sortable', new SortableContainerStrategy(this.state))
 		this.strategyMap.set('target', new TargetContainerStrategy(this.state))
 		for (const entry of strategies) {
 			const strategy = typeof entry === 'function' ? entry(this.state) : entry
 			this.strategyMap.set(strategy.mode, strategy)
 		}
-		this.simulator = new DndSimulator(this.state, this.registry, this.strategyMap)
+
+		this.translationEngine = new TranslationEngine(this.state, this.registry)
+		this.dropResolver = new DropResolver(this.state, this.registry, collision)
+
 		this.scrollController = new ScrollController(this.state, {
 			...scroll,
 			onZoneRefresh: () => this.eventEmitter.notifyZonesInvalidated(),
-			onMouseUpdate: (x, y) => this.updateMousePosition(x, y)
+			onMouseUpdate: (x, y) => this.sessionManager.updateMousePosition(x, y)
 		})
+
+		this.animationCoordinator = new DropAnimationCoordinator(
+			this.state,
+			this.eventEmitter,
+			this.scrollController,
+			this.dropResolver
+		)
+
+		if (preview.showDelay !== undefined) this.animationCoordinator.previewShowDelay = preview.showDelay
+		if (preview.collapseDelay !== undefined) this.animationCoordinator.previewCollapseDelay = preview.collapseDelay
+
+		this.sessionManager = new DragSessionManager(
+			this.state,
+			this.registry,
+			this.eventEmitter,
+			this.scrollController,
+			this.animationCoordinator
+		)
+
+		this.registrar = new ContainerRegistrar(this.state, this.registry, this.strategyMap, debug)
+		this.simulator = new DndSimulator(this.state, this.registry, this.strategyMap)
 	}
 
 	// --- Reactive state (read-only) ---
@@ -161,24 +180,23 @@ export class DndController {
 	}
 
 	registerDroppableData(id: string, data: Record<string, unknown>) {
-		this.registry.registerData(id, data)
+		this.registrar.registerDroppableData(id, data)
 	}
 
 	registerDroppableAccepts(id: string, accepts: string | string[] | undefined) {
-		this.registry.registerAccepts(id, accepts)
+		this.registrar.registerDroppableAccepts(id, accepts)
 	}
 
 	registerDroppableCollision(id: string, algo: CollisionAlgorithm | undefined) {
-		this.registry.registerCollision(id, algo)
+		this.registrar.registerDroppableCollision(id, algo)
 	}
 
 	unregisterDroppableData(id: string) {
-		this.registry.unregisterContainer(id)
+		this.registrar.unregisterDroppableData(id)
 	}
 
 	unregisterContainer(id: string) {
-		this.registry.unregisterContainer(id)
-		this.state.setDropZones(this.state.zones.filter((z) => z.containerId !== id))
+		this.registrar.unregisterContainer(id)
 	}
 
 	startDrag(
@@ -188,52 +206,15 @@ export class DndController {
 		data?: Record<string, unknown>,
 		type?: string
 	) {
-		const rect = element.getBoundingClientRect()
-
-		let originContainerId = ''
-		let originPosition = 0
-		let slotSize: { width: number; height: number } | null = null
-
-		const containerEl = element.closest<HTMLElement>('[data-dnd-drop-id]')
-		if (containerEl) {
-			const containerId = containerEl.getAttribute('data-dnd-drop-id')!
-			const items = DOMHelper.findDraggableItemsInContainer(containerEl)
-			const position = items.indexOf(element)
-			originContainerId = containerId
-			originPosition = position >= 0 ? position : 0
-			slotSize = DOMHelper.calculateSlotSize(element, items)
-		}
-
-		const session: DragSession = {
-			itemId,
-			itemData: data,
-			element,
-			originContainerId,
-			originPosition,
-			startRect: rect,
-			ghostTransform: initialPosition,
-			dropPreview: null,
-			ghostSize: { width: element.offsetWidth, height: element.offsetHeight },
-			slotSize,
-			draggedItemType: type ?? null,
-			source: 'user'
-		}
-
-		this.state.startSession(session)
-		this.state.setSkipDropPreviewAnimation(true)
-		this.eventEmitter.notifyDragStart(itemId)
+		this.sessionManager.startDrag(element, itemId, initialPosition, data, type)
 	}
 
 	updateTransform(transform: { x: number; y: number }) {
-		this.state.setTransform(transform)
+		this.sessionManager.updateTransform(transform)
 	}
 
 	updateMousePosition(mouseX: number, mouseY: number) {
-		if (this.state.dragging) {
-			const ghostCenter = this.getGhostCenter()
-			this.updateDropPreview(ghostCenter)
-			this.scrollController.handleAutoScroll(mouseX, mouseY)
-		}
+		this.sessionManager.updateMousePosition(mouseX, mouseY)
 	}
 
 	performDrop(
@@ -242,50 +223,12 @@ export class DndController {
 		targetContainerId: string,
 		position: number
 	) {
-		const targetZone = this.state.zones.find(
-			(zone) => zone.containerId === targetContainerId && zone.position === position
-		)
-
-		this.state.setPerformingDrop(true)
-
-		if (targetZone && this.state.element && this.state.transform) {
-			this.animate(new GhostToTargetStep(this.state, targetZone), () => {
-				this.eventEmitter.notifyDrop(sourceId, sourceData, targetContainerId, position)
-				this.finalizeDragEnd(sourceId)
-			})
-		} else {
-			this.eventEmitter.notifyDrop(sourceId, sourceData, targetContainerId, position)
-			this.finalizeDragEnd(sourceId)
-		}
+		this.animationCoordinator.performDrop(sourceId, sourceData, targetContainerId, position)
 	}
 
 	/** Cancel the current drag and animate the ghost back to its origin. */
 	endDrag(shouldAnimate = true) {
-		const itemId = this.state.draggedItem
-		const session = this.state.session
-
-		if (itemId) this.eventEmitter.notifyDropCancelled(itemId)
-
-		if (shouldAnimate && session?.originContainerId) {
-			this.state.setDropPreview({
-				containerId: session.originContainerId,
-				position: session.originPosition,
-				visible: true,
-				draggedElementHeight: session.ghostSize.height,
-				draggedElementWidth: session.ghostSize.width
-			})
-		}
-
-		if (shouldAnimate && session) {
-			requestAnimationFrame(() => {
-				this.animate(
-					new GhostReturnStep(this.state, this.state.originContainerId, this.state.originPosition),
-					() => this.finalizeDragEnd(itemId)
-				)
-			})
-		} else {
-			this.finalizeDragEnd(itemId)
-		}
+		this.animationCoordinator.endDrag(shouldAnimate)
 	}
 
 	/**
@@ -298,17 +241,7 @@ export class DndController {
 		direction: DndDirection = 'vertical',
 		mode: DndMode = 'sortable'
 	) {
-		const strategy = this.strategyMap.get(mode) ?? (
-			this.debug && !['sortable', 'target'].includes(mode) &&
-				console.warn(`[svelte-dnd] Unknown mode "${mode}", falling back to "sortable". Did you forget to register a strategy?`),
-			this.strategyMap.get('sortable')!
-		)
-
-		this.registry.registerContainer(containerId, containerElement, strategy)
-
-		const newZones = strategy.calculateDropZones(containerId, containerElement, this.state.session)
-		const otherZones = this.state.zones.filter((z) => z.containerId !== containerId)
-		this.state.setDropZones([...otherZones, ...newZones])
+		this.registrar.refreshContainerZones(containerId, containerElement, direction, mode)
 	}
 
 	/** Update auto-scroll config at runtime. Changes take effect on the next scroll tick. */
@@ -318,8 +251,7 @@ export class DndController {
 
 	/** Update preview animation delays at runtime. */
 	setPreviewConfig(config: PreviewConfig) {
-		if (config.showDelay !== undefined) this.previewShowDelay = config.showDelay
-		if (config.collapseDelay !== undefined) this.previewCollapseDelay = config.collapseDelay
+		this.animationCoordinator.setPreviewConfig(config)
 	}
 
 	/** Toggle visual overlay of drop zones — useful for debugging layout. */
@@ -337,89 +269,9 @@ export class DndController {
 		return this.simulator.simulateDrop(itemId, fromContainerId, toContainerId, toPosition)
 	}
 
-	// --- Private ---
-
-	private animate(step: AnimationStep, onComplete: () => void): void {
-		this.currentAnimation?.cancel()
-		const pipeline = AnimationPipeline.chain(step)
-		this.currentAnimation = pipeline
-		pipeline.execute().then(() => {
-			this.currentAnimation = null
-			onComplete()
-		})
-	}
-
-	private getGhostCenter(): { x: number; y: number } {
-		const transform = this.state.transform
-		const size = this.state.elementSize
-		if (transform && size) {
-			return {
-				x: transform.x + size.width / 2,
-				y: transform.y + size.height / 2
-			}
-		}
-		return this.state.transform ?? { x: 0, y: 0 }
-	}
-
-	private updateDropPreview(mousePos: { x: number; y: number }) {
-		if (!this.state.dragging) {
-			this.state.setDropPreview(null)
-			return
-		}
-
-		const targetZone = this.dropResolver.findZoneAt(mousePos)
-
-		if (targetZone) {
-			const preview: DropPreview = {
-				containerId: targetZone.containerId,
-				position: targetZone.position,
-				visible: true,
-				draggedElementHeight: this.state.size?.height,
-				draggedElementWidth: this.state.size?.width
-			}
-			this.state.setDropPreview(preview)
-
-			if (this.state.skipDropPreviewAnimation) {
-				requestAnimationFrame(() => {
-					this.state.setSkipDropPreviewAnimation(false)
-				})
-			}
-		} else {
-			const current = this.state.dropPreview
-			if (current?.visible) {
-				this.state.setDropPreview({ ...current, visible: false })
-				if (this.hidePreviewTimeout) clearTimeout(this.hidePreviewTimeout)
-				this.hidePreviewTimeout = setTimeout(() => {
-					this.hidePreviewTimeout = null
-					if (this.state.dropPreview && !this.state.dropPreview.visible) {
-						this.state.setDropPreview(null)
-					}
-				}, 300)
-			}
-		}
-	}
-
-	private finalizeDragEnd(itemId: string | null) {
-		this.state.setSkipDropPreviewAnimation(true)
-		this.scrollController.clearAll()
-		this.state.reset()
-		requestAnimationFrame(() => {
-			this.state.setPerformingDrop(false)
-		})
-
-		if (itemId) {
-			this.eventEmitter.notifyDragEnd(itemId)
-		}
-
-		setTimeout(() => {
-			this.state.setSkipDropPreviewAnimation(false)
-		}, 100)
-	}
-
 	/** Release all resources. Call when the `DndProvider` is destroyed. */
 	destroy() {
-		this.currentAnimation?.cancel()
-		if (this.hidePreviewTimeout) clearTimeout(this.hidePreviewTimeout)
+		this.animationCoordinator.destroy()
 		this.scrollController.destroy()
 		this.registry.clearAll()
 		this.eventEmitter.destroy()
