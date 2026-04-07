@@ -45,7 +45,7 @@
 	const dndController = getContext<DndController>('dnd')
 	setContext('dnd-container-id', () => id)
 	if (dndController?.debug) setContext('dnd-position-registry', new Map<number, string>())
-	let element: HTMLElement
+	let element = $state<HTMLElement | undefined>(undefined)
 
 	$effect(() => {
 		if (dndController) dndController.registerDroppableData(id, data)

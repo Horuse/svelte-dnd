@@ -21,6 +21,7 @@ export class ContainerRegistry {
 	}
 
 	clearAll(): void {
+		this.containers.clear()
 		this.dataMap.clear()
 		this.acceptsMap.clear()
 	}
