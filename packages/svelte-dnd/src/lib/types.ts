@@ -17,11 +17,11 @@ export const defaultAnnouncements: Announcements = {
 }
 export type DndMode = 'sortable' | 'target' | (string & {})
 
-export interface DndDragEvent {
+export interface DndDragEvent<TData = Record<string, unknown>> {
 	source: {
 		id: string
 		element: HTMLElement
-		data?: Record<string, unknown>
+		data?: TData
 	}
 	target?: {
 		id: string
@@ -34,11 +34,11 @@ export interface DndDragEvent {
 	}
 }
 
-export interface DndDropEvent {
+export interface DndDropEvent<TData = Record<string, unknown>> {
 	source: {
 		id: string
 		element: HTMLElement
-		data?: Record<string, unknown>
+		data?: TData
 	}
 	target: {
 		id: string
@@ -78,11 +78,17 @@ export type GhostSnippet = Snippet<[GhostSnippetProps]>
 
 export type DragStartCallback = (itemId: string) => void
 export type DragEndCallback = (itemId: string) => void
-export type DropCallback = (
+export type DropCallback<TData = Record<string, unknown>> = (
 	sourceId: string,
-	sourceData: Record<string, unknown> | undefined,
+	sourceData: TData | undefined,
 	targetContainerId: string,
 	position: number
+) => void
+export type DragOverCallback = (
+	sourceId: string,
+	containerId: string,
+	position: number,
+	prevContainerId: string | null
 ) => void
 export type DropCancelledCallback = (itemId: string) => void
 export type ZonesInvalidatedCallback = () => void

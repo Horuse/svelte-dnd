@@ -12,6 +12,7 @@ import { GhostReturnStep } from './steps/ghost-return-step.js'
 export class DropAnimationCoordinator {
 	private currentAnimation: AnimationPipeline | null = null
 	private hidePreviewTimeout: ReturnType<typeof setTimeout> | null = null
+	private lastPreviewKey: string | null = null
 	previewShowDelay = 300
 	previewCollapseDelay = 200
 
@@ -39,6 +40,16 @@ export class DropAnimationCoordinator {
 				draggedElementWidth: this.state.size?.width
 			}
 			this.state.setDropPreview(preview)
+
+			const previewKey = `${targetZone.containerId}:${targetZone.position}`
+			if (previewKey !== this.lastPreviewKey) {
+				const prevContainerId = this.lastPreviewKey?.split(':')[0] ?? null
+				this.lastPreviewKey = previewKey
+				const sourceId = this.state.draggedItem
+				if (sourceId) {
+					this.eventEmitter.notifyDragOver(sourceId, targetZone.containerId, targetZone.position, prevContainerId)
+				}
+			}
 
 			if (this.state.skipDropPreviewAnimation) {
 				requestAnimationFrame(() => {
@@ -138,6 +149,7 @@ export class DropAnimationCoordinator {
 	}
 
 	private finalizeDragEnd(itemId: string | null) {
+		this.lastPreviewKey = null
 		this.state.setSkipDropPreviewAnimation(true)
 		this.scrollController.clearAll()
 		this.state.reset()

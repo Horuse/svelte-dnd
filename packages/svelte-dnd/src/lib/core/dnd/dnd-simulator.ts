@@ -1,6 +1,7 @@
 import type { DndState } from './dnd-state.svelte.js'
 import type { ContainerRegistry } from '../containers/container-registry.js'
 import type { ContainerStrategy } from '../containers/strategies/container-strategy.js'
+import type { DndEventEmitter } from './dnd-event-emitter.js'
 import type { DragSession } from './drag-session.js'
 import type { DropZone, DndMode } from '../../types.js'
 import { DOMHelper } from '../utils/dom-helper.js'
@@ -9,11 +10,16 @@ import { GhostToTargetStep } from '../animation/steps/ghost-to-target-step.js'
 import { GhostReturnStep } from '../animation/steps/ghost-return-step.js'
 import { SortableContainerStrategy } from '../containers/strategies/sortable-container-strategy.js'
 
+export interface SimulateOptions {
+	emitEvents?: boolean
+}
+
 export class DndSimulator {
 	constructor(
 		private state: DndState,
 		private registry: ContainerRegistry,
-		private strategyMap: Map<string, ContainerStrategy> = new Map()
+		private strategyMap: Map<string, ContainerStrategy> = new Map(),
+		private eventEmitter?: DndEventEmitter
 	) {}
 
 	/**
@@ -45,12 +51,13 @@ export class DndSimulator {
 		itemId: string,
 		fromContainerId: string,
 		toContainerId: string,
-		toPosition: number
+		toPosition: number,
+		options: SimulateOptions = {}
 	): Promise<void> {
 		const step = (_session: DragSession) =>
 			new GhostToTargetStep(this.state, this.syntheticZone(toContainerId, toPosition))
 
-		return this.run(itemId, fromContainerId, toContainerId, toPosition, step)
+		return this.run(itemId, fromContainerId, toContainerId, toPosition, step, options)
 	}
 
 	// --- Private ---
@@ -60,7 +67,8 @@ export class DndSimulator {
 		fromContainerId: string,
 		toContainerId: string,
 		toPosition: number,
-		makeStep: (session: DragSession) => GhostToTargetStep | GhostReturnStep
+		makeStep: (session: DragSession) => GhostToTargetStep | GhostReturnStep,
+		options: SimulateOptions = {}
 	): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			if (this.state.dragging) {
@@ -137,6 +145,9 @@ export class DndSimulator {
 				AnimationPipeline.chain(step).execute().then(() => {
 					// setPerformingDrop(true) here so PreviewHandler.hide() collapses instantly
 					this.state.setPerformingDrop(true)
+					if (options.emitEvents) {
+						this.eventEmitter?.notifyDrop(itemId, undefined, toContainerId, toPosition)
+					}
 					this.cleanup()
 					resolve()
 				})

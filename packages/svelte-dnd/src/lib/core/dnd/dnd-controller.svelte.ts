@@ -15,7 +15,7 @@ import { DropAnimationCoordinator } from '../animation/drop-animation-coordinato
 import { DragSessionManager } from './drag-session-manager.js'
 import type { Modifier } from '../modifiers/modifier.js'
 import { DndSimulator } from './dnd-simulator.js'
-import type { DropZone, DndDirection, DndMode, DragStartCallback, DragEndCallback, DropCallback, DropCancelledCallback, ZonesInvalidatedCallback } from '../../types.js'
+import type { DropZone, DndDirection, DndMode, DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback, ZonesInvalidatedCallback } from '../../types.js'
 
 export type StrategyFactory = (state: DndState) => ContainerStrategy
 
@@ -29,7 +29,7 @@ export interface DndControllerConfig {
 	modifiers?: Modifier[]
 }
 
-export type { DragStartCallback, DragEndCallback, DropCallback, DropCancelledCallback, ZonesInvalidatedCallback } from '../../types.js'
+export type { DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback, ZonesInvalidatedCallback } from '../../types.js'
 
 /**
  * Central controller for drag-and-drop. Create one instance and pass it to
@@ -45,7 +45,7 @@ export type { DragStartCallback, DragEndCallback, DropCallback, DropCancelledCal
  * })
  * ```
  */
-export class DndController {
+export class DndController<TData = Record<string, unknown>> {
 	private state = new DndState()
 	private registry = new ContainerRegistry()
 	private strategyMap = new Map<string, ContainerStrategy>()
@@ -101,7 +101,7 @@ export class DndController {
 		)
 
 		this.registrar = new ContainerRegistrar(this.state, this.registry, this.strategyMap, debug)
-		this.simulator = new DndSimulator(this.state, this.registry, this.strategyMap)
+		this.simulator = new DndSimulator(this.state, this.registry, this.strategyMap, this.eventEmitter)
 	}
 
 	// --- Reactive state (read-only) ---
@@ -168,7 +168,14 @@ export class DndController {
 	 *
 	 * @param cb `(sourceId, sourceData, targetContainerId, position) => void`
 	 */
-	onDrop(cb: DropCallback)                         { return this.eventEmitter.onDrop(cb) }
+	onDrop(cb: DropCallback<TData>) {
+		return this.eventEmitter.onDrop((id, data, containerId, pos) =>
+			cb(id, data as TData | undefined, containerId, pos)
+		)
+	}
+
+	/** Fired each time the drag-over target (container + position) changes. */
+	onDragOver(cb: DragOverCallback)                 { return this.eventEmitter.onDragOver(cb) }
 
 	/**
 	 * Fired after auto-scroll moves a container, invalidating existing drop zone
@@ -268,8 +275,8 @@ export class DndController {
 	}
 
 	/** Delegates to {@link DndSimulator.simulateDrop}. */
-	simulateDrop(itemId: string, fromContainerId: string, toContainerId: string, toPosition: number): Promise<void> {
-		return this.simulator.simulateDrop(itemId, fromContainerId, toContainerId, toPosition)
+	simulateDrop(itemId: string, fromContainerId: string, toContainerId: string, toPosition: number, options?: import('../dnd/dnd-simulator.js').SimulateOptions): Promise<void> {
+		return this.simulator.simulateDrop(itemId, fromContainerId, toContainerId, toPosition, options)
 	}
 
 	/** Release all resources. Call when the `DndProvider` is destroyed. */

@@ -18,7 +18,7 @@
 		onDragEnd?: (event: DndDragEvent) => void
 		children: Snippet
 		class?: string
-		position: number
+		position?: number
 		/**
 		 * Delay in ms before drag starts on touch devices.
 		 * During the delay, finger movement scrolls the container manually (with momentum).
@@ -44,7 +44,7 @@
 		onDrag,
 		onDragEnd,
 		children,
-		position,
+		position = undefined,
 		dragDelay = 300,
 		scrollCancelThreshold = 8
 	}: Props = $props()
@@ -55,7 +55,7 @@
 
 	$effect(() => {
 		if (!dndController?.debug) return
-		if (!Number.isInteger(position) || position < 0) {
+		if (position !== undefined && (!Number.isInteger(position) || position < 0)) {
 			console.warn(`[svelte-dnd] DndDraggable "${id}": invalid position ${position}. Must be a non-negative integer.`)
 		}
 		if (positionRegistry) {
@@ -87,7 +87,9 @@
 </script>
 
 <div style="position: relative">
-	<DndPreview containerId={getContainerId()} {position} />
+	{#if position !== undefined}
+		<DndPreview containerId={getContainerId()} {position} />
+	{/if}
 
 	<div
 		bind:this={element}
@@ -102,9 +104,6 @@
 		data-dnd-draggable-item
 		style="transform: translate3d({translate.x}px, {translate.y}px, 0); transition: {isGhostActive || performingDrop ? 'none' : 'transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)'}"
 		onpointerdown={handler.handlePointerDown}
-		onpointermove={handler.handlePointerMove}
-		onpointerup={handler.handlePointerUp}
-		onpointercancel={handler.handlePointerCancel}
 		onclick={handler.handleClick}
 		onkeydown={handler.handleKeyDown}
 	>
