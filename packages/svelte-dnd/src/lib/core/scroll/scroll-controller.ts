@@ -15,6 +15,7 @@ export interface ScrollOptions extends ScrollConfig {
 export class ScrollController {
 	private scrollFrames = new Map<HTMLElement, number>()
 	private lastMousePosition = { x: 0, y: 0 }
+	private refreshTimer: ReturnType<typeof setTimeout> | null = null
 
 	constructor(
 		private state: DndState,
@@ -179,7 +180,9 @@ export class ScrollController {
 	}
 
 	private scheduleRefresh() {
-		setTimeout(() => {
+		if (this.refreshTimer) return
+		this.refreshTimer = setTimeout(() => {
+			this.refreshTimer = null
 			this.options.onZoneRefresh?.()
 			this.options.onMouseUpdate?.(this.lastMousePosition.x, this.lastMousePosition.y)
 		}, 10)
@@ -225,5 +228,6 @@ export class ScrollController {
 
 	destroy() {
 		this.clearAll()
+		if (this.refreshTimer) clearTimeout(this.refreshTimer)
 	}
 }
