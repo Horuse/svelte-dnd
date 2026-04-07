@@ -1,21 +1,28 @@
 <script lang="ts">
-	import { DndProvider, DndDroppable, DndDraggable, DndController, PointerSensor, KeyboardSensor } from '@horuse/svelte-dnd'
+	import {
+		DndProvider, DndDroppable, DndDraggable, DndController,
+		restrictToVerticalAxis, restrictToHorizontalAxis, snapToGrid, restrictToContainer,
+		type Modifier,
+	} from '@horuse/svelte-dnd'
 
-	type Mode = 'both' | 'pointer-only' | 'keyboard-only'
-	let activeMode = $state<Mode>('both')
+	type Option = { label: string; value: Modifier[] }
+
+	const options: Option[] = [
+		{ label: 'None', value: [] },
+		{ label: 'Vertical axis', value: [restrictToVerticalAxis] },
+		{ label: 'Horizontal axis', value: [restrictToHorizontalAxis] },
+		{ label: 'Snap 40px', value: [snapToGrid({ x: 40, y: 40 })] },
+		{ label: 'Restrict + Snap', value: [restrictToContainer, snapToGrid({ x: 40, y: 40 })] },
+	]
+
+	let activeIndex = $state(1)
 
 	let items = $state(
 		Array.from({ length: 6 }, (_, i) => ({ id: String(i), label: `Item ${i + 1}` }))
 	)
 
-	function buildController(mode: Mode) {
-		const ctrl = new DndController()
-		ctrl.sensors =
-			mode === 'both'
-				? [new PointerSensor(), new KeyboardSensor(ctrl)]
-				: mode === 'pointer-only'
-					? [new PointerSensor()]
-					: [new KeyboardSensor(ctrl)]
+	function buildController(modifiers: Modifier[]) {
+		const ctrl = new DndController({ modifiers })
 		ctrl.onDrop((sourceId, _data, _containerId, position) => {
 			const from = items.findIndex((i) => i.id === sourceId)
 			if (from === -1) return
@@ -27,29 +34,25 @@
 		return ctrl
 	}
 
-	let controller = $state(buildController('both'))
+	let controller = $state(buildController(options[1].value))
 
 	$effect(() => {
-		controller = buildController(activeMode)
+		controller = buildController(options[activeIndex].value)
 	})
 </script>
 
 <div class="flex flex-col gap-4 max-w-sm">
 	<div class="flex flex-wrap gap-2">
-		{#each (['both', 'pointer-only', 'keyboard-only'] as const) as mode}
+		{#each options as opt, i}
 			<button
 				class="black-button p-2 px-4"
-				class:active={activeMode === mode}
-				onclick={() => (activeMode = mode)}
+				class:active={activeIndex === i}
+				onclick={() => (activeIndex = i)}
 			>
-				{mode === 'both' ? 'Pointer + Keyboard' : mode === 'pointer-only' ? 'Pointer only' : 'Keyboard only'}
+				{opt.label}
 			</button>
 		{/each}
 	</div>
-
-	{#if activeMode !== 'pointer-only'}
-		<p class="text-sm text-neutral-500">Tab to focus, Enter/Space to pick up, arrow keys to move, Enter to drop</p>
-	{/if}
 
 	{#key controller}
 	<DndProvider {controller}>

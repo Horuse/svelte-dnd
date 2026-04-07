@@ -87,3 +87,17 @@ interface ModifierContext {
     ghostSize: { width: number; height: number };
 }
 ```
+
+---
+
+## Example
+
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components'
+	import ModifiersExample from '$lib/examples/ModifiersExample.svelte'
+	import ModifiersExampleCode from '$lib/examples/ModifiersExample.svelte?raw'
+</script>
+
+<ComponentPreview sources={[{ name: 'ModifiersExample.svelte', code: ModifiersExampleCode, language: 'svelte' }]}>
+	<ModifiersExample />
+</ComponentPreview>

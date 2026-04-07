@@ -14,6 +14,7 @@ import {
     DndController,
     PointerSensor,
     KeyboardSensor,
+    centerPoint,
     overlap,
     restrictToVerticalAxis,
     defaultAnnouncements,
@@ -41,6 +42,29 @@ const controller = new DndController({
         onDragStart: () => 'Picked up item.',
     },
     strategies: [],                          // custom container strategies, see /docs/custom-strategies
+});
+
+// Default values (what you get when omitting each option):
+const controller = new DndController({
+    scroll: {
+        scrollZoneRatio: 0.3,
+        maxSpeed: 30,
+    },
+    preview: {
+        showDelay: 300,
+        collapseDelay: 200,
+    },
+    debug: false,
+    sensors: [new PointerSensor(), new KeyboardSensor(controller)],
+    collision: centerPoint,  // ghost center must be inside zone rect
+    modifiers: [],
+    announcements: {
+        onDragStart: () => 'Picked up item.',
+        onDragOver: (_id, pos, total) => `Moving to position ${pos + 1} of ${total}.`,
+        onDrop: () => 'Dropped item.',
+        onCancel: () => 'Drop cancelled.',
+    },
+    strategies: [], // built-in 'sortable' and 'target' are always registered
 });
 ```
 
@@ -306,7 +330,5 @@ type DndDirection = 'vertical' | 'horizontal' | 'grid';
 type DndMode = 'sortable' | 'target' | (string & {}); // custom modes allowed
 type DragSource = 'user' | 'programmatic';
 ```
-
-See the [Configs](/examples/configs) example for a live demo of both `scroll` and `preview` config sliders.
 
 For custom drop zone strategies see [Custom Strategies](/docs/custom-strategies).

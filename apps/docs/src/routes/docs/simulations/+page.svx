@@ -114,3 +114,17 @@ await controller.simulateDrop('task-3', 'backlog', 'in-progress', 0, { emitEvent
 | Same-container animation | Scroll-aware return (like cancel) | Fly-to-target |
 | Cross-container animation | Fly-to-target | Fly-to-target |
 | Typical use case | Undo, cancel, reject | Auto-sort, programmatic move |
+
+---
+
+## Example
+
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components'
+	import SimulationsExample from '$lib/examples/SimulationsExample.svelte'
+	import SimulationsExampleCode from '$lib/examples/SimulationsExample.svelte?raw'
+</script>
+
+<ComponentPreview sources={[{ name: 'SimulationsExample.svelte', code: SimulationsExampleCode, language: 'svelte' }]}>
+	<SimulationsExample />
+</ComponentPreview>

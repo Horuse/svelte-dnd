@@ -84,3 +84,17 @@ The `draggable` action sets the same ARIA attributes on any element, without req
 ```
 
 The `use:draggable` action also adds/removes the CSS class `dnd-dragging` during a drag, so you can style it without Svelte reactivity.
+
+---
+
+## Example
+
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components'
+	import AccessibilityExample from '$lib/examples/AccessibilityExample.svelte'
+	import AccessibilityExampleCode from '$lib/examples/AccessibilityExample.svelte?raw'
+</script>
+
+<ComponentPreview sources={[{ name: 'AccessibilityExample.svelte', code: AccessibilityExampleCode, language: 'svelte' }]}>
+	<AccessibilityExample />
+</ComponentPreview>

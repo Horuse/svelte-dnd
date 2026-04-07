@@ -10,8 +10,6 @@
 		{ href: '/examples/multi-container', label: 'Multi Container' },
 		{ href: '/examples/custom-ghost', label: 'Custom Ghost' },
 		{ href: '/examples/sortable-containers', label: 'Sortable Containers' },
-		{ href: '/examples/configs', label: 'Configs' },
-		{ href: '/examples/sensors', label: 'Sensors' },
 	];
 
 	type NavLink = {

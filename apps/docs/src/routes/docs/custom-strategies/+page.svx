@@ -84,3 +84,17 @@ interface ContainerStrategy {
 
 type StrategyFactory = (state: DndState) => ContainerStrategy;
 ```
+
+---
+
+## Example
+
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components'
+	import StrategiesExample from '$lib/examples/StrategiesExample.svelte'
+	import StrategiesExampleCode from '$lib/examples/StrategiesExample.svelte?raw'
+</script>
+
+<ComponentPreview sources={[{ name: 'StrategiesExample.svelte', code: StrategiesExampleCode, language: 'svelte' }]}>
+	<StrategiesExample />
+</ComponentPreview>

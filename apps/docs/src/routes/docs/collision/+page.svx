@@ -87,3 +87,17 @@ interface CollisionContext {
     ghost: { x: number; y: number; width: number; height: number };
 }
 ```
+
+---
+
+## Example
+
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components'
+	import CollisionExample from '$lib/examples/CollisionExample.svelte'
+	import CollisionExampleCode from '$lib/examples/CollisionExample.svelte?raw'
+</script>
+
+<ComponentPreview sources={[{ name: 'CollisionExample.svelte', code: CollisionExampleCode, language: 'svelte' }]}>
+	<CollisionExample />
+</ComponentPreview>

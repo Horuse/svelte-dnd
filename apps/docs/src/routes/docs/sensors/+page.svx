@@ -139,4 +139,16 @@ interface SensorActivation {
 }
 ```
 
-See the [Sensors](/examples/sensors) example for a live demo with both sensors configured.
+---
+
+## Example
+
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components'
+	import SensorsExample from '$lib/examples/SensorsExample.svelte'
+	import SensorsExampleCode from '$lib/examples/SensorsExample.svelte?raw'
+</script>
+
+<ComponentPreview sources={[{ name: 'SensorsExample.svelte', code: SensorsExampleCode, language: 'svelte' }]}>
+	<SensorsExample />
+</ComponentPreview>
