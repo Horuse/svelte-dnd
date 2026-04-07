@@ -27,6 +27,7 @@ export interface DndControllerConfig {
 	sensors?: SensorDescriptor[]
 	collision?: CollisionAlgorithm
 	modifiers?: Modifier[]
+	announcements?: import('../../types.js').Announcements
 }
 
 export type { DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback, ZonesInvalidatedCallback } from '../../types.js'
@@ -60,10 +61,12 @@ export class DndController<TData = Record<string, unknown>> {
 
 	debug = false
 	sensors: SensorDescriptor[] | undefined = undefined
+	announcements: import('../../types.js').Announcements | undefined = undefined
 
-	constructor({ scroll = {}, preview = {}, debug = false, strategies = [], sensors, collision, modifiers = [] }: DndControllerConfig = {}) {
+	constructor({ scroll = {}, preview = {}, debug = false, strategies = [], sensors, collision, modifiers = [], announcements }: DndControllerConfig = {}) {
 		this.debug = debug
 		this.sensors = sensors
+		this.announcements = announcements
 
 		this.strategyMap.set('sortable', new SortableContainerStrategy(this.state))
 		this.strategyMap.set('target', new TargetContainerStrategy(this.state))

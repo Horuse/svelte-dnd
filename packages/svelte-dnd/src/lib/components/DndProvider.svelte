@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { setContext, onDestroy, untrack } from 'svelte'
 	import { DndController } from '../core/dnd/dnd-controller.svelte.js'
-	import type { GhostSnippet, Announcements } from '../types.js'
+	import type { GhostSnippet } from '../types.js'
 	import { defaultAnnouncements } from '../types.js'
 	import type { Snippet } from 'svelte'
 
@@ -9,10 +9,9 @@
 		children: Snippet
 		controller?: DndController
 		ghost?: GhostSnippet
-		announcements?: Announcements
 	}
 
-	let { children, ghost, announcements, ...rest }: Props = $props()
+	let { children, ghost, ...rest }: Props = $props()
 
 	const dragController = untrack(() => rest.controller) ?? new DndController()
 	const ownsController = untrack(() => !rest.controller)
@@ -56,7 +55,7 @@
 
 	let announcement = $state('')
 
-	const ann = $derived({ ...defaultAnnouncements, ...announcements })
+	const ann = $derived({ ...defaultAnnouncements, ...dragController.announcements })
 
 	$effect(() => {
 		if (dragController.dragging && dragController.draggedItem) {

@@ -23,6 +23,19 @@
 	const docsLinks: NavLink[] = [
 		{ href: '/docs/getting-started', label: 'Getting Started' },
 		{
+			href: '/docs/dnd-controller-api',
+			label: 'Controller API',
+			children: [
+				{ href: '/docs/dnd-controller-api', label: 'DndController' },
+				{ href: '/docs/simulations', label: 'Simulations' },
+				{ href: '/docs/sensors', label: 'Sensors' },
+				{ href: '/docs/collision', label: 'Collisions' },
+				{ href: '/docs/modifiers', label: 'Modifiers' },
+				{ href: '/docs/accessibility', label: 'Accessibility' },
+				{ href: '/docs/custom-strategies', label: 'Strategies' },
+			]
+		},
+		{
 			href: '/docs/components-api',
 			label: 'Components API',
 			children: [
@@ -32,12 +45,6 @@
 			]
 		},
 		{ href: '/docs/css-custom-props', label: 'CSS Custom Props' },
-		{ href: '/docs/drag-controller-api', label: 'DndController API' },
-		{ href: '/docs/simulations', label: 'Simulations' },
-		{ href: '/docs/sensors', label: 'Sensors' },
-		{ href: '/docs/collision', label: 'Collision Detection' },
-		{ href: '/docs/modifiers', label: 'Modifiers' },
-		{ href: '/docs/accessibility', label: 'Accessibility' },
 		{ href: '/docs/html-attributes', label: 'HTML Attributes' },
 		{ href: '/docs/faq', label: 'FAQ' },
 	{

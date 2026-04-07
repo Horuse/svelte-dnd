@@ -10,26 +10,37 @@ The `DndController` is the core engine that manages all drag-and-drop state and 
 ## Constructor
 
 ```ts
-import { DndController } from '@horuse/svelte-dnd';
-import type { DndControllerConfig } from '@horuse/svelte-dnd';
+import {
+    DndController,
+    PointerSensor,
+    KeyboardSensor,
+    overlap,
+    restrictToVerticalAxis,
+    defaultAnnouncements,
+} from '@horuse/svelte-dnd';
 
+// Minimal — all options have sensible defaults
 const controller = new DndController();
 
-// With config:
+// Full config:
 const controller = new DndController({
     scroll: {
         scrollZoneRatio: 0.2, // trigger zone = 20% of container height/width (default: 0.3)
-        maxSpeed: 20,          // max scroll speed in px/frame at 60fps (default: 30)
+        maxSpeed: 20,          // max px/frame at 60fps (default: 30)
     },
     preview: {
         showDelay: 150,     // ms before preview slot appears (default: 300)
-        collapseDelay: 400, // ms before slot collapses — should match --dnd-preview-duration-out (default: 200)
+        collapseDelay: 400, // ms before slot collapses — match --dnd-preview-duration-out (default: 200)
     },
-    debug: true,            // enables position validation warnings
-    strategies: [new MasonryStrategy()], // custom or override built-in strategies
-    sensors: [new PointerSensor(), new KeyboardSensor(controller)], // active input sensors
-    collision: overlap({ threshold: '25%' }),  // global collision algorithm
-    modifiers: [restrictToVerticalAxis],       // transform modifiers applied on every move
+    debug: true,                             // position validation warnings in console
+    sensors: [new PointerSensor(), new KeyboardSensor(controller)], // see /docs/sensors
+    collision: overlap({ threshold: '25%' }), // see /docs/collision
+    modifiers: [restrictToVerticalAxis],      // see /docs/modifiers
+    announcements: {                          // see /docs/accessibility
+        ...defaultAnnouncements,
+        onDragStart: () => 'Picked up item.',
+    },
+    strategies: [],                          // custom container strategies, see /docs/custom-strategies
 });
 ```
 
@@ -280,6 +291,8 @@ interface DndControllerConfig {
     collision?: CollisionAlgorithm;
     /** Transform modifiers applied to ghost position on every move. See [Modifiers](/docs/modifiers) */
     modifiers?: Modifier[];
+    /** Screen-reader announcement strings. See [Accessibility](/docs/accessibility) */
+    announcements?: Announcements;
 }
 
 type StrategyFactory = (state: DndState) => ContainerStrategy;
@@ -296,51 +309,4 @@ type DragSource = 'user' | 'programmatic';
 
 See the [Configs](/examples/configs) example for a live demo of both `scroll` and `preview` config sliders.
 
-## Custom Strategies
-
-You can replace or extend the built-in `'sortable'` and `'target'` strategies, or add entirely new modes by implementing the `ContainerStrategy` interface.
-
-The built-in strategies (`SortableContainerStrategy`, `TargetContainerStrategy`) receive `DndState` in their constructor. Since `DndState` is created inside `DndController`, pass a **factory function** when your strategy needs it — the controller will call it with the internal state:
-
-```ts
-import {
-    DndController,
-    SortableContainerStrategy,
-    type ContainerStrategy,
-    type StrategyFactory,
-    type DndState,
-    type DropZone,
-    type DndMode,
-} from '@horuse/svelte-dnd';
-
-class MasonryStrategy extends SortableContainerStrategy {
-    override readonly mode: DndMode = 'masonry'
-
-    override calculateDropZones(containerId: string, container: HTMLElement, session): DropZone[] {
-        // your masonry-specific zone calculation
-        return []
-    }
-}
-
-const masonryFactory: StrategyFactory = (state) => new MasonryStrategy(state)
-
-const controller = new DndController({
-    strategies: [masonryFactory]
-})
-```
-
-If your strategy doesn't need `DndState` (e.g. it only overrides `calculateDropZones` and delegates animations elsewhere), you can pass a plain instance directly:
-
-```ts
-const controller = new DndController({
-    strategies: [new SimpleStrategy()]
-})
-```
-
-```svelte
-<DndDroppable mode="masonry" id="board">
-    ...
-</DndDroppable>
-```
-
-Passing a strategy with `mode: 'sortable'` or `mode: 'target'` **overrides** the built-in behaviour for that mode.
+For custom drop zone strategies see [Custom Strategies](/docs/custom-strategies).

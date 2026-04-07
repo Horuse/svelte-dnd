@@ -33,25 +33,21 @@ Arrow keys navigate both within and across containers. When the end of a contain
 
 ### Custom announcements
 
-Pass an `announcements` prop to `DndProvider` to customise the messages:
+Pass `announcements` in the `DndController` constructor to customise the messages:
 
-```svelte
-<script>
-    import { DndProvider, defaultAnnouncements } from '@horuse/svelte-dnd';
+```ts
+import { DndController, defaultAnnouncements } from '@horuse/svelte-dnd';
 
-    const announcements = {
+const controller = new DndController({
+    announcements: {
         ...defaultAnnouncements,
         onDragStart: () => 'Picked up a task. Use arrow keys to move it.',
         onDragOver: (containerId, position, total) =>
             `Moving to column ${containerId}, position ${position + 1} of ${total}.`,
         onDrop: () => 'Task placed.',
         onCancel: () => 'Move cancelled, task returned to original position.',
-    };
-</script>
-
-<DndProvider {controller} {announcements}>
-    ...
-</DndProvider>
+    },
+});
 ```
 
 ### Announcements type

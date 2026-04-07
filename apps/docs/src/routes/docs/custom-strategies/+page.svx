@@ -1,0 +1,86 @@
+---
+title: Custom Strategies
+description: Replace or extend built-in drop zone strategies, or add entirely new container modes.
+---
+
+# Custom Strategies
+
+You can replace or extend the built-in `'sortable'` and `'target'` strategies, or add entirely new modes by implementing the `ContainerStrategy` interface.
+
+## Built-in strategies
+
+| Mode | Strategy class | Description |
+|------|---------------|-------------|
+| `'sortable'` | `SortableContainerStrategy` | Position-based drop zones with insert previews. Supports `vertical`, `horizontal`, and `grid` directions |
+| `'target'` | `TargetContainerStrategy` | Single drop zone covering the whole container, no previews |
+
+## Passing a strategy factory
+
+The built-in strategies receive `DndState` in their constructor. Since `DndState` is created inside `DndController`, pass a **factory function** when your strategy needs it — the controller will call it with the internal state:
+
+```ts
+import {
+    DndController,
+    SortableContainerStrategy,
+    type ContainerStrategy,
+    type StrategyFactory,
+    type DndState,
+    type DropZone,
+    type DndMode,
+} from '@horuse/svelte-dnd';
+
+class MasonryStrategy extends SortableContainerStrategy {
+    override readonly mode: DndMode = 'masonry'
+
+    override calculateDropZones(containerId: string, container: HTMLElement, session): DropZone[] {
+        // your masonry-specific zone calculation
+        return []
+    }
+}
+
+const masonryFactory: StrategyFactory = (state) => new MasonryStrategy(state)
+
+const controller = new DndController({
+    strategies: [masonryFactory]
+})
+```
+
+Then use the custom mode on a droppable:
+
+```svelte
+<DndDroppable mode="masonry" id="board">
+    ...
+</DndDroppable>
+```
+
+## Passing a plain instance
+
+If your strategy doesn't need `DndState` (e.g. it only overrides `calculateDropZones` and delegates animations elsewhere), you can pass a plain instance directly:
+
+```ts
+const controller = new DndController({
+    strategies: [new SimpleStrategy()]
+})
+```
+
+## Overriding built-in strategies
+
+Passing a strategy with `mode: 'sortable'` or `mode: 'target'` **overrides** the built-in behaviour for that mode globally:
+
+```ts
+const controller = new DndController({
+    strategies: [new MySortableStrategy(state)] // replaces built-in sortable
+})
+```
+
+## Types
+
+```ts
+interface ContainerStrategy {
+    readonly mode: DndMode;
+    calculateDropZones(containerId: string, container: HTMLElement, session: DragSession): DropZone[];
+    getTranslations(session: DragSession, registry: ContainerRegistry): Map<string, { x: number; y: number }>;
+}
+
+type StrategyFactory = (state: DndState) => ContainerStrategy;
+```
