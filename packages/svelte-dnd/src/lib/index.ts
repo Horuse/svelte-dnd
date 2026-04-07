@@ -13,3 +13,5 @@ export type { ContainerStrategy } from './core/containers/strategies/container-s
 export { SortableContainerStrategy } from './core/containers/strategies/sortable-container-strategy.js'
 export { TargetContainerStrategy } from './core/containers/strategies/target-container-strategy.js'
 export type { DndState } from './core/dnd/dnd-state.svelte.js'
+export type { SensorDescriptor, SensorActivation, SensorOptions, SensorCallbacks } from './core/sensors/sensor.js'
+export { PointerSensor } from './core/sensors/pointer-sensor.js'

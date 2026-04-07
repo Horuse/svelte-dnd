@@ -8,6 +8,7 @@ import { ContainerRegistry } from '../containers/container-registry.js'
 import { SortableContainerStrategy } from '../containers/strategies/sortable-container-strategy.js'
 import { TargetContainerStrategy } from '../containers/strategies/target-container-strategy.js'
 import type { ContainerStrategy } from '../containers/strategies/container-strategy.js'
+import type { SensorDescriptor } from '../sensors/sensor.js'
 
 export type StrategyFactory = (state: DndState) => ContainerStrategy
 
@@ -16,6 +17,7 @@ export interface DndControllerConfig {
 	preview?: PreviewConfig
 	debug?: boolean
 	strategies?: (ContainerStrategy | StrategyFactory)[]
+	sensors?: SensorDescriptor[]
 }
 import { DropResolver } from '../zones/drop-resolver.js'
 import { AnimationPipeline } from '../animation/steps/animation-pipeline.js'
@@ -56,9 +58,11 @@ export class DndController {
 	previewShowDelay = 300
 	previewCollapseDelay = 200
 	debug = false
+	sensors: SensorDescriptor[] | undefined = undefined
 
-	constructor({ scroll = {}, preview = {}, debug = false, strategies = [] }: DndControllerConfig = {}) {
+	constructor({ scroll = {}, preview = {}, debug = false, strategies = [], sensors }: DndControllerConfig = {}) {
 		this.debug = debug
+		this.sensors = sensors
 		if (preview.showDelay !== undefined) this.previewShowDelay = preview.showDelay
 		if (preview.collapseDelay !== undefined) this.previewCollapseDelay = preview.collapseDelay
 		this.strategyMap.set('sortable', new SortableContainerStrategy(this.state))

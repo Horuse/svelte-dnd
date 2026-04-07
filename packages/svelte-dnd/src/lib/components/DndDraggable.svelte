@@ -2,6 +2,7 @@
 	import { getContext, onDestroy } from 'svelte'
 	import type { DndDragEvent } from '../types.js'
 	import type { DndController } from '../core/dnd/dnd-controller.svelte.js'
+	import type { SensorDescriptor } from '../core/sensors/sensor.js'
 	import type { Snippet } from 'svelte'
 	import DndPreview from './DndPreview.svelte'
 	import { DragHandler } from '../core/handlers/drag-handler.svelte.js'
@@ -11,6 +12,7 @@
 		type?: string
 		data?: Record<string, unknown>
 		disabled?: boolean
+		sensors?: SensorDescriptor[]
 		onDragStart?: (event: DndDragEvent) => void
 		onDrag?: (event: DndDragEvent) => void
 		onDragEnd?: (event: DndDragEvent) => void
@@ -36,6 +38,7 @@
 		type = undefined,
 		data = {},
 		disabled = false,
+		sensors = undefined,
 		class: className,
 		onDragStart,
 		onDrag,
@@ -69,7 +72,7 @@
 
 	const handler = new DragHandler(
 		() => element,
-		() => ({ id, type, data, disabled, dragDelay, scrollCancelThreshold, dndController, callbacks: { onDragStart, onDrag, onDragEnd } })
+		() => ({ id, type, data, disabled, dragDelay, scrollCancelThreshold, dndController, sensors: sensors ?? dndController?.sensors, callbacks: { onDragStart, onDrag, onDragEnd } })
 	)
 
 	const translate = $derived(dndController?.translations.get(id) ?? { x: 0, y: 0 })

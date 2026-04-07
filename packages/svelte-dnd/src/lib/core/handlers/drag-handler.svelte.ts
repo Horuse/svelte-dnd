@@ -1,7 +1,7 @@
 import type { DndDragEvent } from '../../types.js'
 import type { DndController } from '../dnd/dnd-controller.svelte.js'
-import { TouchScroll } from '../scroll/touch-scroll.js'
-import { isBrowser } from '../utils/dom-helper.js'
+import type { SensorDescriptor, SensorActivation } from '../sensors/sensor.js'
+import { PointerSensor } from '../sensors/pointer-sensor.js'
 
 interface DragHandlerCallbacks {
 	onDragStart?: (event: DndDragEvent) => void
@@ -18,21 +18,17 @@ interface DragHandlerOptions {
 	scrollCancelThreshold: number
 	dndController: DndController | undefined
 	callbacks: DragHandlerCallbacks
+	sensors?: SensorDescriptor[]
 }
 
-const DRAG_THRESHOLD = 5
+const DEFAULT_SENSORS: SensorDescriptor[] = [new PointerSensor()]
 
 export class DragHandler {
 	isDragging = $state(false)
-	isPotentialDrag = $state(false)
-	dragOffset = $state({ x: 0, y: 0 })
 	dragOccurred = $state(false)
 
-	private dragStartPosition = { x: 0, y: 0 }
-	private longPressTimer: ReturnType<typeof setTimeout> | null = null
-	private lastPointerPos = { x: 0, y: 0 }
-	private lastPointerId = 0
-	private touchScroll = new TouchScroll()
+	private dragOffset = { x: 0, y: 0 }
+	private activeActivation: SensorActivation | null = null
 
 	constructor(
 		private getElement: () => HTMLElement | undefined,
@@ -42,117 +38,90 @@ export class DragHandler {
 	// --- Public event handlers (bound in template) ---
 
 	handlePointerDown = (e: PointerEvent) => {
-		const { disabled, id, data, dragDelay, dndController, callbacks } = this.getOptions()
-		if (disabled) return
+		const options = this.getOptions()
+		if (options.disabled) return
 		const element = this.getElement()
 		if (!element) return
-		if (e.button !== 0) return
 
-		const target = e.target as HTMLElement
-		const hasHandle = !!element.querySelector('[data-dnd-handle]')
-		if (hasHandle) {
-			if (!target.closest('[data-dnd-handle]')) return
-		} else {
-			if (target.closest('[data-dnd-no-drag]')) return
-		}
+		const sensors = options.sensors ?? DEFAULT_SENSORS
 
-		const rect = element.getBoundingClientRect()
-		const styles = getComputedStyle(element)
-		const contentTop = rect.top + parseFloat(styles.paddingTop)
-		const contentBottom = rect.bottom - parseFloat(styles.paddingBottom)
-		const contentLeft = rect.left + parseFloat(styles.paddingLeft)
-		const contentRight = rect.right - parseFloat(styles.paddingRight)
-		if (
-			e.clientY < contentTop || e.clientY > contentBottom ||
-			e.clientX < contentLeft || e.clientX > contentRight
-		) return
+		for (const sensor of sensors) {
+			const activation = sensor.activate(e, element, {
+				dragDelay: options.dragDelay,
+				scrollCancelThreshold: options.scrollCancelThreshold
+			}, {
+				onStart: (transform) => {
+					this.dragOffset = activation!.offset
+					this.startDragSession(transform)
+				},
+				onMove: (transform, mouseX, mouseY) => {
+					this.handleDragMove(transform, mouseX, mouseY)
+				},
+				onEnd: () => {
+					this.handleDragEnd()
+				},
+				onCancel: () => {
+					this.handleDragCancel()
+				}
+			})
 
-		e.stopPropagation()
-		this.touchScroll.stopMomentum()
-
-		this.isPotentialDrag = true
-		this.dragOccurred = false
-		this.dragStartPosition = { x: e.clientX, y: e.clientY }
-		this.dragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top }
-		this.lastPointerPos = { x: e.clientX, y: e.clientY }
-		this.lastPointerId = e.pointerId
-
-		const effectiveDelay = e.pointerType === 'touch' ? dragDelay : 0
-
-		if (effectiveDelay > 0) {
-			this.longPressTimer = setTimeout(() => {
-				this.longPressTimer = null
-				if (!this.isPotentialDrag || this.touchScroll.isScrolling) return
-				const el = this.getElement()
-				if (!el) return
-				el.setPointerCapture(this.lastPointerId)
-				this.startActualDrag(this.lastPointerPos.x, this.lastPointerPos.y, this.lastPointerId)
-			}, effectiveDelay)
-		} else {
-			element.setPointerCapture(e.pointerId)
-		}
-	}
-
-	handlePointerMove = (e: PointerEvent) => {
-		if (!this.isPotentialDrag && !this.touchScroll.isScrolling) return
-
-		this.lastPointerPos = { x: e.clientX, y: e.clientY }
-
-		if (!this.isPotentialDrag) {
-			this.touchScroll.update(e.clientX, e.clientY)
-			return
-		}
-
-		const deltaX = Math.abs(e.clientX - this.dragStartPosition.x)
-		const deltaY = Math.abs(e.clientY - this.dragStartPosition.y)
-		const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
-
-		if (this.longPressTimer !== null) {
-			if (distance > this.getOptions().scrollCancelThreshold) {
-				this.cancelLongPress()
-				this.isPotentialDrag = false
-				this.touchScroll.start(this.getElement()!, e.clientX, e.clientY)
+			if (activation) {
+				this.activeActivation = activation
+				this.dragOffset = activation.offset
+				break
 			}
-			return
-		}
-
-		if (distance >= DRAG_THRESHOLD) {
-			this.startActualDrag(e.clientX, e.clientY, e.pointerId)
 		}
 	}
 
-	handlePointerUp = (e: PointerEvent) => {
-		const element = this.getElement()
-		if (element?.hasPointerCapture(e.pointerId)) {
-			element.releasePointerCapture(e.pointerId)
-		}
-		if (this.touchScroll.isScrolling) this.touchScroll.end()
-		if (this.isPotentialDrag) {
-			this.cancelLongPress()
-			this.isPotentialDrag = false
+	handleClick = (e: MouseEvent) => {
+		if (this.dragOccurred) {
+			e.preventDefault()
+			e.stopPropagation()
+			this.dragOccurred = false
 		}
 	}
 
-	handlePointerCancel = () => {
-		if (this.touchScroll.isScrolling) this.touchScroll.end()
-		this.cancelLongPress()
-		this.isPotentialDrag = false
+	handleKeyDown = (e: KeyboardEvent) => {
+		if (e.key === 'Enter' || e.key === ' ') {
+			this.getElement()?.click()
+		}
 	}
 
-	handleWindowPointerMove = (e: PointerEvent) => {
+	destroy() {
+		this.activeActivation?.destroy()
+		this.activeActivation = null
+	}
+
+	// --- Private ---
+
+	private startDragSession(initialTransform: { x: number; y: number }) {
+		if (this.isDragging) return
+		this.isDragging = true
+		this.dragOccurred = true
+
+		const { id, type, data, dndController, callbacks } = this.getOptions()
+		const element = this.getElement()!
+
+		dndController?.startDrag(element, id, initialTransform, data, type)
+		dndController?.updateMousePosition?.(
+			initialTransform.x + this.dragOffset.x,
+			initialTransform.y + this.dragOffset.y
+		)
+
+		callbacks.onDragStart?.({
+			source: { id, element, data },
+			target: null,
+			transform: initialTransform
+		})
+	}
+
+	private handleDragMove(transform: { x: number; y: number }, mouseX: number, mouseY: number) {
 		if (!this.isDragging) return
-
-		const { id, data, callbacks } = this.getOptions()
+		const { id, data, dndController, callbacks } = this.getOptions()
 		const element = this.getElement()
-		const dndController = this.getOptions().dndController
-
-		const transform = {
-			x: e.clientX - this.dragOffset.x,
-			y: e.clientY - this.dragOffset.y
-		}
 
 		dndController?.updateTransform(transform)
-		dndController?.updateMousePosition?.(e.clientX, e.clientY)
+		dndController?.updateMousePosition?.(mouseX, mouseY)
 
 		callbacks.onDrag?.({
 			source: { id, element: element!, data },
@@ -161,11 +130,10 @@ export class DragHandler {
 		})
 	}
 
-	handleWindowPointerUp = (_e: PointerEvent) => {
+	private handleDragEnd() {
 		if (!this.isDragging) return
-
 		this.isDragging = false
-		this.removeWindowListeners()
+		this.activeActivation = null
 
 		const { id, data, dndController, callbacks } = this.getOptions()
 		const element = this.getElement()
@@ -185,82 +153,10 @@ export class DragHandler {
 		})
 	}
 
-	handleWindowPointerCancel = () => {
+	private handleDragCancel() {
 		if (!this.isDragging) return
 		this.isDragging = false
-		this.removeWindowListeners()
+		this.activeActivation = null
 		this.getOptions().dndController?.endDrag(false)
-	}
-
-	handleClick = (e: MouseEvent) => {
-		if (this.dragOccurred) {
-			e.preventDefault()
-			e.stopPropagation()
-			this.dragOccurred = false
-		}
-	}
-
-	handleKeyDown = (e: KeyboardEvent) => {
-		if (e.key === 'Enter' || e.key === ' ') {
-			this.getElement()?.click()
-		}
-	}
-
-	destroy() {
-		this.cancelLongPress()
-		this.touchScroll.stopMomentum()
-		this.removeWindowListeners()
-	}
-
-	// --- Private ---
-
-	private startActualDrag(clientX: number, clientY: number, pointerId: number) {
-		if (this.isDragging) return
-
-		this.isDragging = true
-		this.isPotentialDrag = false
-		this.dragOccurred = true
-
-		const element = this.getElement()!
-		if (element.hasPointerCapture(pointerId)) {
-			element.releasePointerCapture(pointerId)
-		}
-		this.addWindowListeners()
-
-		const { id, type, data, dndController, callbacks } = this.getOptions()
-		const initialTransform = {
-			x: clientX - this.dragOffset.x,
-			y: clientY - this.dragOffset.y
-		}
-
-		dndController?.startDrag(element, id, initialTransform, data, type)
-		dndController?.updateMousePosition?.(clientX, clientY)
-
-		callbacks.onDragStart?.({
-			source: { id, element, data },
-			target: null,
-			transform: initialTransform
-		})
-	}
-
-	private addWindowListeners() {
-		if (!isBrowser) return
-		window.addEventListener('pointermove', this.handleWindowPointerMove)
-		window.addEventListener('pointerup', this.handleWindowPointerUp)
-		window.addEventListener('pointercancel', this.handleWindowPointerCancel)
-	}
-
-	private removeWindowListeners() {
-		if (!isBrowser) return
-		window.removeEventListener('pointermove', this.handleWindowPointerMove)
-		window.removeEventListener('pointerup', this.handleWindowPointerUp)
-		window.removeEventListener('pointercancel', this.handleWindowPointerCancel)
-	}
-
-	private cancelLongPress() {
-		if (this.longPressTimer) {
-			clearTimeout(this.longPressTimer)
-			this.longPressTimer = null
-		}
 	}
 }
