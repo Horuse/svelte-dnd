@@ -17,7 +17,7 @@ Defines a container that accepts draggable items. Automatically registers drop z
 | `disabled` | `boolean` | `false` | Disables dropping when `true`. Also sets `opacity: 0.5; pointer-events: none` |
 | `direction` | `DndDirection` | `'vertical'` | Layout direction: `'vertical'` \| `'horizontal'` \| `'grid'` |
 | `mode` | `DndMode` | `'sortable'` | `'sortable'` — position-based drop zones with insert previews. `'target'` — single drop zone covering the whole container, no previews |
-| `overlap` | `number \| string` | `undefined` | Overlap required to activate this container. A `number` is pixels of intersection (`0` = any pixel). A `string` is a percentage of the ghost's smaller dimension (e.g. `"25%"`). `undefined` uses center-point detection |
+| `collision` | `CollisionAlgorithm` | `undefined` | Per-container collision algorithm. Overrides the global algorithm set on `DndController`. `undefined` falls back to the global, or `centerPoint` if none. See [Collision Detection](/docs/collision) |
 | `class` | `string` | — | Additional CSS class names |
 
 ### Snippets

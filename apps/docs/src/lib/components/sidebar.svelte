@@ -10,7 +10,8 @@
 		{ href: '/examples/multi-container', label: 'Multi Container' },
 		{ href: '/examples/custom-ghost', label: 'Custom Ghost' },
 		{ href: '/examples/sortable-containers', label: 'Sortable Containers' },
-		{ href: '/examples/configs', label: 'Configs' }
+		{ href: '/examples/configs', label: 'Configs' },
+		{ href: '/examples/sensors', label: 'Sensors' },
 	];
 
 	type NavLink = {
@@ -33,6 +34,10 @@
 		{ href: '/docs/css-custom-props', label: 'CSS Custom Props' },
 		{ href: '/docs/drag-controller-api', label: 'DndController API' },
 		{ href: '/docs/simulations', label: 'Simulations' },
+		{ href: '/docs/sensors', label: 'Sensors' },
+		{ href: '/docs/collision', label: 'Collision Detection' },
+		{ href: '/docs/modifiers', label: 'Modifiers' },
+		{ href: '/docs/accessibility', label: 'Accessibility' },
 		{ href: '/docs/html-attributes', label: 'HTML Attributes' },
 		{ href: '/docs/faq', label: 'FAQ' },
 	{

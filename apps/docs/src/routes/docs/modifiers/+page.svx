@@ -1,0 +1,89 @@
+---
+title: Modifiers
+description: Transform modifiers that constrain or snap ghost movement during drag.
+---
+
+# Modifiers
+
+Modifiers are functions applied to the ghost's transform on every pointer move. They can restrict, snap, or otherwise transform the drag position before it is applied.
+
+## Built-in modifiers
+
+| Modifier | Description |
+|----------|-------------|
+| `restrictToVerticalAxis` | Locks horizontal movement — ghost only moves up/down |
+| `restrictToHorizontalAxis` | Locks vertical movement — ghost only moves left/right |
+| `restrictToContainer` | Clamps ghost inside its origin container's bounding box |
+| `snapToGrid` | Snaps ghost position to a configurable grid |
+
+All are exported from `@horuse/svelte-dnd`.
+
+## Usage
+
+Pass modifiers to `DndController`:
+
+```ts
+import {
+    DndController,
+    restrictToVerticalAxis,
+    snapToGrid,
+} from '@horuse/svelte-dnd';
+
+const controller = new DndController({
+    modifiers: [restrictToVerticalAxis],
+});
+```
+
+Modifiers run in array order — each receives the output of the previous.
+
+## snapToGrid
+
+```ts
+import { snapToGrid } from '@horuse/svelte-dnd';
+
+const controller = new DndController({
+    modifiers: [snapToGrid({ x: 20, y: 20 })],
+});
+```
+
+Grid cell size is in pixels. Pass `{ x, y }` for non-square grids.
+
+## Combining modifiers
+
+```ts
+const controller = new DndController({
+    modifiers: [restrictToContainer, snapToGrid({ x: 10, y: 10 })],
+});
+```
+
+## Custom modifier
+
+Implement `Modifier` to write your own:
+
+```ts
+import type { Modifier, ModifierContext } from '@horuse/svelte-dnd';
+
+const clampToPositive: Modifier = ({ transform }) => ({
+    x: Math.max(0, transform.x),
+    y: Math.max(0, transform.y),
+});
+
+const controller = new DndController({
+    modifiers: [clampToPositive],
+});
+```
+
+## Types
+
+```ts
+type Modifier = (context: ModifierContext) => { x: number; y: number };
+
+interface ModifierContext {
+    /** Current accumulated transform (after previous modifiers) */
+    transform: { x: number; y: number };
+    /** Transform at the moment drag started */
+    initialTransform: { x: number; y: number };
+    /** Width/height of the ghost element */
+    ghostSize: { width: number; height: number };
+}
+```

@@ -1,0 +1,41 @@
+---
+title: Sensors
+description: Switch between pointer-only, keyboard-only, or both sensors at runtime.
+---
+
+<script>
+    import SensorsExample from '$lib/examples/SensorsExample.svelte'
+</script>
+
+# Sensors
+
+Demonstrates how to configure `PointerSensor` and `KeyboardSensor`. Use the toggle buttons to switch between sensor modes at runtime.
+
+For keyboard mode: focus any item with **Tab**, then press **Enter** or **Space** to pick it up. Use **arrow keys** to navigate, **Enter** to drop, **Escape** to cancel.
+
+<SensorsExample />
+
+```ts
+import {
+    DndController,
+    PointerSensor,
+    KeyboardSensor,
+} from '@horuse/svelte-dnd';
+
+// Both sensors (default)
+const controller = new DndController({
+    sensors: [new PointerSensor(), new KeyboardSensor(controller)],
+});
+
+// Pointer only — disables keyboard drag
+const controller = new DndController({
+    sensors: [new PointerSensor()],
+});
+
+// Keyboard only — disables pointer drag
+const controller = new DndController({
+    sensors: [new KeyboardSensor(controller)],
+});
+```
+
+See [Sensors docs](/docs/sensors) for the full API reference.

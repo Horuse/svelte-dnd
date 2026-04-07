@@ -1,0 +1,142 @@
+---
+title: Sensors
+description: Pluggable input sensors — configure PointerSensor and KeyboardSensor or write your own.
+---
+
+# Sensors
+
+Sensors are the layer that translates raw input events (pointer, keyboard, touch) into drag lifecycle calls. The library ships with two built-in sensors and exposes the `SensorDescriptor` interface so you can write your own.
+
+## Built-in sensors
+
+| Sensor | Activates on | Notes |
+|--------|-------------|-------|
+| `PointerSensor` | `pointerdown` | Handles mouse, touch, and stylus. Respects `dragDelay` and `scrollCancelThreshold` |
+| `KeyboardSensor` | `Enter` / `Space` | Navigate zones with arrow keys, confirm with Enter, cancel with Escape |
+
+Both are exported from `@horuse/svelte-dnd`.
+
+## Default behaviour
+
+If you do not configure `sensors` explicitly, the controller uses `[PointerSensor, KeyboardSensor]`.
+
+## Configuring sensors
+
+Pass sensors to `DndController`:
+
+```ts
+import {
+    DndController,
+    PointerSensor,
+    KeyboardSensor,
+} from '@horuse/svelte-dnd';
+
+const controller = new DndController({
+    sensors: [new PointerSensor(), new KeyboardSensor(controller)],
+});
+```
+
+> **Note:** `KeyboardSensor` needs a reference to the controller to read `filteredDropZones` for navigation. Pass it after constructing the controller.
+
+## Pointer-only (disable keyboard)
+
+```ts
+const controller = new DndController({
+    sensors: [new PointerSensor()],
+});
+```
+
+## Per-item sensor override
+
+You can override sensors on individual draggable items using the `sensors` prop on `DndDraggable`:
+
+```svelte
+<DndDraggable id={item.id} {position} sensors={[new PointerSensor()]}>
+    {item.label}
+</DndDraggable>
+```
+
+The per-item sensors take precedence over controller-level sensors for that element.
+
+## PointerSensor options
+
+`PointerSensor` respects the `dragDelay` and `scrollCancelThreshold` values passed to `DndDraggable` (or the `draggable` action):
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `dragDelay` | `300` ms | On touch devices: wait this long before deciding the gesture is a drag rather than a scroll |
+| `scrollCancelThreshold` | `8` px | If the finger moves more than this during `dragDelay`, treat it as a scroll and cancel drag activation |
+
+## KeyboardSensor navigation
+
+Once activated (Enter or Space on a focused draggable), keyboard navigation works as follows:
+
+| Key | Action |
+|-----|--------|
+| `ArrowDown` / `ArrowRight` | Move to next position in current container |
+| `ArrowUp` / `ArrowLeft` | Move to previous position in current container |
+| `ArrowRight` (at last item) | Jump to first position in next container |
+| `ArrowLeft` (at first item) | Jump to last position in previous container |
+| `Enter` | Confirm drop at current preview position |
+| `Escape` | Cancel drag, ghost returns to origin |
+
+## Custom sensor
+
+Implement `SensorDescriptor` to create your own input sensor:
+
+```ts
+import type { SensorDescriptor, SensorActivation, SensorOptions, SensorCallbacks } from '@horuse/svelte-dnd';
+
+const mySensor: SensorDescriptor = {
+    activate(event, element, options, callbacks): SensorActivation | null {
+        // Return null if this sensor doesn't handle the event
+        if (!(event instanceof CustomEvent)) return null;
+
+        // Start drag immediately
+        callbacks.onStart({ x: 0, y: 0 }, element);
+
+        return {
+            initialTransform: { x: 0, y: 0 },
+            offset: { x: 0, y: 0 },
+            destroy() {
+                // Clean up any listeners added here
+            },
+        };
+    },
+};
+
+const controller = new DndController({ sensors: [mySensor] });
+```
+
+## Types
+
+```ts
+interface SensorDescriptor {
+    activate(
+        event: Event,
+        element: HTMLElement,
+        options: SensorOptions,
+        callbacks: SensorCallbacks
+    ): SensorActivation | null;
+}
+
+interface SensorOptions {
+    dragDelay?: number;
+    scrollCancelThreshold?: number;
+}
+
+interface SensorCallbacks {
+    onStart(initialTransform: { x: number; y: number }, element: HTMLElement): void;
+    onMove(transform: { x: number; y: number }, mouseX: number, mouseY: number): void;
+    onEnd(): void;
+    onCancel(): void;
+}
+
+interface SensorActivation {
+    initialTransform: { x: number; y: number };
+    offset: { x: number; y: number };
+    destroy(): void;
+}
+```
+
+See the [Sensors](/examples/sensors) example for a live demo with both sensors configured.

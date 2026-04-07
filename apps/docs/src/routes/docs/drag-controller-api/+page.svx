@@ -27,6 +27,9 @@ const controller = new DndController({
     },
     debug: true,            // enables position validation warnings
     strategies: [new MasonryStrategy()], // custom or override built-in strategies
+    sensors: [new PointerSensor(), new KeyboardSensor(controller)], // active input sensors
+    collision: overlap({ threshold: '25%' }),  // global collision algorithm
+    modifiers: [restrictToVerticalAxis],       // transform modifiers applied on every move
 });
 ```
 
@@ -98,14 +101,28 @@ controller.onDropCancelled((itemId: string) => {
 
 ### onDrop
 
-The main callback for handling item reordering or moving between containers.
+The main callback for handling item reordering or moving between containers. `DndController` is generic — the `TData` type parameter flows through to `sourceData` in `onDrop`.
 
 ```ts
+interface TaskData { label: string; priority: number }
+
+const controller = new DndController<TaskData>()
+
 controller.onDrop((sourceId, sourceData, targetContainerId, position) => {
     // sourceId: ID of the dragged item
-    // sourceData: data attached to the dragged item
+    // sourceData: TaskData | undefined  ← typed!
     // targetContainerId: ID of the container where item was dropped
     // position: index within the target container
+});
+```
+
+### onDragOver
+
+Fired each time the drag-over target (container + position) changes. Useful for highlighting the active drop zone in custom UIs.
+
+```ts
+controller.onDragOver((containerId: string, position: number) => {
+    console.log('hovering over', containerId, 'at position', position);
 });
 ```
 
@@ -257,6 +274,12 @@ interface DndControllerConfig {
     /** Enable dev warnings (unknown strategy mode, etc.). Default: false */
     debug?: boolean;
     strategies?: (ContainerStrategy | StrategyFactory)[];
+    /** Active input sensors. Defaults to [PointerSensor, KeyboardSensor]. See [Sensors](/docs/sensors) */
+    sensors?: SensorDescriptor[];
+    /** Global collision algorithm. Per-container `collision` prop takes priority. See [Collision Detection](/docs/collision) */
+    collision?: CollisionAlgorithm;
+    /** Transform modifiers applied to ghost position on every move. See [Modifiers](/docs/modifiers) */
+    modifiers?: Modifier[];
 }
 
 type StrategyFactory = (state: DndState) => ContainerStrategy;
@@ -264,7 +287,8 @@ type StrategyFactory = (state: DndState) => ContainerStrategy;
 type DragStartCallback = (itemId: string) => void;
 type DragEndCallback = (itemId: string) => void;
 type DropCancelledCallback = (itemId: string) => void;
-type DropCallback = (sourceId: string, sourceData: Record<string, unknown> | undefined, targetContainerId: string, position: number) => void;
+type DropCallback<TData = Record<string, unknown>> = (sourceId: string, sourceData: TData | undefined, targetContainerId: string, position: number) => void;
+type DragOverCallback = (containerId: string, position: number) => void;
 type DndDirection = 'vertical' | 'horizontal' | 'grid';
 type DndMode = 'sortable' | 'target' | (string & {}); // custom modes allowed
 type DragSource = 'user' | 'programmatic';

@@ -1,0 +1,89 @@
+---
+title: Collision Detection
+description: Pluggable collision algorithms — centerPoint, overlap, closestCenter, or custom.
+---
+
+# Collision Detection
+
+Collision detection determines which drop zone is the active target while an item is being dragged. The library ships with three algorithms and exposes the `CollisionAlgorithm` interface for custom implementations.
+
+## Built-in algorithms
+
+| Algorithm | Description |
+|-----------|-------------|
+| `centerPoint` | Active zone is the one whose rect contains the ghost's center. **Default.** |
+| `overlap` | Active zone is the one with the most overlap with the ghost rect. Accepts a threshold option |
+| `closestCenter` | Active zone is the one whose center is closest to the ghost's center |
+
+All three are exported from `@horuse/svelte-dnd`.
+
+## Global algorithm
+
+Set a global algorithm on `DndController`:
+
+```ts
+import { DndController, overlap } from '@horuse/svelte-dnd';
+
+const controller = new DndController({
+    collision: overlap({ threshold: '25%' }),
+});
+```
+
+## Per-container override
+
+Use the `collision` prop on `DndDroppable` to override the algorithm for a specific container:
+
+```svelte
+<script>
+    import { DndDroppable, closestCenter } from '@horuse/svelte-dnd';
+</script>
+
+<DndDroppable id="board" collision={closestCenter}>
+    ...
+</DndDroppable>
+```
+
+**Priority:** per-container `collision` prop → global `collision` on controller → `centerPoint` default.
+
+## overlap options
+
+```ts
+import { overlap } from '@horuse/svelte-dnd';
+
+// pixels of intersection required (0 = any overlap)
+collision: overlap({ threshold: 0 })
+
+// percentage of ghost's smaller dimension
+collision: overlap({ threshold: '25%' })
+```
+
+## Custom algorithm
+
+Implement `CollisionAlgorithm` to write your own:
+
+```ts
+import type { CollisionAlgorithm, CollisionContext } from '@horuse/svelte-dnd';
+
+const myAlgorithm: CollisionAlgorithm = ({ zones, pointer, ghost }) => {
+    // zones: DropZone[]  — all candidate zones
+    // pointer: { x, y }  — current mouse/touch position
+    // ghost: { x, y, width, height }  — ghost bounding box
+
+    // Return the winning zone or null
+    return zones.find(z => z.rect.x < pointer.x && pointer.x < z.rect.x + z.rect.width) ?? null;
+};
+
+const controller = new DndController({ collision: myAlgorithm });
+```
+
+## Types
+
+```ts
+type CollisionAlgorithm = (context: CollisionContext) => DropZone | null;
+
+interface CollisionContext {
+    zones: DropZone[];
+    pointer: { x: number; y: number };
+    ghost: { x: number; y: number; width: number; height: number };
+}
+```

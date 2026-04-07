@@ -12,6 +12,7 @@ Wraps your drag-and-drop area and provides the `DndController` context to all ch
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `controller` | `DndController` | auto-created | Optional pre-created controller instance. Configure it via its constructor — see [DndController API](/docs/drag-controller-api) |
+| `announcements` | `Announcements` | `defaultAnnouncements` | Screen-reader announcement strings for drag events. See [Accessibility](/docs/accessibility) |
 
 ### Snippets
 

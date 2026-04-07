@@ -65,13 +65,19 @@ controller.simulateDrop(
     itemId: string,
     fromContainerId: string,
     toContainerId: string,
-    toPosition: number
+    toPosition: number,
+    options?: SimulateOptions
 ): Promise<void>
+
+interface SimulateOptions {
+    /** When true, fires onDrop after the animation completes. Default: false */
+    emitEvents?: boolean;
+}
 ```
 
 Animates an item flying from its current DOM position to a target container and position. Always uses a fly-to-target animation regardless of whether containers match.
 
-**Does not fire any drop events.**
+By default **does not fire any drop events**. Pass `{ emitEvents: true }` to fire `onDrop` after the animation completes.
 
 ### Example — auto-sort animation
 
@@ -83,13 +89,21 @@ await controller.simulateDrop('2', 'list', 'list', 0);
 moveItemToTop('2');
 ```
 
+### Example — programmatic move with events
+
+```ts
+// Animate AND fire onDrop (your existing handler updates the data model):
+await controller.simulateDrop('task-3', 'backlog', 'in-progress', 0, { emitEvents: true });
+// onDrop fires automatically — no manual data update needed
+```
+
 ---
 
 ## Constraints
 
 - **Cannot run while a drag is in progress.** Both methods reject with an error if `controller.dragging` is `true`.
 - **Item must exist in the DOM.** The item must be rendered in `fromContainerId` at the time the simulation starts.
-- **No drop events.** Neither `onDrop` nor `onDragEnd` callbacks are called. You must update your data model manually after `await`.
+- **No drop events by default.** Neither `onDrop` nor `onDragEnd` callbacks are called unless you pass `{ emitEvents: true }` to `simulateDrop`.
 
 ---
 

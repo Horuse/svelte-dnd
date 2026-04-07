@@ -1,0 +1,90 @@
+---
+title: Accessibility
+description: Keyboard navigation, ARIA attributes, and screen-reader announcements.
+---
+
+# Accessibility
+
+## Keyboard navigation
+
+Keyboard drag-and-drop is powered by `KeyboardSensor` and is active by default. Focusable items have `role="button"` and `tabindex="0"` automatically set.
+
+| Key | Action |
+|-----|--------|
+| `Tab` | Move focus between draggable items |
+| `Enter` / `Space` | Pick up the focused item and start drag |
+| `ArrowDown` / `ArrowRight` | Move preview to next position |
+| `ArrowUp` / `ArrowLeft` | Move preview to previous position |
+| `Enter` | Drop at current preview position |
+| `Escape` | Cancel drag, ghost returns to origin |
+
+Arrow keys navigate both within and across containers. When the end of a container is reached, focus jumps to the first position of the next container (and vice-versa at the start).
+
+## Screen-reader announcements
+
+`DndProvider` renders a visually-hidden ARIA live region (`aria-live="assertive"`) that announces drag events to screen readers. The default announcements are:
+
+| Event | Default message |
+|-------|----------------|
+| Drag start | `"Picked up item."` |
+| Drag over new position | `"Moving to position {n} of {total}."` |
+| Drop | `"Dropped item."` |
+| Cancel | `"Drop cancelled."` |
+
+### Custom announcements
+
+Pass an `announcements` prop to `DndProvider` to customise the messages:
+
+```svelte
+<script>
+    import { DndProvider, defaultAnnouncements } from '@horuse/svelte-dnd';
+
+    const announcements = {
+        ...defaultAnnouncements,
+        onDragStart: () => 'Picked up a task. Use arrow keys to move it.',
+        onDragOver: (containerId, position, total) =>
+            `Moving to column ${containerId}, position ${position + 1} of ${total}.`,
+        onDrop: () => 'Task placed.',
+        onCancel: () => 'Move cancelled, task returned to original position.',
+    };
+</script>
+
+<DndProvider {controller} {announcements}>
+    ...
+</DndProvider>
+```
+
+### Announcements type
+
+```ts
+interface Announcements {
+    onDragStart: () => string;
+    onDragOver: (containerId: string, position: number, total: number) => string;
+    onDrop: () => string;
+    onCancel: () => string;
+}
+```
+
+## ARIA attributes
+
+The library sets these attributes automatically:
+
+| Element | Attributes |
+|---------|-----------|
+| `DndDraggable` inner div | `role="button"`, `tabindex="0"`, `aria-grabbed`, `aria-roledescription="draggable item"` |
+| `DndDroppable` | `aria-disabled` when `disabled={true}` |
+
+## use:draggable action
+
+The `draggable` action sets the same ARIA attributes on any element, without requiring `DndDraggable`:
+
+```svelte
+<li
+    use:draggable={{ id: item.id, controller }}
+    style="transform: translate3d({controller.translations.get(item.id)?.x ?? 0}px, {controller.translations.get(item.id)?.y ?? 0}px, 0)"
+>
+    {item.label}
+</li>
+```
+
+The `use:draggable` action also adds/removes the CSS class `dnd-dragging` during a drag, so you can style it without Svelte reactivity.
