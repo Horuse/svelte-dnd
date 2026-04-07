@@ -4,6 +4,7 @@ import type { DndEventEmitter } from './dnd-event-emitter.js'
 import type { ScrollController } from '../scroll/scroll-controller.js'
 import type { DropAnimationCoordinator } from '../animation/drop-animation-coordinator.js'
 import type { DragSession } from './drag-session.js'
+import type { Modifier } from '../modifiers/modifier.js'
 import { DOMHelper } from '../utils/dom-helper.js'
 
 export class DragSessionManager {
@@ -12,7 +13,8 @@ export class DragSessionManager {
 		private registry: ContainerRegistry,
 		private eventEmitter: DndEventEmitter,
 		private scrollController: ScrollController,
-		private animationCoordinator: DropAnimationCoordinator
+		private animationCoordinator: DropAnimationCoordinator,
+		private modifiers: Modifier[] = []
 	) {}
 
 	startDrag(
@@ -58,7 +60,19 @@ export class DragSessionManager {
 		this.eventEmitter.notifyDragStart(itemId)
 	}
 
-	updateTransform(transform: { x: number; y: number }) {
+	updateTransform(rawTransform: { x: number; y: number }) {
+		if (this.modifiers.length === 0) {
+			this.state.setTransform(rawTransform)
+			return
+		}
+
+		const initialTransform = this.state.session?.ghostTransform ?? rawTransform
+		const ghostSize = this.state.size ?? { width: 0, height: 0 }
+
+		let transform = rawTransform
+		for (const modifier of this.modifiers) {
+			transform = modifier({ transform, initialTransform, ghostSize })
+		}
 		this.state.setTransform(transform)
 	}
 

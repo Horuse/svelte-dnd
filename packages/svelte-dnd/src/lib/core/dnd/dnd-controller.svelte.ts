@@ -13,6 +13,7 @@ import type { CollisionAlgorithm } from '../collision/collision-algorithm.js'
 import { DropResolver } from '../zones/drop-resolver.js'
 import { DropAnimationCoordinator } from '../animation/drop-animation-coordinator.js'
 import { DragSessionManager } from './drag-session-manager.js'
+import type { Modifier } from '../modifiers/modifier.js'
 import { DndSimulator } from './dnd-simulator.js'
 import type { DropZone, DndDirection, DndMode, DragStartCallback, DragEndCallback, DropCallback, DropCancelledCallback, ZonesInvalidatedCallback } from '../../types.js'
 
@@ -25,6 +26,7 @@ export interface DndControllerConfig {
 	strategies?: (ContainerStrategy | StrategyFactory)[]
 	sensors?: SensorDescriptor[]
 	collision?: CollisionAlgorithm
+	modifiers?: Modifier[]
 }
 
 export type { DragStartCallback, DragEndCallback, DropCallback, DropCancelledCallback, ZonesInvalidatedCallback } from '../../types.js'
@@ -59,7 +61,7 @@ export class DndController {
 	debug = false
 	sensors: SensorDescriptor[] | undefined = undefined
 
-	constructor({ scroll = {}, preview = {}, debug = false, strategies = [], sensors, collision }: DndControllerConfig = {}) {
+	constructor({ scroll = {}, preview = {}, debug = false, strategies = [], sensors, collision, modifiers = [] }: DndControllerConfig = {}) {
 		this.debug = debug
 		this.sensors = sensors
 
@@ -94,7 +96,8 @@ export class DndController {
 			this.registry,
 			this.eventEmitter,
 			this.scrollController,
-			this.animationCoordinator
+			this.animationCoordinator,
+			modifiers
 		)
 
 		this.registrar = new ContainerRegistrar(this.state, this.registry, this.strategyMap, debug)
