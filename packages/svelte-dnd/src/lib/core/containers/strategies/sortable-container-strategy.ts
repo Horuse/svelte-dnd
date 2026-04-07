@@ -25,16 +25,18 @@ export class SortableContainerStrategy implements ContainerStrategy {
 			return this.createEmptyZone(containerId, containerRect, direction)
 		}
 
-		// case 'grid': return this.createGridZones(containerId, containerRect, draggableItems)
 		switch (direction) {
 			case 'horizontal': return this.createHorizontalZones(containerId, containerRect, draggableItems)
-			default: return this.createVerticalZones(containerId, containerRect, draggableItems)
+			case 'grid':       return this.createGridZones(containerId, containerRect, draggableItems)
+			default:           return this.createVerticalZones(containerId, containerRect, draggableItems)
 		}
 	}
 
 	getTranslations(containerId: string, container: HTMLElement, session: DragSession): Map<string, { x: number; y: number }> {
-		const map = new Map<string, { x: number; y: number }>()
 		const direction = DOMHelper.getContainerDirection(container)
+		if (direction === 'grid') return this.getGridTranslations(containerId, container, session)
+
+		const map = new Map<string, { x: number; y: number }>()
 		const preview = session.dropPreview
 		const draggedId = session.itemId
 		const slotSize = session.slotSize
@@ -112,6 +114,77 @@ export class SortableContainerStrategy implements ContainerStrategy {
 
 	getReturnAnimation(session: DragSession): AnimationStep {
 		return new GhostReturnStep(this.state, session.originContainerId, session.originPosition)
+	}
+
+	// --- Grid translation helpers ---
+
+	private getGridTranslations(containerId: string, container: HTMLElement, session: DragSession): Map<string, { x: number; y: number }> {
+		const map = new Map<string, { x: number; y: number }>()
+		const preview = session.dropPreview
+		const draggedId = session.itemId
+		const allItems = DOMHelper.findDraggableItemsInContainer(container)
+		const draggedIdx = allItems.findIndex((el) => el.getAttribute('data-dnd-drag-id') === draggedId)
+
+		const getId = (el: HTMLElement) => el.getAttribute('data-dnd-drag-id')
+		const getRect = (el: HTMLElement) => DOMHelper.getRect(el)
+		const delta = (from: HTMLElement, to: HTMLElement) => ({
+			x: getRect(to).left - getRect(from).left,
+			y: getRect(to).top - getRect(from).top
+		})
+		// Fallback offset when no neighbor exists (last item shifts out of bounds)
+		const fallbackDelta = (el: HTMLElement, direction: 1 | -1) => {
+			const r = getRect(el)
+			return { x: r.width * direction, y: 0 }
+		}
+
+		if (!preview?.visible) {
+			if (containerId !== session.originContainerId || draggedIdx === -1) return map
+			for (let i = draggedIdx + 1; i < allItems.length; i++) {
+				const id = getId(allItems[i])
+				if (id && id !== draggedId) map.set(id, delta(allItems[i], allItems[i - 1]))
+			}
+			return map
+		}
+
+		if (preview.containerId === containerId) {
+			const pos = preview.position
+
+			if (draggedIdx === -1) {
+				// Cross-container target: items from pos onwards shift forward by 1 slot
+				for (let i = pos; i < allItems.length; i++) {
+					const id = getId(allItems[i])
+					if (!id || id === draggedId) continue
+					const d = i + 1 < allItems.length
+						? delta(allItems[i], allItems[i + 1])
+						: fallbackDelta(allItems[i], 1)
+					map.set(id, d)
+				}
+			} else {
+				// Same-container reorder
+				const targetIdx = pos <= draggedIdx ? pos : pos + 1
+				for (let i = 0; i < allItems.length; i++) {
+					const id = getId(allItems[i])
+					if (!id || id === draggedId) continue
+					if (i < draggedIdx && i >= targetIdx) {
+						// Shift forward to make room
+						map.set(id, delta(allItems[i], allItems[i + 1]))
+					} else if (i > draggedIdx && i < targetIdx) {
+						// Shift backward to fill gap
+						map.set(id, delta(allItems[i], allItems[i - 1]))
+					}
+				}
+			}
+		} else if (containerId === session.originContainerId) {
+			// Origin container: collapse gap
+			if (draggedIdx !== -1) {
+				for (let i = draggedIdx + 1; i < allItems.length; i++) {
+					const id = getId(allItems[i])
+					if (id && id !== draggedId) map.set(id, delta(allItems[i], allItems[i - 1]))
+				}
+			}
+		}
+
+		return map
 	}
 
 	// --- Zone calculation helpers ---
