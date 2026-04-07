@@ -15,3 +15,7 @@ export { TargetContainerStrategy } from './core/containers/strategies/target-con
 export type { DndState } from './core/dnd/dnd-state.svelte.js'
 export type { SensorDescriptor, SensorActivation, SensorOptions, SensorCallbacks } from './core/sensors/sensor.js'
 export { PointerSensor } from './core/sensors/pointer-sensor.js'
+export type { CollisionAlgorithm, CollisionContext } from './core/collision/collision-algorithm.js'
+export { centerPoint } from './core/collision/center-point.js'
+export { overlap } from './core/collision/overlap.js'
+export { closestCenter } from './core/collision/closest-center.js'

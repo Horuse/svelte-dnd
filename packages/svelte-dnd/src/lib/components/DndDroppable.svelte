@@ -2,6 +2,7 @@
 	import { getContext, onDestroy, setContext } from 'svelte'
 	import type { DndDirection, DndMode } from '../types.js'
 	import type { DndController } from '../core/dnd/dnd-controller.svelte.js'
+	import type { CollisionAlgorithm } from '../core/collision/collision-algorithm.js'
 	import type { Snippet } from 'svelte'
 	import { DropHandler } from '../core/handlers/drop-handler.svelte.js'
 	import DndPreview from './DndPreview.svelte'
@@ -18,12 +19,16 @@
 		 */
 		mode?: DndMode
 		/**
-		 * How much of the dragged element must overlap this container to activate it.
-		 * - `number` — pixels of intersection required (0 = any pixel)
-		 * - `string` — CSS-like percentage of the ghost's smaller dimension, e.g. `"25%"`
-		 * - `undefined` (default) — center-point detection (current behaviour)
+		 * Collision detection algorithm for this container.
+		 * Overrides the global `collision` set on `DndController`.
+		 * Defaults to `centerPoint` if neither is set.
+		 *
+		 * @example
+		 * ```svelte
+		 * <DndDroppable collision={overlap('25%')} />
+		 * ```
 		 */
-		overlap?: number | string
+		collision?: CollisionAlgorithm
 		/** Item type(s) this container accepts. If omitted, accepts everything. */
 		accepts?: string | string[]
 		children: Snippet
@@ -36,7 +41,7 @@
 		disabled = false,
 		direction = 'vertical',
 		mode = 'sortable',
-		overlap = undefined,
+		collision = undefined,
 		accepts = undefined,
 		children,
 		class: className
@@ -53,6 +58,10 @@
 
 	$effect(() => {
 		if (dndController) dndController.registerDroppableAccepts(id, accepts)
+	})
+
+	$effect(() => {
+		if (dndController) dndController.registerDroppableCollision(id, collision)
 	})
 
 	const handler = new DropHandler(
@@ -88,7 +97,6 @@
 	data-dnd-drop-id={id}
 	data-dnd-direction={direction}
 	data-dnd-mode={mode}
-	data-dnd-overlap={overlap !== undefined ? String(overlap) : undefined}
 	data-dnd-scroll
 >
 	{@render children()}

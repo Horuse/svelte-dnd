@@ -9,6 +9,7 @@ import { SortableContainerStrategy } from '../containers/strategies/sortable-con
 import { TargetContainerStrategy } from '../containers/strategies/target-container-strategy.js'
 import type { ContainerStrategy } from '../containers/strategies/container-strategy.js'
 import type { SensorDescriptor } from '../sensors/sensor.js'
+import type { CollisionAlgorithm } from '../collision/collision-algorithm.js'
 
 export type StrategyFactory = (state: DndState) => ContainerStrategy
 
@@ -18,6 +19,7 @@ export interface DndControllerConfig {
 	debug?: boolean
 	strategies?: (ContainerStrategy | StrategyFactory)[]
 	sensors?: SensorDescriptor[]
+	collision?: CollisionAlgorithm
 }
 import { DropResolver } from '../zones/drop-resolver.js'
 import { AnimationPipeline } from '../animation/steps/animation-pipeline.js'
@@ -50,7 +52,7 @@ export class DndController {
 	private strategyMap = new Map<string, ContainerStrategy>()
 	private eventEmitter = new DndEventEmitter()
 	private translationEngine = new TranslationEngine(this.state, this.registry)
-	private dropResolver = new DropResolver(this.state, this.registry)
+	private dropResolver!: DropResolver
 	private currentAnimation: AnimationPipeline | null = null
 	private simulator!: DndSimulator
 	private hidePreviewTimeout: ReturnType<typeof setTimeout> | null = null
@@ -60,9 +62,10 @@ export class DndController {
 	debug = false
 	sensors: SensorDescriptor[] | undefined = undefined
 
-	constructor({ scroll = {}, preview = {}, debug = false, strategies = [], sensors }: DndControllerConfig = {}) {
+	constructor({ scroll = {}, preview = {}, debug = false, strategies = [], sensors, collision }: DndControllerConfig = {}) {
 		this.debug = debug
 		this.sensors = sensors
+		this.dropResolver = new DropResolver(this.state, this.registry, collision)
 		if (preview.showDelay !== undefined) this.previewShowDelay = preview.showDelay
 		if (preview.collapseDelay !== undefined) this.previewCollapseDelay = preview.collapseDelay
 		this.strategyMap.set('sortable', new SortableContainerStrategy(this.state))
@@ -163,6 +166,10 @@ export class DndController {
 
 	registerDroppableAccepts(id: string, accepts: string | string[] | undefined) {
 		this.registry.registerAccepts(id, accepts)
+	}
+
+	registerDroppableCollision(id: string, algo: CollisionAlgorithm | undefined) {
+		this.registry.registerCollision(id, algo)
 	}
 
 	unregisterDroppableData(id: string) {

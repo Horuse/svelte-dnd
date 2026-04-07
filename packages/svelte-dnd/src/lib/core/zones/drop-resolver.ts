@@ -1,17 +1,22 @@
 import type { DropZone } from '../../types.js'
 import type { DndState } from '../dnd/dnd-state.svelte.js'
 import type { ContainerRegistry } from '../containers/container-registry.js'
+import type { CollisionAlgorithm } from '../collision/collision-algorithm.js'
+import { centerPoint } from '../collision/center-point.js'
 import { DOMHelper } from '../utils/dom-helper.js'
 
 /**
  * Resolves which drop zone contains a given point during an active drag.
- * Extracted from DropZoneCalculator for single-responsibility and testability.
- * Supports both center-point and overlap-based hit detection.
+ * Uses pluggable collision algorithms with the following priority:
+ * 1. Per-container algorithm (from registry)
+ * 2. Global algorithm (passed to constructor)
+ * 3. centerPoint (default)
  */
 export class DropResolver {
 	constructor(
 		private state: DndState,
-		private registry: ContainerRegistry
+		private registry: ContainerRegistry,
+		private globalAlgorithm?: CollisionAlgorithm
 	) {}
 
 	/** All zones filtered to only those that accept the currently dragged item type. */
@@ -24,21 +29,16 @@ export class DropResolver {
 		if (!draggedItemId) return null
 
 		const filteredZones = this.filterZonesByType(this.state.zones)
+		const ghost = this.getGhostRect()
 
 		for (const zone of filteredZones) {
-			const container = DOMHelper.findContainer(zone.containerId)
-			const overlapAttr = container?.getAttribute('data-dnd-overlap') ?? null
+			const algorithm =
+				this.registry.getCollision(zone.containerId) ??
+				this.globalAlgorithm ??
+				centerPoint
 
-			if (overlapAttr !== null) {
-				const threshold = this.parseOverlapThreshold(overlapAttr)
-				if (this.isGhostOverlappingZone(zone, threshold) && this.isGhostOverlappingContainer(zone.containerId)) {
-					return zone
-				}
-			} else {
-				if (this.isPointInZone(point, zone) && this.isPointInContainer(point, zone.containerId)) {
-					return zone
-				}
-			}
+			const hit = algorithm({ zones: [zone], pointer: point, ghost })
+			if (hit) return hit
 		}
 
 		return null
@@ -56,54 +56,14 @@ export class DropResolver {
 		})
 	}
 
-	private parseOverlapThreshold(value: string): number {
-		if (value.endsWith('%')) {
-			const pct = parseFloat(value) / 100
-			const size = this.state.size
-			if (!size) return 0
-			return pct * Math.min(size.width, size.height)
+	private getGhostRect(): { x: number; y: number; width: number; height: number } {
+		const transform = this.state.transform
+		const size = this.state.size
+		return {
+			x: transform?.x ?? 0,
+			y: transform?.y ?? 0,
+			width: size?.width ?? 0,
+			height: size?.height ?? 0
 		}
-		return parseFloat(value) || 0
-	}
-
-	private isGhostOverlappingZone(zone: DropZone, threshold: number): boolean {
-		const transform = this.state.transform
-		const size = this.state.size
-		if (!transform || !size) return false
-
-		const intersectW = Math.min(transform.x + size.width, zone.rect.x + zone.rect.width) - Math.max(transform.x, zone.rect.x)
-		const intersectH = Math.min(transform.y + size.height, zone.rect.y + zone.rect.height) - Math.max(transform.y, zone.rect.y)
-
-		return intersectW > threshold && intersectH > threshold
-	}
-
-	private isGhostOverlappingContainer(containerId: string): boolean {
-		const containerElement = DOMHelper.findContainer(containerId)
-		if (!containerElement) return true
-		const transform = this.state.transform
-		const size = this.state.size
-		if (!transform || !size) return true
-
-		const rect = DOMHelper.getRect(containerElement)
-		const intersectW = Math.min(transform.x + size.width, rect.right) - Math.max(transform.x, rect.left)
-		const intersectH = Math.min(transform.y + size.height, rect.bottom) - Math.max(transform.y, rect.top)
-
-		return intersectW > 0 && intersectH > 0
-	}
-
-	private isPointInContainer(point: { x: number; y: number }, containerId: string): boolean {
-		const containerElement = DOMHelper.findContainer(containerId)
-		if (!containerElement) return true
-		const rect = DOMHelper.getRect(containerElement)
-		return point.x >= rect.left && point.x <= rect.right && point.y >= rect.top && point.y <= rect.bottom
-	}
-
-	private isPointInZone(point: { x: number; y: number }, zone: DropZone): boolean {
-		return (
-			point.x >= zone.rect.x &&
-			point.x <= zone.rect.x + zone.rect.width &&
-			point.y >= zone.rect.y &&
-			point.y <= zone.rect.y + zone.rect.height
-		)
 	}
 }
