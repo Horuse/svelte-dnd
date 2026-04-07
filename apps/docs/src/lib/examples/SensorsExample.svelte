@@ -70,10 +70,6 @@
 </div>
 
 <style>
-	.active {
-		border-color: var(--color-theme) !important;
-	}
-
 	:root {
 		--dnd-preview-bg: var(--color-third);
 		--dnd-preview-border: 2px dashed var(--color-second-active);

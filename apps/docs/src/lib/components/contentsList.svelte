@@ -20,7 +20,7 @@
     } = $props();
 
     let headings = $state<TocItem[]>([]);
-    let activeId = $state<string>('');
+    let activeIds = $state(new Set<string>());
 
     // Line animation state
     let indicatorTop = $state(0);
@@ -141,7 +141,9 @@
 
     // --- Indicator position ---
     function updateIndicator(range?: IndicatorRange) {
-        const applied = range ?? indicatorRange ?? (activeId ? { startId: activeId, endId: activeId } : null);
+        const sortedActive = [...activeIds].sort((a, b) => (headingOrder.get(a) ?? 0) - (headingOrder.get(b) ?? 0));
+        const fallback = sortedActive.length > 0 ? { startId: sortedActive[0], endId: sortedActive[sortedActive.length - 1] } : null;
+        const applied = range ?? indicatorRange ?? fallback;
 
         if (!applied) {
             indicatorRange = null;
@@ -207,7 +209,7 @@
                     }
                     updateActive();
                 },
-                { root: scrollEl, rootMargin: '-80px 0px -70% 0px' },
+                { root: scrollEl, rootMargin: '-80px 0px 0px 0px' },
             );
 
             for (const h of headings) {
@@ -220,29 +222,19 @@
             const distToBottom = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
 
             if (distToBottom < 100 && headings.length > 0) {
-                activeId = headings[headings.length - 1].id;
-                scheduleIndicatorUpdate({ startId: activeId, endId: activeId });
+                const lastId = headings[headings.length - 1].id;
+                activeIds = new Set([lastId]);
+                scheduleIndicatorUpdate({ startId: lastId, endId: lastId });
                 return;
             }
 
             if (visibleHeadings.size > 0) {
-                let bestId = '';
-                let bestTop = Infinity;
-                const visibleIds: string[] = [];
-
-                for (const [id, top] of visibleHeadings) {
-                    visibleIds.push(id);
-                    if (top < bestTop) { bestTop = top; bestId = id; }
-                }
-
-                if (bestId) {
-                    activeId = bestId;
-                    const sorted = visibleIds.sort(
-                        (a, b) => (headingOrder.get(a) ?? 0) - (headingOrder.get(b) ?? 0),
-                    );
-                    scheduleIndicatorUpdate({ startId: sorted[0], endId: sorted[sorted.length - 1] });
-                    return;
-                }
+                const sorted = [...visibleHeadings.keys()].sort(
+                    (a, b) => (headingOrder.get(a) ?? 0) - (headingOrder.get(b) ?? 0),
+                );
+                activeIds = new Set(sorted);
+                scheduleIndicatorUpdate({ startId: sorted[0], endId: sorted[sorted.length - 1] });
+                return;
             }
 
             // Fallback: last heading past the top
@@ -257,7 +249,7 @@
                 else break;
             }
 
-            activeId = lastPassed;
+            activeIds = new Set(lastPassed ? [lastPassed] : []);
             if (lastPassed) scheduleIndicatorUpdate({ startId: lastPassed, endId: lastPassed });
         }
 
@@ -324,6 +316,16 @@
         return `${(level - min) * INDENT_STEP}px`;
     }
 
+    function levelColor(level: number): string {
+        const levels = headings.map((h) => h.level);
+        const min = Math.min(...levels);
+        const max = Math.max(...levels);
+        const range = Math.max(1, max - min);
+        const t = (level - min) / range;
+        const opacity = (1 - t * 0.65).toFixed(2); // h1=1.0, h6≈0.35
+        return `color-mix(in srgb, var(--color-theme) calc(${opacity} * 100%), transparent)`;
+    }
+
     // SVG mask URL (encoded)
     const svgMask = $derived(
         `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${svgWidth} ${lineHeight}' width='${svgWidth}' height='${lineHeight}' preserveAspectRatio='none'%3E%3Cpath d='${svgPath}' stroke='black' stroke-width='1' fill='none'/%3E%3C/svg%3E")`
@@ -364,9 +366,8 @@
                 <li style:padding-left={indentPadding(heading.level)}>
                     <button
                         class="block w-full cursor-pointer py-1 text-left text-[0.8125rem] leading-relaxed transition-colors duration-150
-                            {activeId === heading.id
-                                ? 'font-medium text-indigo-400'
-                                : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-300'}"
+                            {activeIds.has(heading.id) ? 'text-indigo-400' : ''}"
+                        style:color={activeIds.has(heading.id) ? undefined : levelColor(heading.level)}
                         onclick={() => scrollTo(heading.id)}
                         use:registerLink={heading.id}
                     >

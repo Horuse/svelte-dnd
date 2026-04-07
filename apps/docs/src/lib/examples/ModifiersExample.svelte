@@ -74,9 +74,6 @@
 </div>
 
 <style>
-	.active {
-		border-color: var(--color-theme) !important;
-	}
 
 	:root {
 		--dnd-preview-bg: var(--color-third);
