@@ -1,6 +1,20 @@
 import type { Snippet } from 'svelte'
 
 export type DndDirection = 'vertical' | 'horizontal' | 'grid'
+
+export interface Announcements {
+	onDragStart?: (id: string) => string
+	onDragOver?: (id: string, containerId: string, position: number) => string
+	onDrop?: (id: string, containerId: string, position: number) => string
+	onCancel?: (id: string) => string
+}
+
+export const defaultAnnouncements: Announcements = {
+	onDragStart:  (id) => `Started dragging item ${id}.`,
+	onDragOver:   (id, containerId, position) => `Item ${id} is over ${containerId} at position ${position}.`,
+	onDrop:       (id, containerId, position) => `Dropped item ${id} into ${containerId} at position ${position}.`,
+	onCancel:     (id) => `Dragging ${id} was cancelled.`
+}
 export type DndMode = 'sortable' | 'target' | (string & {})
 
 export interface DndDragEvent {

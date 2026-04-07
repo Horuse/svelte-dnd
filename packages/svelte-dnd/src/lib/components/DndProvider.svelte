@@ -1,16 +1,18 @@
 <script lang="ts">
 	import { setContext, onDestroy, untrack } from 'svelte'
 	import { DndController } from '../core/dnd/dnd-controller.svelte.js'
-	import type { GhostSnippet } from '../types.js'
+	import type { GhostSnippet, Announcements } from '../types.js'
+	import { defaultAnnouncements } from '../types.js'
 	import type { Snippet } from 'svelte'
 
 	interface Props {
 		children: Snippet
 		controller?: DndController
 		ghost?: GhostSnippet
+		announcements?: Announcements
 	}
 
-	let { children, ghost, ...rest }: Props = $props()
+	let { children, ghost, announcements, ...rest }: Props = $props()
 
 	const dragController = untrack(() => rest.controller) ?? new DndController()
 	const ownsController = untrack(() => !rest.controller)
@@ -50,6 +52,36 @@
 
 	setContext('dnd', dragController)
 
+	// --- Accessibility announcements ---
+
+	let announcement = $state('')
+
+	const ann = $derived({ ...defaultAnnouncements, ...announcements })
+
+	$effect(() => {
+		if (dragController.dragging && dragController.draggedItem) {
+			announcement = ann.onDragStart?.(dragController.draggedItem) ?? ''
+		}
+	})
+
+	$effect(() => {
+		const preview = dragController.dropPreview
+		const id = dragController.draggedItem
+		if (preview?.visible && id) {
+			announcement = ann.onDragOver?.(id, preview.containerId, preview.position) ?? ''
+		}
+	})
+
+	$effect(() => {
+		const unsubDrop = dragController.onDrop((sourceId, _data, containerId, position) => {
+			announcement = ann.onDrop?.(sourceId, containerId, position) ?? ''
+		})
+		const unsubCancel = dragController.onDropCancelled((id) => {
+			announcement = ann.onCancel?.(id) ?? ''
+		})
+		return () => { unsubDrop(); unsubCancel() }
+	})
+
 	let dragCursorStyle: HTMLStyleElement | null = null
 
 	$effect(() => {
@@ -74,6 +106,8 @@
 </script>
 
 {@render children()}
+
+<div aria-live="assertive" aria-atomic="true" class="dnd-sr-only">{announcement}</div>
 
 {#if (dragController.dragging || dragController.animatingReturn) && dragController.element && dragController.transform && dragController.size}
 	<div
@@ -115,6 +149,18 @@
 {/if}
 
 <style>
+	.dnd-sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+
 	.dnd-ghost {
 		position: fixed;
 		pointer-events: none;

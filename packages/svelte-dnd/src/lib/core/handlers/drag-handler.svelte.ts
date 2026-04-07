@@ -82,8 +82,41 @@ export class DragHandler {
 	}
 
 	handleKeyDown = (e: KeyboardEvent) => {
-		if (e.key === 'Enter' || e.key === ' ') {
-			this.getElement()?.click()
+		const options = this.getOptions()
+		if (options.disabled) return
+		const element = this.getElement()
+		if (!element) return
+
+		const sensors = options.sensors ?? DEFAULT_SENSORS
+		let handled = false
+
+		for (const sensor of sensors) {
+			const activation = sensor.activate(e, element, {
+				dragDelay: options.dragDelay,
+				scrollCancelThreshold: options.scrollCancelThreshold
+			}, {
+				onStart: (transform) => {
+					this.dragOffset = activation!.offset
+					this.startDragSession(transform)
+				},
+				onMove: (transform, mouseX, mouseY) => {
+					this.handleDragMove(transform, mouseX, mouseY)
+				},
+				onEnd: () => { this.handleDragEnd() },
+				onCancel: () => { this.handleDragCancel() }
+			})
+
+			if (activation) {
+				this.activeActivation = activation
+				this.dragOffset = activation.offset
+				handled = true
+				break
+			}
+		}
+
+		// Fallback: Enter/Space triggers click for non-DnD keyboard interactions
+		if (!handled && (e.key === 'Enter' || e.key === ' ')) {
+			element.click()
 		}
 	}
 
