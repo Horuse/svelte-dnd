@@ -99,6 +99,78 @@ await controller.simulateDrop('task-3', 'backlog', 'in-progress', 0, { emitEvent
 
 ---
 
+## simulateSwap
+
+```ts
+controller.simulateSwap(
+    idA: string,
+    containerA: string,
+    idB: string,
+    containerB: string,
+    duration?: number  // default: 300ms
+): Promise<void>
+```
+
+Animates two items swapping positions simultaneously using direct CSS transforms. Both elements animate at the same time without going through the ghost system.
+
+**The caller is responsible for updating data state after the promise resolves.**
+
+### Example — swap two items
+
+```ts
+await controller.simulateSwap('item-1', 'list', 'item-5', 'list');
+
+// After animation — update your data:
+const i = items.findIndex(x => x.id === 'item-1');
+const j = items.findIndex(x => x.id === 'item-5');
+[items[i], items[j]] = [items[j], items[i]];
+items = [...items];
+```
+
+---
+
+## simulateBatchSwap
+
+```ts
+controller.simulateBatchSwap(
+    ids: string[],
+    applyState: () => void | Promise<void>,
+    duration?: number  // default: 300ms
+): Promise<void>
+```
+
+Animates multiple items simultaneously to their new positions using FLIP (First, Last, Invert, Play). Works across different containers. All elements animate at the same time.
+
+Pass an `applyState` callback that updates your data model — the library records DOM positions before and after the state change, then animates the delta.
+
+### Example — sort all items at once
+
+```ts
+const sorted = [...items].sort((a, b) => a.label.localeCompare(b.label));
+
+await controller.simulateBatchSwap(
+    sorted.map(i => i.id),
+    () => { items = sorted }
+);
+```
+
+### Example — swap all items between two containers
+
+```ts
+const oldA = [...teamA];
+const oldB = [...teamB];
+
+await controller.simulateBatchSwap(
+    [...oldA.map(i => i.id), ...oldB.map(i => i.id)],
+    () => {
+        teamA = oldB;
+        teamB = oldA;
+    }
+);
+```
+
+---
+
 ## Constraints
 
 - **Cannot run while a drag is in progress.** Both methods reject with an error if `controller.dragging` is `true`.
@@ -107,24 +179,45 @@ await controller.simulateDrop('task-3', 'backlog', 'in-progress', 0, { emitEvent
 
 ---
 
-## Difference between the two methods
+## Difference between methods
 
-| | `simulateReturn` | `simulateDrop` |
-|---|---|---|
-| Same-container animation | Scroll-aware return (like cancel) | Fly-to-target |
-| Cross-container animation | Fly-to-target | Fly-to-target |
-| Typical use case | Undo, cancel, reject | Auto-sort, programmatic move |
+| | `simulateReturn` | `simulateDrop` | `simulateSwap` | `simulateBatchSwap` |
+|---|---|---|---|---|
+| Items animated | 1 | 1 | 2 | N |
+| Simultaneous | — | — | ✓ | ✓ |
+| Cross-container | ✓ | ✓ | ✓ | ✓ |
+| Fires drop events | No | Optional | No | No |
+| Updates data | Caller, after | Caller, after | Caller, after | Caller, inside callback |
+| Typical use case | Undo, cancel | Auto-sort (one-by-one) | Swap two items | Batch reorder, team swap |
 
 ---
 
-## Example
+## Examples
 
 <script lang="ts">
 	import { ComponentPreview } from '$lib/components'
 	import SimulationsExample from '$lib/examples/SimulationsExample.svelte'
 	import SimulationsExampleCode from '$lib/examples/SimulationsExample.svelte?raw'
+	import SimulationsBatchSwapExample from '$lib/examples/SimulationsBatchSwapExample.svelte'
+	import SimulationsBatchSwapExampleCode from '$lib/examples/SimulationsBatchSwapExample.svelte?raw'
+	import SimulationsGroupByColorExample from '$lib/examples/SimulationsGroupByColorExample.svelte'
+	import SimulationsGroupByColorExampleCode from '$lib/examples/SimulationsGroupByColorExample.svelte?raw'
 </script>
 
-<ComponentPreview sources={[{ name: 'SimulationsExample.svelte', code: SimulationsExampleCode, language: 'svelte' }]}>
+### Single list — sort & undo
+
+<ComponentPreview collapsible sources={[{ name: 'SimulationsExample.svelte', code: SimulationsExampleCode, language: 'svelte' }]}>
 	<SimulationsExample />
+</ComponentPreview>
+
+### Two containers — batch swap
+
+<ComponentPreview collapsible sources={[{ name: 'SimulationsBatchSwapExample.svelte', code: SimulationsBatchSwapExampleCode, language: 'svelte' }]}>
+	<SimulationsBatchSwapExample />
+</ComponentPreview>
+
+### Three containers — group by color
+
+<ComponentPreview collapsible sources={[{ name: 'SimulationsGroupByColorExample.svelte', code: SimulationsGroupByColorExampleCode, language: 'svelte' }]}>
+	<SimulationsGroupByColorExample />
 </ComponentPreview>

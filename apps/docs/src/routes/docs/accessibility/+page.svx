@@ -95,6 +95,6 @@ The `use:draggable` action also adds/removes the CSS class `dnd-dragging` during
 	import AccessibilityExampleCode from '$lib/examples/AccessibilityExample.svelte?raw'
 </script>
 
-<ComponentPreview sources={[{ name: 'AccessibilityExample.svelte', code: AccessibilityExampleCode, language: 'svelte' }]}>
+<ComponentPreview collapsible sources={[{ name: 'AccessibilityExample.svelte', code: AccessibilityExampleCode, language: 'svelte' }]}>
 	<AccessibilityExample />
 </ComponentPreview>

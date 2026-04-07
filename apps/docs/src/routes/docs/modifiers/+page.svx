@@ -98,6 +98,6 @@ interface ModifierContext {
 	import ModifiersExampleCode from '$lib/examples/ModifiersExample.svelte?raw'
 </script>
 
-<ComponentPreview sources={[{ name: 'ModifiersExample.svelte', code: ModifiersExampleCode, language: 'svelte' }]}>
+<ComponentPreview collapsible sources={[{ name: 'ModifiersExample.svelte', code: ModifiersExampleCode, language: 'svelte' }]}>
 	<ModifiersExample />
 </ComponentPreview>

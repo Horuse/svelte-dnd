@@ -20,6 +20,8 @@
 		codeSlot?: Snippet;
 		sources?: SourceTab[];
 		class?: string;
+		collapsible?: boolean;
+		defaultExpanded?: boolean;
 		[key: string]: unknown;
 	};
 
@@ -31,8 +33,12 @@
 		label: providedLabel,
 		sources: providedSources,
 		class: className = '',
+		collapsible = false,
+		defaultExpanded = false,
 		...restProps
 	}: ComponentProps = $props();
+
+	let expanded = $state(defaultExpanded);
 
 	let previewKey = $state(0);
 
@@ -92,7 +98,7 @@
 	});
 </script>
 
-	<section class="flex h-full flex-col">
+	<section class="flex h-full relative flex-col">
 		<div class="flex w-full flex-1 flex-col p-8 border rounded-2xl">
 			{#key previewKey}
 				{@render children?.()}
@@ -124,10 +130,8 @@
 					</div>
 				</div>
 			{/if}
-			<div class="relative overflow-auto flex-1">
-				<div
-					class="p-4 text-sm *:mt-0 *:rounded-none *:border-0 *:bg-transparent *:p-0 *:inset-shadow-none"
-				>
+			<div class="relative" class:max-h-64={collapsible && !expanded} class:overflow-hidden={collapsible && !expanded}>
+				<div class="overflow-auto p-4 text-sm *:mt-0 *:rounded-none *:border-0 *:bg-transparent *:p-0 *:inset-shadow-none">
 					{#if activeSource}
 						{#if highlightedSources[activeSource.name]}
 							<ShikiCodeBlock
@@ -143,6 +147,27 @@
 						{@render codeSlot?.()}
 					{/if}
 				</div>
+				{#if collapsible && !expanded}
+					<div class="absolute bottom-0 left-0 right-0 h-16 bg-linear-to-t from-foreground to-transparent pointer-events-none"></div>
+					<div class="absolute bottom-0 left-0 right-0 flex justify-center pb-2">
+						<button onclick={() => (expanded = true)} class="black-button p-1 px-3 text-xs gap-2">
+							<svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+							</svg>
+							Expand
+						</button>
+					</div>
+				{/if}
+				{#if collapsible && expanded}
+					<div class="flex justify-center pb-2 pt-1">
+						<button onclick={() => (expanded = false)} class="black-button p-1 px-3 text-xs gap-2">
+							<svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+							</svg>
+							Collapse
+						</button>
+					</div>
+				{/if}
 			</div>
 		</div>
 	</section>

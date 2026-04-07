@@ -98,6 +98,6 @@ interface CollisionContext {
 	import CollisionExampleCode from '$lib/examples/CollisionExample.svelte?raw'
 </script>
 
-<ComponentPreview sources={[{ name: 'CollisionExample.svelte', code: CollisionExampleCode, language: 'svelte' }]}>
+<ComponentPreview collapsible sources={[{ name: 'CollisionExample.svelte', code: CollisionExampleCode, language: 'svelte' }]}>
 	<CollisionExample />
 </ComponentPreview>

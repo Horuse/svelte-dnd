@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { DndProvider, DndDroppable, DndDraggable, DndController } from '@horuse/svelte-dnd'
-	import { tick } from 'svelte'
 
 	let items = $state(
 		['Delta', 'Alpha', 'Gamma', 'Beta', 'Epsilon'].map((label, i) => ({ id: String(i), label }))
@@ -25,12 +24,10 @@
 		if (busy) return
 		busy = true
 		const sorted = [...items].sort((a, b) => a.label.localeCompare(b.label))
-		for (const [targetPos, target] of sorted.entries()) {
-			const currentPos = items.findIndex((i) => i.id === target.id)
-			if (currentPos === targetPos) continue
-			await controller.simulateDrop(target.id, 'list', 'list', targetPos, { emitEvents: true })
-			await tick()
-		}
+		await controller.simulateBatchSwap(
+			sorted.map((i) => i.id),
+			() => { items = sorted }
+		)
 		busy = false
 	}
 

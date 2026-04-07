@@ -149,6 +149,6 @@ interface SensorActivation {
 	import SensorsExampleCode from '$lib/examples/SensorsExample.svelte?raw'
 </script>
 
-<ComponentPreview sources={[{ name: 'SensorsExample.svelte', code: SensorsExampleCode, language: 'svelte' }]}>
+<ComponentPreview collapsible sources={[{ name: 'SensorsExample.svelte', code: SensorsExampleCode, language: 'svelte' }]}>
 	<SensorsExample />
 </ComponentPreview>

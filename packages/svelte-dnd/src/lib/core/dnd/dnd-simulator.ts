@@ -241,6 +241,63 @@ export class DndSimulator {
 		})
 	}
 
+	/**
+	 * Animate multiple items simultaneously to their new positions using FLIP technique.
+	 * Works across different containers.
+	 * The caller is responsible for updating data state inside `applyState`.
+	 */
+	async simulateBatchSwap(
+		ids: string[],
+		applyState: () => void | Promise<void>,
+		duration = 300
+	): Promise<void> {
+		// First — record current positions
+		const oldRects = new Map<string, DOMRect>()
+		for (const id of ids) {
+			const el = document.querySelector(`[data-dnd-drag-id="${id}"]`)
+			if (el) oldRects.set(id, el.getBoundingClientRect())
+		}
+
+		// Apply state change
+		await applyState()
+
+		// Last — wait for Svelte to update DOM
+		const { tick } = await import('svelte')
+		await tick()
+
+		// Invert — apply inverted transforms so elements appear in old positions
+		const elements: HTMLElement[] = []
+		for (const id of ids) {
+			const el = document.querySelector(`[data-dnd-drag-id="${id}"]`) as HTMLElement | null
+			const oldRect = oldRects.get(id)
+			if (!el || !oldRect) continue
+			const newRect = el.getBoundingClientRect()
+			const dx = oldRect.left - newRect.left
+			const dy = oldRect.top - newRect.top
+			if (dx === 0 && dy === 0) continue
+			el.style.transition = 'none'
+			el.style.transform = `translate(${dx}px, ${dy}px)`
+			elements.push(el)
+		}
+
+		if (elements.length === 0) return
+
+		// Double rAF to force reflow before enabling transitions
+		await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+
+		// Play — animate all to final positions simultaneously
+		for (const el of elements) {
+			el.style.transition = `transform ${duration}ms ease`
+			el.style.transform = ''
+		}
+
+		await new Promise<void>((resolve) => setTimeout(resolve, duration + 50))
+
+		for (const el of elements) {
+			el.style.transition = ''
+		}
+	}
+
 	private cleanup(): void {
 		this.state.setSkipDropPreviewAnimation(true)
 		this.state.reset()

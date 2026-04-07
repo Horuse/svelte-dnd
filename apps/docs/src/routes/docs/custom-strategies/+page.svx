@@ -95,6 +95,6 @@ type StrategyFactory = (state: DndState) => ContainerStrategy;
 	import StrategiesExampleCode from '$lib/examples/StrategiesExample.svelte?raw'
 </script>
 
-<ComponentPreview sources={[{ name: 'StrategiesExample.svelte', code: StrategiesExampleCode, language: 'svelte' }]}>
+<ComponentPreview collapsible sources={[{ name: 'StrategiesExample.svelte', code: StrategiesExampleCode, language: 'svelte' }]}>
 	<StrategiesExample />
 </ComponentPreview>
