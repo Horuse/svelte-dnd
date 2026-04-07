@@ -13,6 +13,7 @@ interface DragHandlerOptions {
 	id: string
 	type: string | undefined
 	data: Record<string, unknown>
+	disabled: boolean
 	dragDelay: number
 	scrollCancelThreshold: number
 	dndController: DndController | undefined
@@ -41,7 +42,8 @@ export class DragHandler {
 	// --- Public event handlers (bound in template) ---
 
 	handlePointerDown = (e: PointerEvent) => {
-		const { id, data, dragDelay, dndController, callbacks } = this.getOptions()
+		const { disabled, id, data, dragDelay, dndController, callbacks } = this.getOptions()
+		if (disabled) return
 		const element = this.getElement()
 		if (!element) return
 		if (e.button !== 0) return

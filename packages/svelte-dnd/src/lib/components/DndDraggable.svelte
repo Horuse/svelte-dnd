@@ -69,7 +69,7 @@
 
 	const handler = new DragHandler(
 		() => element,
-		() => ({ id, type, data, dragDelay, scrollCancelThreshold, dndController, callbacks: { onDragStart, onDrag, onDragEnd } })
+		() => ({ id, type, data, disabled, dragDelay, scrollCancelThreshold, dndController, callbacks: { onDragStart, onDrag, onDragEnd } })
 	)
 
 	const translate = $derived(dndController?.translations.get(id) ?? { x: 0, y: 0 })

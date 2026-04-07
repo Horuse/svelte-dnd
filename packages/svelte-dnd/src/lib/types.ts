@@ -1,6 +1,6 @@
 import type { Snippet } from 'svelte'
 
-export type DndDirection = 'vertical' | 'horizontal' | 'grid'
+export type DndDirection = 'vertical' | 'horizontal'
 export type DndMode = 'sortable' | 'target' | (string & {})
 
 export interface DndDragEvent {

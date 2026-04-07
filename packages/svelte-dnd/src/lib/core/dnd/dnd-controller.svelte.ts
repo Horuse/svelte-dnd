@@ -408,6 +408,7 @@ export class DndController {
 	/** Release all resources. Call when the `DndProvider` is destroyed. */
 	destroy() {
 		this.currentAnimation?.cancel()
+		if (this.hidePreviewTimeout) clearTimeout(this.hidePreviewTimeout)
 		this.scrollController.destroy()
 		this.registry.clearAll()
 		this.eventEmitter.destroy()
