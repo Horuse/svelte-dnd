@@ -68,18 +68,18 @@ export class DragSessionManager {
 
 		const initialTransform = this.state.session?.ghostTransform ?? rawTransform
 		const ghostSize = this.state.size ?? { width: 0, height: 0 }
+		const originContainerId = this.state.session?.originContainerId ?? ''
 
 		let transform = rawTransform
 		for (const modifier of this.modifiers) {
-			transform = modifier({ transform, initialTransform, ghostSize })
+			transform = modifier({ transform, initialTransform, ghostSize, originContainerId })
 		}
 		this.state.setTransform(transform)
 	}
 
 	updateMousePosition(mouseX: number, mouseY: number) {
 		if (this.state.dragging) {
-			const ghostCenter = this.getGhostCenter()
-			this.animationCoordinator.updateDropPreview(ghostCenter)
+			this.animationCoordinator.updateDropPreview({ x: mouseX, y: mouseY })
 			this.scrollController.handleAutoScroll(mouseX, mouseY)
 		}
 	}

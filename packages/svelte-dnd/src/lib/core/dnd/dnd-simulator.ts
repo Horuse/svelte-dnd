@@ -171,6 +171,76 @@ export class DndSimulator {
 		}
 	}
 
+	/**
+	 * Animate two items swapping positions simultaneously using direct CSS transforms.
+	 * Both elements animate at the same time without going through the ghost system.
+	 * The caller is responsible for updating data state after the promise resolves.
+	 */
+	simulateSwap(
+		idA: string, containerA: string,
+		idB: string, containerB: string,
+		duration = 300
+	): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			const fromContainerA = DOMHelper.findContainer(containerA)
+			const fromContainerB = DOMHelper.findContainer(containerB)
+			if (!fromContainerA || !fromContainerB) {
+				reject(new Error('DndSimulator.simulateSwap: container not found'))
+				return
+			}
+
+			const itemsA = DOMHelper.findDraggableItemsInContainer(fromContainerA)
+			const itemsB = DOMHelper.findDraggableItemsInContainer(fromContainerB)
+			const elA = itemsA.find((el) => el.getAttribute('data-dnd-drag-id') === idA) ?? null
+			const elB = itemsB.find((el) => el.getAttribute('data-dnd-drag-id') === idB) ?? null
+
+			if (!elA || !elB) {
+				reject(new Error(`DndSimulator.simulateSwap: item not found`))
+				return
+			}
+
+			const rectA = elA.getBoundingClientRect()
+			const rectB = elB.getBoundingClientRect()
+			const dxA = rectB.left - rectA.left
+			const dyA = rectB.top - rectA.top
+			const dxB = rectA.left - rectB.left
+			const dyB = rectA.top - rectB.top
+
+			const transition = `transform ${duration}ms ease`
+			elA.style.transition = transition
+			elB.style.transition = transition
+			elA.style.transform = `translate(${dxA}px, ${dyA}px)`
+			elB.style.transform = `translate(${dxB}px, ${dyB}px)`
+
+			let settled = 0
+			const onDone = () => {
+				settled++
+				if (settled < 2) return
+				elA.style.transition = ''
+				elA.style.transform = ''
+				elB.style.transition = ''
+				elB.style.transform = ''
+				resolve()
+			}
+
+			const endA = () => { elA.removeEventListener('transitionend', endA); onDone() }
+			const endB = () => { elB.removeEventListener('transitionend', endB); onDone() }
+			elA.addEventListener('transitionend', endA)
+			elB.addEventListener('transitionend', endB)
+
+			// Fallback in case transitionend doesn't fire (e.g. same position)
+			setTimeout(() => {
+				elA.removeEventListener('transitionend', endA)
+				elB.removeEventListener('transitionend', endB)
+				elA.style.transition = ''
+				elA.style.transform = ''
+				elB.style.transition = ''
+				elB.style.transform = ''
+				resolve()
+			}, duration + 100)
+		})
+	}
+
 	private cleanup(): void {
 		this.state.setSkipDropPreviewAnimation(true)
 		this.state.reset()

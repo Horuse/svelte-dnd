@@ -9,6 +9,8 @@ import { SortableContainerStrategy } from '../containers/strategies/sortable-con
 import { TargetContainerStrategy } from '../containers/strategies/target-container-strategy.js'
 import type { ContainerStrategy } from '../containers/strategies/container-strategy.js'
 import type { SensorDescriptor } from '../sensors/sensor.js'
+import { PointerSensor } from '../sensors/pointer-sensor.js'
+import { KeyboardSensor } from '../sensors/keyboard-sensor.js'
 import type { CollisionAlgorithm } from '../collision/collision-algorithm.js'
 import { DropResolver } from '../zones/drop-resolver.js'
 import { DropAnimationCoordinator } from '../animation/drop-animation-coordinator.js'
@@ -65,7 +67,7 @@ export class DndController<TData = Record<string, unknown>> {
 
 	constructor({ scroll = {}, preview = {}, debug = false, strategies = [], sensors, collision, modifiers = [], announcements }: DndControllerConfig = {}) {
 		this.debug = debug
-		this.sensors = sensors
+		this.sensors = sensors ?? [new PointerSensor(), new KeyboardSensor(this)]
 		this.announcements = announcements
 
 		this.strategyMap.set('sortable', new SortableContainerStrategy(this.state))
@@ -280,6 +282,11 @@ export class DndController<TData = Record<string, unknown>> {
 	/** Delegates to {@link DndSimulator.simulateDrop}. */
 	simulateDrop(itemId: string, fromContainerId: string, toContainerId: string, toPosition: number, options?: import('../dnd/dnd-simulator.js').SimulateOptions): Promise<void> {
 		return this.simulator.simulateDrop(itemId, fromContainerId, toContainerId, toPosition, options)
+	}
+
+	/** Delegates to {@link DndSimulator.simulateSwap}. */
+	simulateSwap(idA: string, containerA: string, idB: string, containerB: string, duration?: number): Promise<void> {
+		return this.simulator.simulateSwap(idA, containerA, idB, containerB, duration)
 	}
 
 	/** Release all resources. Call when the `DndProvider` is destroyed. */

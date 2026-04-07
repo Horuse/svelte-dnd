@@ -43,15 +43,16 @@ export class DragHandler {
 		const element = this.getElement()
 		if (!element) return
 
-		const sensors = options.sensors ?? DEFAULT_SENSORS
+		const sensors = this.getSensors()
 
 		for (const sensor of sensors) {
+			const activationRef = { current: null as SensorActivation | null }
 			const activation = sensor.activate(e, element, {
 				dragDelay: options.dragDelay,
 				scrollCancelThreshold: options.scrollCancelThreshold
 			}, {
 				onStart: (transform) => {
-					this.dragOffset = activation!.offset
+					this.dragOffset = activationRef.current?.offset ?? { x: 0, y: 0 }
 					this.startDragSession(transform)
 				},
 				onMove: (transform, mouseX, mouseY) => {
@@ -66,6 +67,7 @@ export class DragHandler {
 			})
 
 			if (activation) {
+				activationRef.current = activation
 				this.activeActivation = activation
 				this.dragOffset = activation.offset
 				break
@@ -82,21 +84,23 @@ export class DragHandler {
 	}
 
 	handleKeyDown = (e: KeyboardEvent) => {
+		if (this.isDragging) return
 		const options = this.getOptions()
 		if (options.disabled) return
 		const element = this.getElement()
 		if (!element) return
 
-		const sensors = options.sensors ?? DEFAULT_SENSORS
+		const sensors = this.getSensors()
 		let handled = false
 
 		for (const sensor of sensors) {
+			const activationRef = { current: null as SensorActivation | null }
 			const activation = sensor.activate(e, element, {
 				dragDelay: options.dragDelay,
 				scrollCancelThreshold: options.scrollCancelThreshold
 			}, {
 				onStart: (transform) => {
-					this.dragOffset = activation!.offset
+					this.dragOffset = activationRef.current?.offset ?? { x: 0, y: 0 }
 					this.startDragSession(transform)
 				},
 				onMove: (transform, mouseX, mouseY) => {
@@ -107,6 +111,7 @@ export class DragHandler {
 			})
 
 			if (activation) {
+				activationRef.current = activation
 				this.activeActivation = activation
 				this.dragOffset = activation.offset
 				handled = true
@@ -126,6 +131,13 @@ export class DragHandler {
 	}
 
 	// --- Private ---
+
+	private getSensors(): SensorDescriptor[] {
+		const { sensors, dndController } = this.getOptions()
+		if (sensors) return sensors
+		if (dndController?.sensors) return dndController.sensors
+		return DEFAULT_SENSORS
+	}
 
 	private startDragSession(initialTransform: { x: number; y: number }) {
 		if (this.isDragging) return

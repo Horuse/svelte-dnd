@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { DndProvider, DndDroppable, DndDraggable, DndController } from '@horuse/svelte-dnd'
+	import { tick } from 'svelte'
 
 	let items = $state(
 		['Delta', 'Alpha', 'Gamma', 'Beta', 'Epsilon'].map((label, i) => ({ id: String(i), label }))
@@ -28,6 +29,7 @@
 			const currentPos = items.findIndex((i) => i.id === target.id)
 			if (currentPos === targetPos) continue
 			await controller.simulateDrop(target.id, 'list', 'list', targetPos, { emitEvents: true })
+			await tick()
 		}
 		busy = false
 	}

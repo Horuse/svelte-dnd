@@ -54,6 +54,13 @@ export class DOMHelper {
 		)
 	}
 
+	/** Returns the position:relative wrapper elements (parent of draggable items).
+	 * These wrappers stay at their natural layout position regardless of CSS translations on the inner item. */
+	static findDraggableWrappers(container: HTMLElement): HTMLElement[] {
+		return DOMHelper.findDraggableItemsInContainer(container)
+			.map((item) => (item.parentElement as HTMLElement) ?? item)
+	}
+
 	static findDraggableItemsInContainerById(container: HTMLElement): HTMLElement[] {
 		return Array.from(
 			container.querySelectorAll<HTMLElement>(SELECTORS.draggableItemsWithId)

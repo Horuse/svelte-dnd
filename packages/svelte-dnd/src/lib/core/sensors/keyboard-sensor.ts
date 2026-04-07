@@ -1,6 +1,7 @@
 import type { SensorDescriptor, SensorActivation, SensorOptions, SensorCallbacks } from './sensor.js'
 import type { DndController } from '../dnd/dnd-controller.svelte.js'
 import type { DropZone } from '../../types.js'
+import { DOMHelper } from '../utils/dom-helper.js'
 
 export class KeyboardSensor implements SensorDescriptor {
 	constructor(private controller: DndController) {}
@@ -23,14 +24,33 @@ export class KeyboardSensor implements SensorDescriptor {
 
 		let started = false
 
-		const moveToZone = (zone: DropZone) => {
-			const centerX = zone.rect.x + zone.rect.width / 2
-			const centerY = zone.rect.y + zone.rect.height / 2
-			callbacks.onMove(
-				{ x: centerX - offset.x, y: centerY - offset.y },
-				centerX,
-				centerY
-			)
+		const moveToZone = (zone: DropZone, zones: DropZone[]) => {
+			// mouseX/mouseY = zone rect center for collision detection
+			const mouseX = zone.rect.x + zone.rect.width / 2
+			const mouseY = zone.rect.y + zone.rect.height / 2
+
+			// Ghost visual center = center of filteredItem[zone.position]
+			// Math: zone[P].y + zone[P].height = nextZone.rect.y = center of filteredItem[P]
+			// For last zone (no nextZone): use zone.rect.y (= center of last item)
+			const zoneIdx = zones.findIndex((z) => z.position === zone.position)
+			const nextZone = zones[zoneIdx + 1]
+			const itemCenterX = zone.rect.x + zone.rect.width / 2
+			const itemCenterY = nextZone ? nextZone.rect.y : zone.rect.y
+
+			const ghostX = itemCenterX - offset.x
+			const ghostY = itemCenterY - offset.y
+
+			callbacks.onMove({ x: ghostX, y: ghostY }, mouseX, mouseY)
+		}
+
+		const refreshZones = () => {
+			const seen = new Set<string>()
+			for (const zone of this.controller.dropZones) {
+				if (seen.has(zone.containerId)) continue
+				seen.add(zone.containerId)
+				const container = DOMHelper.findContainer(zone.containerId)
+				if (container) this.controller.refreshContainerZones(zone.containerId, container)
+			}
 		}
 
 		const getOrderedContainerZones = (): Map<string, DropZone[]> => {
@@ -49,9 +69,9 @@ export class KeyboardSensor implements SensorDescriptor {
 			const preview = this.controller.dropPreview
 
 			if (!preview) {
-				// First navigation: jump to the first available zone
-				const firstZone = containerZones.get(containerIds[0])?.[0]
-				if (firstZone) moveToZone(firstZone)
+				const firstContainerZones = containerZones.get(containerIds[0]) ?? []
+				const firstZone = firstContainerZones[0]
+				if (firstZone) moveToZone(firstZone, firstContainerZones)
 				return
 			}
 
@@ -61,22 +81,36 @@ export class KeyboardSensor implements SensorDescriptor {
 
 			if (key === 'ArrowDown' || key === 'ArrowRight') {
 				if (currentZoneIdx < currentZones.length - 1) {
-					moveToZone(currentZones[currentZoneIdx + 1])
+					moveToZone(currentZones[currentZoneIdx + 1], currentZones)
 				} else if (key === 'ArrowRight' && currentContainerIdx < containerIds.length - 1) {
 					const nextId = containerIds[currentContainerIdx + 1]
-					const firstZone = containerZones.get(nextId)?.[0]
-					if (firstZone) moveToZone(firstZone)
+					const nextZones = containerZones.get(nextId) ?? []
+					if (nextZones[0]) moveToZone(nextZones[0], nextZones)
 				}
 			} else if (key === 'ArrowUp' || key === 'ArrowLeft') {
 				if (currentZoneIdx > 0) {
-					moveToZone(currentZones[currentZoneIdx - 1])
+					moveToZone(currentZones[currentZoneIdx - 1], currentZones)
 				} else if (key === 'ArrowLeft' && currentContainerIdx > 0) {
 					const prevId = containerIds[currentContainerIdx - 1]
 					const prevZones = containerZones.get(prevId) ?? []
 					const lastZone = prevZones[prevZones.length - 1]
-					if (lastZone) moveToZone(lastZone)
+					if (lastZone) moveToZone(lastZone, prevZones)
 				}
 			}
+		}
+
+		const onScroll = () => {
+			refreshZones()
+			const preview = this.controller.dropPreview
+			if (!preview) {
+				const r = element.getBoundingClientRect()
+				callbacks.onMove({ x: r.left, y: r.top }, r.left + offset.x, r.top + offset.y)
+				return
+			}
+			const containerZones = getOrderedContainerZones()
+			const zones = containerZones.get(preview.containerId)
+			const zone = zones?.find((z) => z.position === preview.position)
+			if (zone) moveToZone(zone, zones)
 		}
 
 		const onWindowKeyDown = (e: KeyboardEvent) => {
@@ -104,7 +138,9 @@ export class KeyboardSensor implements SensorDescriptor {
 			}
 		}
 
-		window.addEventListener('keydown', onWindowKeyDown)
+		// Defer listener so the current Enter keydown event doesn't immediately trigger onEnd
+		setTimeout(() => window.addEventListener('keydown', onWindowKeyDown), 0)
+		window.addEventListener('scroll', onScroll, { passive: true, capture: true })
 
 		// Start drag immediately on Enter/Space
 		callbacks.onStart(initialTransform)
@@ -112,6 +148,7 @@ export class KeyboardSensor implements SensorDescriptor {
 
 		function cleanup() {
 			window.removeEventListener('keydown', onWindowKeyDown)
+			window.removeEventListener('scroll', onScroll, { capture: true })
 		}
 
 		return { initialTransform, offset, destroy: cleanup }

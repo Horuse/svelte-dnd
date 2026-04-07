@@ -11,6 +11,7 @@
 		{ label: 'None', value: [] },
 		{ label: 'Vertical axis', value: [restrictToVerticalAxis] },
 		{ label: 'Horizontal axis', value: [restrictToHorizontalAxis] },
+		{ label: 'Restrict to container', value: [restrictToContainer] },
 		{ label: 'Snap 40px', value: [snapToGrid({ x: 40, y: 40 })] },
 		{ label: 'Restrict + Snap', value: [restrictToContainer, snapToGrid({ x: 40, y: 40 })] },
 	]
