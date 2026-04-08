@@ -19,8 +19,6 @@ Automatically renders a `DndPreview` placeholder at its position - you do not ne
 | `data` | `Record<string, unknown>` | `{}` | Arbitrary data passed to drop callbacks |
 | `disabled` | `boolean` | `false` | Disables dragging when `true` |
 | `sensors` | `SensorDescriptor[]` | `undefined` | Override the active sensors for this item. Falls back to the controller-level sensors if omitted. See [Sensors](/docs/sensors) |
-| `dragDelay` | `number` | `300` | Delay in ms before drag starts on touch devices. During the delay, finger movement scrolls the container. |
-| `scrollCancelThreshold` | `number` | `8` | Max movement in px during `dragDelay` before the gesture is treated as a scroll instead of a drag |
 | `class` | `string` | — | Additional CSS class names |
 
 ### Events

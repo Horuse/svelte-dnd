@@ -10,8 +10,6 @@ export interface DraggableOptions {
 	data?: Record<string, unknown>
 	disabled?: boolean
 	sensors?: SensorDescriptor[]
-	dragDelay?: number
-	scrollCancelThreshold?: number
 	onDragStart?: (event: DndDragEvent) => void
 	onDrag?: (event: DndDragEvent) => void
 	onDragEnd?: (event: DndDragEvent) => void
@@ -49,8 +47,6 @@ export function draggable(node: HTMLElement, options: DraggableOptions) {
 			type: current.type,
 			data: current.data ?? {},
 			disabled: current.disabled ?? false,
-			dragDelay: current.dragDelay ?? 300,
-			scrollCancelThreshold: current.scrollCancelThreshold ?? 8,
 			dndController: current.controller,
 			sensors: current.sensors,
 			callbacks: {

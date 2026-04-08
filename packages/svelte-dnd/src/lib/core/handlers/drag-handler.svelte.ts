@@ -14,8 +14,6 @@ interface DragHandlerOptions {
 	type: string | undefined
 	data: Record<string, unknown>
 	disabled: boolean
-	dragDelay: number
-	scrollCancelThreshold: number
 	dndController: DndController | undefined
 	callbacks: DragHandlerCallbacks
 	sensors?: SensorDescriptor[]
@@ -48,9 +46,6 @@ export class DragHandler {
 		for (const sensor of sensors) {
 			const activationRef = { current: null as SensorActivation | null }
 			const activation = sensor.activate(e, element, {
-				dragDelay: options.dragDelay,
-				scrollCancelThreshold: options.scrollCancelThreshold
-			}, {
 				onStart: (transform) => {
 					this.dragOffset = activationRef.current?.offset ?? { x: 0, y: 0 }
 					this.startDragSession(transform)
@@ -63,6 +58,9 @@ export class DragHandler {
 				},
 				onCancel: () => {
 					this.handleDragCancel()
+				},
+				onNavigate: (direction) => {
+					options.dndController?.navigate(direction)
 				}
 			})
 
@@ -96,9 +94,6 @@ export class DragHandler {
 		for (const sensor of sensors) {
 			const activationRef = { current: null as SensorActivation | null }
 			const activation = sensor.activate(e, element, {
-				dragDelay: options.dragDelay,
-				scrollCancelThreshold: options.scrollCancelThreshold
-			}, {
 				onStart: (transform) => {
 					this.dragOffset = activationRef.current?.offset ?? { x: 0, y: 0 }
 					this.startDragSession(transform)
@@ -107,7 +102,10 @@ export class DragHandler {
 					this.handleDragMove(transform, mouseX, mouseY)
 				},
 				onEnd: () => { this.handleDragEnd() },
-				onCancel: () => { this.handleDragCancel() }
+				onCancel: () => { this.handleDragCancel() },
+				onNavigate: (direction) => {
+					options.dndController?.navigate(direction)
+				}
 			})
 
 			if (activation) {

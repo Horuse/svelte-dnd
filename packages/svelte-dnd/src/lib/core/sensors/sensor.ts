@@ -1,8 +1,11 @@
+export type NavigationDirection = 'up' | 'down' | 'left' | 'right'
+
 export interface SensorCallbacks {
 	onStart: (transform: { x: number; y: number }) => void
 	onMove: (transform: { x: number; y: number }, mouseX: number, mouseY: number) => void
 	onEnd: () => void
 	onCancel: () => void
+	onNavigate?: (direction: NavigationDirection) => void
 }
 
 export interface SensorActivation {
@@ -14,16 +17,30 @@ export interface SensorActivation {
 	destroy: () => void
 }
 
-export interface SensorOptions {
-	dragDelay?: number
-	scrollCancelThreshold?: number
+export interface ActivationState {
+	startX: number
+	startY: number
+	currentX: number
+	currentY: number
+	elapsedMs: number
+	pointerType: 'mouse' | 'touch' | 'pen'
 }
+
+export type ConditionResult = 'satisfied' | 'pending' | 'aborted'
+
+export interface StartCondition {
+	evaluate(state: ActivationState): ConditionResult
+	getRequiredDuration?(): number | null
+}
+
+export type StartConditionInput =
+	| StartCondition[]
+	| ((event: PointerEvent) => StartCondition[])
 
 export interface SensorDescriptor {
 	activate(
 		event: Event,
 		element: HTMLElement,
-		options: SensorOptions,
 		callbacks: SensorCallbacks
 	): SensorActivation | null
 }

@@ -8,7 +8,7 @@ import { ContainerRegistrar } from '../containers/container-registrar.js'
 import { SortableContainerStrategy } from '../containers/strategies/sortable-container-strategy.js'
 import { TargetContainerStrategy } from '../containers/strategies/target-container-strategy.js'
 import type { ContainerStrategy } from '../containers/strategies/container-strategy.js'
-import type { SensorDescriptor } from '../sensors/sensor.js'
+import type { SensorDescriptor, NavigationDirection } from '../sensors/sensor.js'
 import { PointerSensor } from '../sensors/pointer-sensor.js'
 import { KeyboardSensor } from '../sensors/keyboard-sensor.js'
 import type { CollisionAlgorithm } from '../collision/collision-algorithm.js'
@@ -67,7 +67,7 @@ export class DndController<TData = Record<string, unknown>> {
 
 	constructor({ scroll = {}, preview = {}, debug = false, strategies = [], sensors, collision, modifiers = [], announcements }: DndControllerConfig = {}) {
 		this.debug = debug
-		this.sensors = sensors ?? [new PointerSensor(), new KeyboardSensor(this)]
+		this.sensors = sensors ?? [new PointerSensor(), new KeyboardSensor()]
 		this.announcements = announcements
 
 		this.strategyMap.set('sortable', new SortableContainerStrategy(this.state))
@@ -230,6 +230,77 @@ export class DndController<TData = Record<string, unknown>> {
 
 	updateMousePosition(mouseX: number, mouseY: number) {
 		this.sessionManager.updateMousePosition(mouseX, mouseY)
+	}
+
+	navigate(direction: NavigationDirection) {
+		if (!this.state.dragging) return
+
+		const filteredZones = this.dropResolver.filteredZones
+		const containerZones = new Map<string, DropZone[]>()
+		for (const zone of filteredZones) {
+			if (!containerZones.has(zone.containerId)) containerZones.set(zone.containerId, [])
+			containerZones.get(zone.containerId)!.push(zone)
+		}
+		for (const [, zones] of containerZones) zones.sort((a, b) => a.position - b.position)
+
+		const containerIds = [...containerZones.keys()]
+		const preview = this.state.dropPreview
+		const ghostSize = this.state.size
+
+		let targetZone: DropZone | null = null
+		let targetZones: DropZone[] = []
+
+		if (!preview) {
+			const firstZones = containerZones.get(containerIds[0]) ?? []
+			targetZone = firstZones[0] ?? null
+			targetZones = firstZones
+		} else {
+			const currentZones = containerZones.get(preview.containerId) ?? []
+			const currentIdx = currentZones.findIndex((z) => z.position === preview.position)
+			const currentContainerIdx = containerIds.indexOf(preview.containerId)
+
+			if (direction === 'down' || direction === 'right') {
+				if (currentIdx < currentZones.length - 1) {
+					targetZone = currentZones[currentIdx + 1]
+					targetZones = currentZones
+				} else if (direction === 'right' && currentContainerIdx < containerIds.length - 1) {
+					const nextId = containerIds[currentContainerIdx + 1]
+					targetZones = containerZones.get(nextId) ?? []
+					targetZone = targetZones[0] ?? null
+				}
+			} else {
+				if (currentIdx > 0) {
+					targetZone = currentZones[currentIdx - 1]
+					targetZones = currentZones
+				} else if (direction === 'left' && currentContainerIdx > 0) {
+					const prevId = containerIds[currentContainerIdx - 1]
+					targetZones = containerZones.get(prevId) ?? []
+					targetZone = targetZones[targetZones.length - 1] ?? null
+				}
+			}
+		}
+
+		if (!targetZone) return
+
+		const zoneIdx = targetZones.findIndex((z) => z.position === targetZone!.position)
+		const nextZone = targetZones[zoneIdx + 1]
+		const centerX = targetZone.rect.x + targetZone.rect.width / 2
+		const centerY = nextZone ? nextZone.rect.y : targetZone.rect.y
+		const offsetX = ghostSize ? ghostSize.width / 2 : 0
+		const offsetY = ghostSize ? ghostSize.height / 2 : 0
+
+		const ghostTransform = { x: centerX - offsetX, y: centerY - offsetY }
+		const mouseX = targetZone.rect.x + targetZone.rect.width / 2
+		const mouseY = targetZone.rect.y + targetZone.rect.height / 2
+
+		this.sessionManager.updateTransform(ghostTransform)
+		this.state.setDropPreview({
+			containerId: targetZone.containerId,
+			position: targetZone.position,
+			visible: true,
+			draggedElementHeight: ghostSize?.height,
+			draggedElementWidth: ghostSize?.width
+		})
 	}
 
 	performDrop(

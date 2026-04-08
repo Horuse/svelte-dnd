@@ -109,7 +109,7 @@ const controller = new DndController({
 <DndDraggable id={item.id} position={index}>
 ```
 
-New optional props: `type`, `dragDelay`, `scrollCancelThreshold`.
+New optional props: `type`.
 
 ## DndDroppable
 

@@ -19,18 +19,6 @@
 		children: Snippet
 		class?: string
 		position?: number
-		/**
-		 * Delay in ms before drag starts on touch devices.
-		 * During the delay, finger movement scrolls the container manually (with momentum).
-		 * If the finger moves more than `scrollCancelThreshold` px — it's a scroll, not a drag.
-		 * @default 300
-		 */
-		dragDelay?: number
-		/**
-		 * Max movement in px during `dragDelay` before the gesture is treated as a scroll.
-		 * @default 8
-		 */
-		scrollCancelThreshold?: number
 	}
 
 	let {
@@ -44,9 +32,7 @@
 		onDrag,
 		onDragEnd,
 		children,
-		position = undefined,
-		dragDelay = 300,
-		scrollCancelThreshold = 8
+		position = undefined
 	}: Props = $props()
 
 	const dndController = getContext<DndController>('dnd')
@@ -72,7 +58,7 @@
 
 	const handler = new DragHandler(
 		() => element,
-		() => ({ id, type, data, disabled, dragDelay, scrollCancelThreshold, dndController, sensors: sensors ?? dndController?.sensors, callbacks: { onDragStart, onDrag, onDragEnd } })
+		() => ({ id, type, data, disabled, dndController, sensors: sensors ?? dndController?.sensors, callbacks: { onDragStart, onDrag, onDragEnd } })
 	)
 
 	const translate = $derived(dndController?.translations.get(id) ?? { x: 0, y: 0 })
@@ -82,6 +68,20 @@
 		(dndController?.animatingReturn === true && dndController?.draggedItem === id) ||
 		(dndController?.performingDrop === true && dndController?.draggedItem === id)
 	)
+
+	// Block clicks after drag in capture phase — fires before any child onclick handlers.
+	$effect(() => {
+		if (!element) return
+		const onClickCapture = (e: MouseEvent) => {
+			if (handler.dragOccurred) {
+				e.stopPropagation()
+				e.preventDefault()
+				handler.dragOccurred = false
+			}
+		}
+		element.addEventListener('click', onClickCapture, true)
+		return () => element!.removeEventListener('click', onClickCapture, true)
+	})
 
 	onDestroy(() => handler.destroy())
 </script>
@@ -104,7 +104,6 @@
 		data-dnd-draggable-item
 		style="transform: translate3d({translate.x}px, {translate.y}px, 0); transition: {isGhostActive || performingDrop ? 'none' : 'transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)'}"
 		onpointerdown={handler.handlePointerDown}
-		onclick={handler.handleClick}
 		onkeydown={handler.handleKeyDown}
 	>
 		{@render children()}

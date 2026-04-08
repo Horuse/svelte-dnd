@@ -34,7 +34,7 @@ const controller = new DndController({
         collapseDelay: 400, // ms before slot collapses — match --dnd-preview-duration-out (default: 200)
     },
     debug: true,                             // position validation warnings in console
-    sensors: [new PointerSensor(), new KeyboardSensor(controller)], // see /docs/sensors
+    sensors: [new PointerSensor(), new KeyboardSensor()], // see /docs/sensors
     collision: overlap({ threshold: '25%' }), // see /docs/collision
     modifiers: [restrictToVerticalAxis],      // see /docs/modifiers
     announcements: {                          // see /docs/accessibility
@@ -55,7 +55,7 @@ const controller = new DndController({
         collapseDelay: 200,
     },
     debug: false,
-    sensors: [new PointerSensor(), new KeyboardSensor(controller)],
+    sensors: [new PointerSensor(), new KeyboardSensor()],
     collision: centerPoint,  // ghost center must be inside zone rect
     modifiers: [],
     announcements: {

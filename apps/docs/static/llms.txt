@@ -1,0 +1,35 @@
+# @horuse/svelte-dnd
+
+A drag-and-drop library for Svelte 5 with animated drop previews, auto-scroll, pointer & touch support, keyboard navigation, and multi-container layouts.
+
+## Docs
+
+- [Getting Started](/docs/getting-started): Installation and basic setup of @horuse/svelte-dnd
+- [DndController API](/docs/dnd-controller-api): Full API reference for DndController — reactive getters, event callbacks, methods, and types
+- [Sensors](/docs/sensors): Pluggable input sensors — configure PointerSensor and KeyboardSensor or write your own. Supports Distance, Delay start conditions
+- [Collision Detection](/docs/collision): Pluggable collision algorithms — centerPoint, overlap, closestCenter, or custom
+- [Modifiers](/docs/modifiers): Transform modifiers that constrain or snap ghost movement during drag
+- [Accessibility](/docs/accessibility): Keyboard navigation, ARIA attributes, and screen-reader announcements
+- [Simulations](/docs/simulations): Programmatically trigger drag animations with DndSimulator for undo/redo, onboarding, or demo sequences
+- [Custom Strategies](/docs/custom-strategies): Replace or extend built-in drop zone strategies, or add entirely new container modes
+
+## Components
+
+- [DndProvider](/docs/components-api/DndProvider): Root provider component — props, ghost snippet, and CSS variables
+- [DndDraggable](/docs/components-api/DndDraggable): Draggable item component — props, events, CSS variables, and drag handle attributes
+- [DndDroppable](/docs/components-api/DndDroppable): Drop zone component — props, direction, mode, and type filtering
+
+## Reference
+
+- [CSS Custom Properties](/docs/css-custom-props): Reference for all --dnd-* CSS custom properties and CSS classes
+- [HTML Attributes](/docs/html-attributes): Reference for all data-dnd-* HTML attributes set and consumed by the library
+- [FAQ](/docs/faq): Common questions and answers about usage, configuration, and known limitations
+- [Migrating from v0.3.0](/docs/migrations/v0.3.0): How to migrate to @horuse/svelte-dnd v1 from v0.3.0
+
+## Examples
+
+- [Vertical List](/examples/vertical): Simple vertical sortable list with auto-scroll
+- [Horizontal List](/examples/horizontal): Horizontal sortable list using direction="horizontal"
+- [Multi Container](/examples/multi-container): Kanban board with multiple DndDroppable containers
+- [Sortable Containers](/examples/sortable-containers): Draggable columns and tasks with nested DndDroppable
+- [Custom Ghost](/examples/custom-ghost): Custom ghost snippet with scoped preview styling

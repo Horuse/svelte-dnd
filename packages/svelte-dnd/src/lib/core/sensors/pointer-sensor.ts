@@ -1,14 +1,36 @@
 import { TouchScroll } from '../scroll/touch-scroll.js'
 import { isBrowser } from '../utils/dom-helper.js'
-import type { SensorDescriptor, SensorActivation, SensorOptions, SensorCallbacks } from './sensor.js'
+import type { SensorDescriptor, SensorActivation, SensorCallbacks, ActivationState, StartCondition, StartConditionInput } from './sensor.js'
+import { Distance, Delay } from './activation-constraints.js'
 
-const DRAG_THRESHOLD = 5
+export interface PointerSensorOptions {
+	startConditions?: StartConditionInput
+}
+
+const DEFAULT_MOUSE_CONDITIONS: StartCondition[] = [new Distance({ value: 5 })]
+const DEFAULT_TOUCH_CONDITIONS: StartCondition[] = [new Delay({ value: 300, tolerance: 8 })]
+
+function getDefaultStartConditions(pointerType: string): StartCondition[] {
+	if (pointerType === 'mouse') return DEFAULT_MOUSE_CONDITIONS
+	return DEFAULT_TOUCH_CONDITIONS
+}
+
+function resolveStartConditions(
+	event: PointerEvent,
+	options: PointerSensorOptions | undefined
+): StartCondition[] {
+	const input = options?.startConditions
+	if (!input) return getDefaultStartConditions(event.pointerType)
+	if (typeof input === 'function') return input(event)
+	return input
+}
 
 export class PointerSensor implements SensorDescriptor {
+	constructor(private options?: PointerSensorOptions) {}
+
 	activate(
 		event: Event,
 		element: HTMLElement,
-		options: SensorOptions,
 		callbacks: SensorCallbacks
 	): SensorActivation | null {
 		if (!(event instanceof PointerEvent)) return null
@@ -39,26 +61,35 @@ export class PointerSensor implements SensorDescriptor {
 
 		const offset = { x: e.clientX - rect.left, y: e.clientY - rect.top }
 		const initialTransform = { x: e.clientX - offset.x, y: e.clientY - offset.y }
-		const dragStartPosition = { x: e.clientX, y: e.clientY }
-		const lastPointerPos = { x: e.clientX, y: e.clientY }
-		let lastPointerId = e.pointerId
-		let isPotentialDrag = true
+
+		const conditions = resolveStartConditions(e, this.options)
+		const startTime = performance.now()
+
+		const state: ActivationState = {
+			startX: e.clientX,
+			startY: e.clientY,
+			currentX: e.clientX,
+			currentY: e.clientY,
+			elapsedMs: 0,
+			pointerType: e.pointerType as 'mouse' | 'touch' | 'pen'
+		}
+
 		let isDragging = false
-		let longPressTimer: ReturnType<typeof setTimeout> | null = null
+		let isPotentialDrag = true
+		let lastPointerId = e.pointerId
+		const lastPointerPos = { x: e.clientX, y: e.clientY }
+		let conditionTimer: ReturnType<typeof setTimeout> | null = null
 		const touchScroll = new TouchScroll()
 
 		touchScroll.stopMomentum()
-
-		const effectiveDelay = e.pointerType === 'touch' ? (options.dragDelay ?? 300) : 0
 
 		const startActualDrag = (clientX: number, clientY: number, pointerId: number) => {
 			if (isDragging) return
 			isDragging = true
 			isPotentialDrag = false
 
-			const el = element
-			if (el.hasPointerCapture(pointerId)) {
-				el.releasePointerCapture(pointerId)
+			if (element.hasPointerCapture(pointerId)) {
+				element.releasePointerCapture(pointerId)
 			}
 
 			if (isBrowser) {
@@ -71,11 +102,23 @@ export class PointerSensor implements SensorDescriptor {
 			callbacks.onStart(transform)
 		}
 
-		const cancelLongPress = () => {
-			if (longPressTimer) {
-				clearTimeout(longPressTimer)
-				longPressTimer = null
+		const cancelTimer = () => {
+			if (conditionTimer) {
+				clearTimeout(conditionTimer)
+				conditionTimer = null
 			}
+		}
+
+		const evaluateConditions = (): 'satisfied' | 'pending' | 'all_aborted' => {
+			let allAborted = true
+
+			for (const condition of conditions) {
+				const result = condition.evaluate(state)
+				if (result === 'satisfied') return 'satisfied'
+				if (result !== 'aborted') allAborted = false
+			}
+
+			return allAborted ? 'all_aborted' : 'pending'
 		}
 
 		const onWindowMove = (e: PointerEvent) => {
@@ -105,7 +148,6 @@ export class PointerSensor implements SensorDescriptor {
 			window.removeEventListener('pointercancel', onWindowCancel)
 		}
 
-		// Element-level pointermove (before drag starts)
 		const onElementMove = (e: PointerEvent) => {
 			if (!isPotentialDrag && !touchScroll.isScrolling) return
 
@@ -117,21 +159,19 @@ export class PointerSensor implements SensorDescriptor {
 				return
 			}
 
-			const deltaX = Math.abs(e.clientX - dragStartPosition.x)
-			const deltaY = Math.abs(e.clientY - dragStartPosition.y)
-			const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+			state.currentX = e.clientX
+			state.currentY = e.clientY
+			state.elapsedMs = performance.now() - startTime
 
-			if (longPressTimer !== null) {
-				if (distance > (options.scrollCancelThreshold ?? 8)) {
-					cancelLongPress()
-					isPotentialDrag = false
-					touchScroll.start(element, e.clientX, e.clientY)
-				}
-				return
-			}
+			const result = evaluateConditions()
 
-			if (distance >= DRAG_THRESHOLD) {
+			if (result === 'satisfied') {
+				cancelTimer()
 				startActualDrag(e.clientX, e.clientY, e.pointerId)
+			} else if (result === 'all_aborted') {
+				cancelTimer()
+				isPotentialDrag = false
+				touchScroll.start(element, e.clientX, e.clientY)
 			}
 		}
 
@@ -141,7 +181,7 @@ export class PointerSensor implements SensorDescriptor {
 			}
 			if (touchScroll.isScrolling) touchScroll.end()
 			if (isPotentialDrag) {
-				cancelLongPress()
+				cancelTimer()
 				isPotentialDrag = false
 			}
 			element.removeEventListener('pointermove', onElementMove)
@@ -151,7 +191,7 @@ export class PointerSensor implements SensorDescriptor {
 
 		const onElementCancel = () => {
 			if (touchScroll.isScrolling) touchScroll.end()
-			cancelLongPress()
+			cancelTimer()
 			isPotentialDrag = false
 			element.removeEventListener('pointermove', onElementMove)
 			element.removeEventListener('pointerup', onElementUp)
@@ -162,22 +202,35 @@ export class PointerSensor implements SensorDescriptor {
 		element.addEventListener('pointerup', onElementUp)
 		element.addEventListener('pointercancel', onElementCancel)
 
-		if (effectiveDelay > 0) {
-			longPressTimer = setTimeout(() => {
-				longPressTimer = null
+		// Set timer for the minimum required duration among all conditions
+		const durations = conditions
+			.map((c) => c.getRequiredDuration?.())
+			.filter((d): d is number => d !== null && d !== undefined)
+		const minDuration = durations.length > 0 ? Math.min(...durations) : null
+
+		if (minDuration !== null && minDuration > 0) {
+			conditionTimer = setTimeout(() => {
+				conditionTimer = null
 				if (!isPotentialDrag || touchScroll.isScrolling) return
-				element.setPointerCapture(lastPointerId)
-				startActualDrag(lastPointerPos.x, lastPointerPos.y, lastPointerId)
-			}, effectiveDelay)
-		} else {
-			element.setPointerCapture(e.pointerId)
+
+				state.elapsedMs = performance.now() - startTime
+				const result = evaluateConditions()
+
+				if (result === 'satisfied') {
+					element.setPointerCapture(lastPointerId)
+					startActualDrag(lastPointerPos.x, lastPointerPos.y, lastPointerId)
+				} else if (result === 'all_aborted') {
+					isPotentialDrag = false
+					touchScroll.start(element, lastPointerPos.x, lastPointerPos.y)
+				}
+			}, minDuration)
 		}
 
 		return {
 			initialTransform,
 			offset,
 			destroy: () => {
-				cancelLongPress()
+				cancelTimer()
 				touchScroll.stopMomentum()
 				removeWindowListeners()
 				element.removeEventListener('pointermove', onElementMove)
