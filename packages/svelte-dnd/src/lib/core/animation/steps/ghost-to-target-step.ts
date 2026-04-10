@@ -71,8 +71,13 @@ export class GhostToTargetStep implements AnimationStep {
 
 		const placeholder = DOMHelper.findPlaceholder(container, this.targetZone.position)
 		if (placeholder) {
-			const rect = placeholder.getBoundingClientRect()
-			return { x: rect.left, y: rect.top }
+			const slotWrapper = (placeholder.parentElement ?? placeholder) as HTMLElement
+			const wrapperRect = slotWrapper.getBoundingClientRect()
+			const isAlignBottom = placeholder.classList.contains('dnd-preview--align-bottom')
+			const y = isAlignBottom
+				? wrapperRect.bottom - (this.state.size?.height ?? 0)
+				: wrapperRect.top
+			return { x: wrapperRect.left, y }
 		}
 
 		const containerRect = container.getBoundingClientRect()

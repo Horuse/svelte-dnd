@@ -17,8 +17,8 @@
 	const handler = new PreviewHandler()
 
 	$effect(() => {
-		handler.showDelay = previewConfig?.showDelay ?? dndManager?.previewShowDelay ?? 300
-		handler.collapseDelay = previewConfig?.collapseDelay ?? dndManager?.previewCollapseDelay ?? 200
+		handler.showDelay = previewConfig?.showDelay ?? 300
+		handler.collapseDelay = previewConfig?.collapseDelay ?? 200
 	})
 
 	const visible = $derived(
