@@ -69,9 +69,9 @@ export class GhostToTargetStep implements AnimationStep {
 			}
 		}
 
-		const slotWrapper = DOMHelper.findPlaceholderSlot(container, this.targetZone.position)
-		if (slotWrapper) {
-			const rect = slotWrapper.getBoundingClientRect()
+		const placeholder = DOMHelper.findPlaceholder(container, this.targetZone.position)
+		if (placeholder) {
+			const rect = placeholder.getBoundingClientRect()
 			return { x: rect.left, y: rect.top }
 		}
 
