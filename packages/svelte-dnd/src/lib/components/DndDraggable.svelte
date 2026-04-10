@@ -88,7 +88,7 @@
 
 <div style="position: relative; overflow: visible">
 	{#if position !== undefined}
-		<DndPreview containerId={getContainerId()} {position} translateY={translate.y} />
+		<DndPreview containerId={getContainerId()} {position} translateX={translate.x} translateY={translate.y} />
 	{/if}
 
 	<div

@@ -3,15 +3,18 @@
 	import type { DndController } from '../core/dnd/dnd-controller.svelte'
 	import { PreviewHandler, type PreviewConfig } from '../core/handlers/preview-handler.svelte.js'
 
+	import { DOMHelper } from '../core/utils/dom-helper.js'
+
 	interface Props {
 		containerId: string
 		position: number
 		class?: string
 		previewConfig?: PreviewConfig
+		translateX?: number
 		translateY?: number
 	}
 
-	let { containerId, position, class: className = '', previewConfig, translateY = 0 }: Props = $props()
+	let { containerId, position, class: className = '', previewConfig, translateX = 0, translateY = 0 }: Props = $props()
 
 	const dndManager = getContext<DndController>('dnd')
 	const handler = new PreviewHandler()
@@ -28,11 +31,14 @@
 		dndManager.dropPreview.visible
 	)
 
-	let alignBottom = $state(false)
+	let alignSecondary = $state(false)
+	let horizontal = $state(false)
 
 	$effect(() => {
 		if (visible) {
-			alignBottom = translateY < 0
+			const container = DOMHelper.findContainer(containerId)
+			horizontal = container ? DOMHelper.getContainerDirection(container) === 'horizontal' : false
+			alignSecondary = horizontal ? translateX < 0 : translateY < 0
 			handler.show(dndManager)
 		} else {
 			handler.hide(dndManager?.performingDrop ?? false)
@@ -48,7 +54,8 @@
 	class="dnd-preview {className}"
 	class:dnd-preview--revealed={handler.revealed}
 	class:dnd-preview--instant={handler.instant}
-	class:dnd-preview--align-bottom={alignBottom}
+	class:dnd-preview--align-bottom={alignSecondary && !horizontal}
+	class:dnd-preview--align-right={alignSecondary && horizontal}
 	style:height={`${handler.height}px`}
 	style:width={`${handler.width}px`}
 	style:visibility={handler.height === 0 ? 'hidden' : undefined}
@@ -86,5 +93,10 @@
 	.dnd-preview--align-bottom {
 		top: auto;
 		bottom: 0;
+	}
+
+	.dnd-preview--align-right {
+		left: auto;
+		right: 0;
 	}
 </style>

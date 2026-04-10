@@ -4,7 +4,8 @@
 	let items = $state(
 		Array.from({ length: 50 }, (_, i) => ({
 			id: String(i + 1),
-			label: `Item ${i + 1}`
+			label: `Item ${i + 1}`,
+			width: 60 + Math.floor(Math.random() * 80),
 		}))
 	);
 
@@ -25,7 +26,7 @@
 	<DndDroppable id="horizontal-list" direction="horizontal" class="flex space-x-2 overflow-x-auto p-4 bg-foreground border-2 border-second rounded-xl">
 		{#each items as item, index (item.id)}
 			<DndDraggable id={item.id} position={index}>
-				<div class="drag-item w-32">
+				<div class="drag-item" style="width: {item.width}px;}">
 					<span class="text-2xl">{item.id}</span>
 				</div>
 			</DndDraggable>

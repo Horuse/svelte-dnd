@@ -26,7 +26,7 @@
 	<DndDroppable class="flex space-y-4 flex-col h-[calc(100vh-550px)] min-h-125 overflow-y-auto max-w-xl p-4 bg-foreground border-2 border-second rounded-xl" id="vertical-list" direction="vertical">
 		{#each items as item, index (item.id)}
 			<DndDraggable id={item.id} position={index}>
-				<div class="drag-item">
+				<div class="drag-item" style="height: {item.height}px">
 					<span class="text-2xl">{item.id}</span>
 				</div>
 			</DndDraggable>
