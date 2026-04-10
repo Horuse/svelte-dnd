@@ -8,9 +8,10 @@
 		position: number
 		class?: string
 		previewConfig?: PreviewConfig
+		translateY?: number
 	}
 
-	let { containerId, position, class: className = '', previewConfig }: Props = $props()
+	let { containerId, position, class: className = '', previewConfig, translateY = 0 }: Props = $props()
 
 	const dndManager = getContext<DndController>('dnd')
 	const handler = new PreviewHandler()
@@ -27,9 +28,15 @@
 		dndManager.dropPreview.visible
 	)
 
+	let alignBottom = $state(false)
+
 	$effect(() => {
-		if (visible) handler.show(dndManager)
-		else handler.hide(dndManager?.performingDrop ?? false)
+		if (visible) {
+			alignBottom = translateY < 0
+			handler.show(dndManager)
+		} else {
+			handler.hide(dndManager?.performingDrop ?? false)
+		}
 	})
 
 	onDestroy(() => handler.destroy())
@@ -41,6 +48,7 @@
 	class="dnd-preview {className}"
 	class:dnd-preview--revealed={handler.revealed}
 	class:dnd-preview--instant={handler.instant}
+	class:dnd-preview--align-bottom={alignBottom}
 	style:height={`${handler.height}px`}
 	style:width={`${handler.width}px`}
 	style:visibility={handler.height === 0 ? 'hidden' : undefined}
@@ -50,6 +58,7 @@
 <style>
 	.dnd-preview {
 		position: absolute;
+		top: 0;
 		pointer-events: none;
 		opacity: 0;
 		transform: scale(0.5);
@@ -72,5 +81,10 @@
 
 	.dnd-preview--instant {
 		transition: none;
+	}
+
+	.dnd-preview--align-bottom {
+		top: auto;
+		bottom: 0;
 	}
 </style>

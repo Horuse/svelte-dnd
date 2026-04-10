@@ -2,7 +2,7 @@
 	import { DndProvider, DndDroppable, DndDraggable, DndController } from '@horuse/svelte-dnd';
 	import TrashZone from './TrashZone.svelte';
 
-	type Task = { id: string; label: string };
+	type Task = { id: string; label: string; height: number  };
 	type Column = { id: string; title: string; tasks: Task[] };
 
 	let columns = $state<Column[]>([
@@ -10,30 +10,31 @@
 			id: 'backlog',
 			title: 'Backlog',
 			tasks: [
-				{ id: 't1', label: 'Research API design' },
-				{ id: 't2', label: 'Write migration scripts' },
-				{ id: 't3', label: 'Set up CI pipeline' }
+				{ id: 't1', label: 'Research API design', height: 60 + Math.floor(Math.random() * 80) },
+				{ id: 't2', label: 'Write migration scripts', height: 60 + Math.floor(Math.random() * 80) },
+				{ id: 't3', label: 'Set up CI pipeline', height: 60 + Math.floor(Math.random() * 80) }
 			]
 		},
 		{
 			id: 'in-progress',
 			title: 'In Progress',
 			tasks: [
-				{ id: 't4', label: 'Implement auth flow' },
-				{ id: 't5', label: 'Build dashboard UI' }
+				{ id: 't4', label: 'Implement auth flow', height: 60 + Math.floor(Math.random() * 80) },
+				{ id: 't5', label: 'Build dashboard UI', height: 60 + Math.floor(Math.random() * 80) }
 			]
 		},
 		{
 			id: 'review',
 			title: 'Review',
 			tasks: [
-				{ id: 't6', label: 'Code review: payments' },
-				{ id: 't7', label: 'QA: user settings' }
+				{ id: 't6', label: 'Code review: payments', height: 50 },
+				{ id: 't7', label: 'QA: user settings', height: 120 }
 			]
 		}
 	]);
 
 	const controller = new DndController();
+
 
 	controller.onDrop((sourceId: string, sourceData: any, targetContainerId: string, position: number) => {
 		if (targetContainerId === 'trash-zone') return
@@ -139,7 +140,7 @@
 						<DndDroppable id={column.id} direction="vertical" accepts="task" class="space-y-2 p-3 h-full overflow-auto border-t-2 border-primary pt-3">
 							{#each column.tasks as task, taskIndex (task.id)}
 								<DndDraggable id={task.id} type="task" data={{ label: task.label, columnId: column.id }} position={taskIndex}>
-									<div class="drag-item px-4 gap-3">
+									<div class="drag-item px-4 gap-3" style="height: {task.height}px">
 										<span class="truncate">{task.label}</span>
 										<button data-dnd-no-drag class="black-button" onclick={() => alert('Test')}>Alert</button>
 									</div>

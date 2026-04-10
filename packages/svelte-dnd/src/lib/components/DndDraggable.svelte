@@ -86,9 +86,9 @@
 	onDestroy(() => handler.destroy())
 </script>
 
-<div style="position: relative">
+<div style="position: relative; overflow: visible">
 	{#if position !== undefined}
-		<DndPreview containerId={getContainerId()} {position} />
+		<DndPreview containerId={getContainerId()} {position} translateY={translate.y} />
 	{/if}
 
 	<div

@@ -109,9 +109,11 @@ export class DOMHelper {
 			}
 		} else if (prevItem) {
 			const prevRect = prevItem.getBoundingClientRect()
+			const gapH = elementRect.top - (prevRect.top + prevItem.offsetHeight)
+			const gapW = elementRect.left - (prevRect.left + prevItem.offsetWidth)
 			return {
-				width: elementRect.left - prevRect.left,
-				height: elementRect.top - prevRect.top
+				width: element.offsetWidth + Math.max(0, gapW),
+				height: element.offsetHeight + Math.max(0, gapH)
 			}
 		} else {
 			// No draggable neighbors — try the next DOM sibling of the wrapper div
