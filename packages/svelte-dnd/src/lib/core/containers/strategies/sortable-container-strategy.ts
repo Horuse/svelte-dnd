@@ -3,6 +3,7 @@ import type { DropZone, DndMode } from '../../../types.js'
 import type { DragSession } from '../../dnd/drag-session.js'
 import type { DndState } from '../../dnd/dnd-state.svelte.js'
 import type { AnimationStep } from '../../animation/steps/animation-step.js'
+import type { Droppable } from '../../entities/droppable.svelte.js'
 import { DOMHelper } from '../../utils/dom-helper.js'
 import { GhostToTargetStep } from '../../animation/steps/ghost-to-target-step.js'
 import { GhostReturnStep } from '../../animation/steps/ghost-return-step.js'
@@ -12,14 +13,17 @@ export class SortableContainerStrategy implements ContainerStrategy {
 
 	constructor(private state: DndState) {}
 
-	calculateDropZones(containerId: string, container: HTMLElement, session: DragSession | null): DropZone[] {
-		const containerRect = DOMHelper.getRect(container)
-		const direction = DOMHelper.getContainerDirection(container)
+	calculateDropZones(droppable: Droppable, session: DragSession | null): DropZone[] {
+		const containerId = droppable.id
+		const containerRect = DOMHelper.getRect(droppable.element)
+		const direction = droppable.direction
 		const draggedId = session?.itemId ?? null
 
-		const draggableItems = DOMHelper.findDraggableItemsInContainer(container).filter(
-			(item) => item.getAttribute('data-dnd-drag-id') !== draggedId
-		)
+		const slots = droppable.getSortedSlots()
+		const allItems = slots.map((s) => s.draggable.element)
+		const idByEl = new Map(slots.map((s) => [s.draggable.element, s.draggable.id]))
+
+		const draggableItems = allItems.filter((item) => idByEl.get(item) !== draggedId)
 
 		if (draggableItems.length === 0) {
 			return this.createEmptyZone(containerId, containerRect, direction)
@@ -32,9 +36,10 @@ export class SortableContainerStrategy implements ContainerStrategy {
 		}
 	}
 
-	getTranslations(containerId: string, container: HTMLElement, session: DragSession): Map<string, { x: number; y: number }> {
-		const direction = DOMHelper.getContainerDirection(container)
-		if (direction === 'grid') return this.getGridTranslations(containerId, container, session)
+	getTranslations(droppable: Droppable, session: DragSession): Map<string, { x: number; y: number }> {
+		const containerId = droppable.id
+		const direction = droppable.direction
+		if (direction === 'grid') return this.getGridTranslations(droppable, session)
 
 		const map = new Map<string, { x: number; y: number }>()
 		const preview = session.dropPreview
@@ -45,8 +50,10 @@ export class SortableContainerStrategy implements ContainerStrategy {
 		const size = direction === 'horizontal' ? slotSize.width : slotSize.height
 		if (size === 0) return map
 
-		const allItems = DOMHelper.findDraggableItemsInContainer(container)
-		const draggedIdx = allItems.findIndex((el) => el.getAttribute('data-dnd-drag-id') === draggedId)
+		const slots = droppable.getSortedSlots()
+		const allItems = slots.map((s) => s.draggable.element)
+		const idByEl = new Map(slots.map((s) => [s.draggable.element, s.draggable.id]))
+		const draggedIdx = allItems.findIndex((el) => idByEl.get(el) === draggedId)
 
 		if (!preview?.visible) {
 			// No preview: collapse gap only if this is the origin container
@@ -54,7 +61,7 @@ export class SortableContainerStrategy implements ContainerStrategy {
 			if (draggedIdx === -1) return map
 
 			for (const el of allItems) {
-				const id = el.getAttribute('data-dnd-drag-id')
+				const id = idByEl.get(el)
 				if (!id || id === draggedId) continue
 				if (allItems.indexOf(el) > draggedIdx) {
 					map.set(id, direction === 'horizontal' ? { x: -size, y: 0 } : { x: 0, y: -size })
@@ -73,7 +80,7 @@ export class SortableContainerStrategy implements ContainerStrategy {
 			if (effectiveSize === 0) return map
 
 			for (const el of allItems) {
-				const id = el.getAttribute('data-dnd-drag-id')
+				const id = idByEl.get(el)
 				if (!id || id === draggedId) continue
 				const myIdx = allItems.indexOf(el)
 				let offset = 0
@@ -96,7 +103,7 @@ export class SortableContainerStrategy implements ContainerStrategy {
 			// This is the origin container and item is moving to another container: collapse gap
 			if (draggedIdx !== -1) {
 				for (const el of allItems) {
-					const id = el.getAttribute('data-dnd-drag-id')
+					const id = idByEl.get(el)
 					if (!id || id === draggedId) continue
 					if (allItems.indexOf(el) > draggedIdx) {
 						map.set(id, direction === 'horizontal' ? { x: -size, y: 0 } : { x: 0, y: -size })
@@ -118,14 +125,17 @@ export class SortableContainerStrategy implements ContainerStrategy {
 
 	// --- Grid translation helpers ---
 
-	private getGridTranslations(containerId: string, container: HTMLElement, session: DragSession): Map<string, { x: number; y: number }> {
+	private getGridTranslations(droppable: Droppable, session: DragSession): Map<string, { x: number; y: number }> {
+		const containerId = droppable.id
 		const map = new Map<string, { x: number; y: number }>()
 		const preview = session.dropPreview
 		const draggedId = session.itemId
-		const allItems = DOMHelper.findDraggableItemsInContainer(container)
-		const draggedIdx = allItems.findIndex((el) => el.getAttribute('data-dnd-drag-id') === draggedId)
+		const slots = droppable.getSortedSlots()
+		const allItems = slots.map((s) => s.draggable.element)
+		const idByEl = new Map(slots.map((s) => [s.draggable.element, s.draggable.id]))
+		const draggedIdx = allItems.findIndex((el) => idByEl.get(el) === draggedId)
 
-		const getId = (el: HTMLElement) => el.getAttribute('data-dnd-drag-id')
+		const getId = (el: HTMLElement) => idByEl.get(el) ?? null
 		const getRect = (el: HTMLElement) => DOMHelper.getRect(el)
 		const delta = (from: HTMLElement, to: HTMLElement) => ({
 			x: getRect(to).left - getRect(from).left,

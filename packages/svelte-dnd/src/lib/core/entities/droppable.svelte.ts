@@ -13,7 +13,7 @@ export type DroppableControllerRef = {
 	onDragStart(cb: (itemId: string) => void): () => void
 	onZonesInvalidated(cb: () => void): () => void
 	onDragEnd(cb: (itemId: string) => void): () => void
-	refreshContainerZones(id: string, element: HTMLElement, direction: DndDirection, mode: DndMode): void
+	refreshDroppableZones(droppable: Droppable): void
 	dragging: boolean
 }
 
@@ -122,7 +122,7 @@ export class Droppable {
 	invalidateZones() {
 		if (!this.element || this.disabled) return
 		if (this.controller.element?.contains(this.element)) return
-		this.controller.refreshContainerZones(this.id, this.element, this.direction, this.mode)
+		this.controller.refreshDroppableZones(this)
 	}
 
 	// --- Lifecycle (set up from attachDroppable in controller) ---

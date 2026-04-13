@@ -89,8 +89,8 @@ export class DndController<TData = Record<string, unknown>> {
 			this.strategyMap.set(strategy.mode, strategy)
 		}
 
-		this.translationEngine = new TranslationEngine(this.state, this.registry)
-		this.dropResolver = new DropResolver(this.state, this.registry, collision)
+		this.translationEngine = new TranslationEngine(this.state, this.droppables)
+		this.dropResolver = new DropResolver(this.state, this.droppablesById, collision)
 
 		this.scrollController = new ScrollController(this.state, {
 			...scroll,
@@ -117,7 +117,7 @@ export class DndController<TData = Record<string, unknown>> {
 			modifiers
 		)
 
-		this.registrar = new ContainerRegistrar(this.state, this.registry, this.strategyMap, debug)
+		this.registrar = new ContainerRegistrar(this.state, this.registry)
 		this.simulator = new DndSimulator(this.state, this.registry, this.strategyMap, this.eventEmitter)
 	}
 
@@ -331,17 +331,27 @@ export class DndController<TData = Record<string, unknown>> {
 		this.animationCoordinator.endDrag(shouldAnimate)
 	}
 
+	/** Recalculate drop zones for a Droppable entity. Called by Droppable.invalidateZones(). */
+	refreshDroppableZones(droppable: Droppable) {
+		// Keep ContainerRegistry in sync for DndSimulator backward compat
+		this.registry.registerContainer(droppable.id, droppable.element, droppable.strategy)
+		const newZones = droppable.strategy.calculateDropZones(droppable, this.state.session)
+		const otherZones = this.state.zones.filter((z) => z.containerId !== droppable.id)
+		this.state.setDropZones([...otherZones, ...newZones])
+	}
+
 	/**
-	 * Register a container's drop zones and strategy.
-	 * Called by DropHandler on drag start and scroll.
+	 * Legacy bridge — looks up the Droppable by id and delegates to refreshDroppableZones.
+	 * Kept for backward compatibility with DropHandler (removed in Phase 6).
 	 */
 	refreshContainerZones(
 		containerId: string,
-		containerElement: HTMLElement,
-		direction: DndDirection = 'vertical',
-		mode: DndMode = 'sortable'
+		_containerElement: HTMLElement,
+		_direction: DndDirection = 'vertical',
+		_mode: DndMode = 'sortable'
 	) {
-		this.registrar.refreshContainerZones(containerId, containerElement, direction, mode)
+		const droppable = this.droppablesById.get(containerId)
+		if (droppable) this.refreshDroppableZones(droppable)
 	}
 
 	/** Update auto-scroll config at runtime. Changes take effect on the next scroll tick. */

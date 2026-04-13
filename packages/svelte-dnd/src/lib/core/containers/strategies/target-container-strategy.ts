@@ -3,6 +3,7 @@ import type { DropZone, DndMode } from '../../../types.js'
 import type { DragSession } from '../../dnd/drag-session.js'
 import type { DndState } from '../../dnd/dnd-state.svelte.js'
 import type { AnimationStep } from '../../animation/steps/animation-step.js'
+import type { Droppable } from '../../entities/droppable.svelte.js'
 import { DOMHelper } from '../../utils/dom-helper.js'
 import { GhostToTargetStep } from '../../animation/steps/ghost-to-target-step.js'
 import { GhostReturnStep } from '../../animation/steps/ghost-return-step.js'
@@ -12,12 +13,12 @@ export class TargetContainerStrategy implements ContainerStrategy {
 
 	constructor(private state: DndState) {}
 
-	calculateDropZones(containerId: string, container: HTMLElement, _session: DragSession | null): DropZone[] {
-		const rect = DOMHelper.getRect(container)
+	calculateDropZones(droppable: Droppable, _session: DragSession | null): DropZone[] {
+		const rect = DOMHelper.getRect(droppable.element)
 		return [{
-			containerId,
+			containerId: droppable.id,
 			position: 0,
-			direction: DOMHelper.getContainerDirection(container),
+			direction: droppable.direction,
 			rect: {
 				x: rect.left,
 				y: rect.top,
@@ -29,7 +30,7 @@ export class TargetContainerStrategy implements ContainerStrategy {
 
 	// Target containers don't have sortable items — no translations needed.
 	// The origin container's strategy (SortableContainerStrategy) handles gap collapse.
-	getTranslations(_containerId: string, _container: HTMLElement, _session: DragSession): Map<string, { x: number; y: number }> {
+	getTranslations(_droppable: Droppable, _session: DragSession): Map<string, { x: number; y: number }> {
 		return new Map()
 	}
 

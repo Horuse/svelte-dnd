@@ -1,6 +1,6 @@
 import type { DropZone } from '../../types.js'
 import type { DndState } from '../dnd/dnd-state.svelte.js'
-import type { ContainerRegistry } from '../containers/container-registry.js'
+import type { Droppable } from '../entities/droppable.svelte.js'
 import type { CollisionAlgorithm } from '../collision/collision-algorithm.js'
 import { centerPoint } from '../collision/center-point.js'
 import { DOMHelper } from '../utils/dom-helper.js'
@@ -8,14 +8,14 @@ import { DOMHelper } from '../utils/dom-helper.js'
 /**
  * Resolves which drop zone contains a given point during an active drag.
  * Uses pluggable collision algorithms with the following priority:
- * 1. Per-container algorithm (from registry)
+ * 1. Per-container algorithm (from droppable entity)
  * 2. Global algorithm (passed to constructor)
  * 3. centerPoint (default)
  */
 export class DropResolver {
 	constructor(
 		private state: DndState,
-		private registry: ContainerRegistry,
+		private droppablesById: Map<string, Droppable>,
 		private globalAlgorithm?: CollisionAlgorithm
 	) {}
 
@@ -32,10 +32,8 @@ export class DropResolver {
 		const ghost = this.getGhostRect()
 
 		for (const zone of filteredZones) {
-			const algorithm =
-				this.registry.getCollision(zone.containerId) ??
-				this.globalAlgorithm ??
-				centerPoint
+			const droppable = this.droppablesById.get(zone.containerId)
+			const algorithm = droppable?.collision ?? this.globalAlgorithm ?? centerPoint
 
 			const hit = algorithm({ zones: [zone], pointer: point, ghost })
 			if (hit) return hit
@@ -49,7 +47,8 @@ export class DropResolver {
 		if (!draggedType) return zones
 
 		return zones.filter((zone) => {
-			const accepts = this.registry.getAccepts(zone.containerId)
+			const droppable = this.droppablesById.get(zone.containerId)
+			const accepts = droppable?.accepts
 			if (!accepts) return true
 			if (Array.isArray(accepts)) return accepts.includes(draggedType)
 			return accepts === draggedType
