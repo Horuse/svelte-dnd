@@ -3,8 +3,6 @@ import { ScrollController, type ScrollConfig } from '../scroll/scroll-controller
 import { type PreviewConfig } from '../handlers/preview-handler.svelte.js'
 import { DndEventEmitter } from './dnd-event-emitter.js'
 import { TranslationEngine } from '../zones/translation-engine.svelte.js'
-import { ContainerRegistry } from '../containers/container-registry.js'
-import { ContainerRegistrar } from '../containers/container-registrar.js'
 import { SortableContainerStrategy } from '../containers/strategies/sortable-container-strategy.js'
 import { TargetContainerStrategy } from '../containers/strategies/target-container-strategy.js'
 import type { ContainerStrategy } from '../containers/strategies/container-strategy.js'
@@ -14,7 +12,6 @@ import { KeyboardSensor } from '../sensors/keyboard-sensor.js'
 import type { CollisionAlgorithm } from '../collision/collision-algorithm.js'
 import { DropResolver } from '../zones/drop-resolver.js'
 import { DropAnimationCoordinator } from '../animation/drop-animation-coordinator.js'
-import { DragSessionManager } from './drag-session-manager.js'
 import type { Modifier } from '../modifiers/modifier.js'
 import { DndSimulator } from './dnd-simulator.js'
 import type { DropZone, DndDirection, DndMode, DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback, ZonesInvalidatedCallback } from '../../types.js'
@@ -54,23 +51,21 @@ export type { DragStartCallback, DragEndCallback, DropCallback, DragOverCallback
  */
 export class DndController<TData = Record<string, unknown>> {
 	private state = new DndState()
-	private registry = new ContainerRegistry()
 	private strategyMap = new Map<string, ContainerStrategy>()
 	private eventEmitter = new DndEventEmitter()
 	private translationEngine: TranslationEngine
 	private dropResolver: DropResolver
 	private scrollController: ScrollController
 	private animationCoordinator: DropAnimationCoordinator
-	private sessionManager: DragSessionManager
-	private registrar: ContainerRegistrar
 	private simulator: DndSimulator
+	private modifiers: Modifier[]
 
-	// --- Entity maps (new architecture) ---
+	// --- Entity maps ---
 	private droppables = new Map<HTMLElement, Droppable>()
 	private droppablesById = new Map<string, Droppable>()
 	/** Global element→Slot lookup used by sensors and attachSlot. */
 	slots = new Map<HTMLElement, Slot>()
-	/** Current drag session (new DragSession class). Coexists with DndState.session during migration. */
+	/** Current drag session. Coexists with DndState.session during migration. */
 	session = $state<DragSession | null>(null)
 
 	debug = false
@@ -81,6 +76,7 @@ export class DndController<TData = Record<string, unknown>> {
 		this.debug = debug
 		this.sensors = sensors ?? [new PointerSensor(), new KeyboardSensor()]
 		this.announcements = announcements
+		this.modifiers = modifiers
 
 		this.strategyMap.set('sortable', new SortableContainerStrategy(this.state, this.droppablesById))
 		this.strategyMap.set('target', new TargetContainerStrategy(this.state, this.droppablesById))
@@ -95,7 +91,7 @@ export class DndController<TData = Record<string, unknown>> {
 		this.scrollController = new ScrollController(this.state, {
 			...scroll,
 			onZoneRefresh: () => this.eventEmitter.notifyZonesInvalidated(),
-			onMouseUpdate: (x, y) => this.sessionManager.updateMousePosition(x, y)
+			onMouseUpdate: (x, y) => this.updateMousePosition(x, y)
 		})
 
 		this.animationCoordinator = new DropAnimationCoordinator(
@@ -109,16 +105,6 @@ export class DndController<TData = Record<string, unknown>> {
 		if (preview.showDelay !== undefined) this.animationCoordinator.previewShowDelay = preview.showDelay
 		if (preview.collapseDelay !== undefined) this.animationCoordinator.previewCollapseDelay = preview.collapseDelay
 
-		this.sessionManager = new DragSessionManager(
-			this.state,
-			this.registry,
-			this.eventEmitter,
-			this.scrollController,
-			this.animationCoordinator,
-			modifiers
-		)
-
-		this.registrar = new ContainerRegistrar(this.state, this.registry)
 		this.simulator = new DndSimulator(this.state, this.droppablesById, this.slots, this.eventEmitter)
 	}
 
@@ -201,48 +187,34 @@ export class DndController<TData = Record<string, unknown>> {
 	 */
 	onZonesInvalidated(cb: ZonesInvalidatedCallback) { return this.eventEmitter.onZonesInvalidated(cb) }
 
-	// --- Lifecycle (called by DndDraggable / DndDroppable internally) ---
+	// --- Lifecycle ---
 
 	setSkipDropPreviewAnimation(value: boolean) {
 		this.state.setSkipDropPreviewAnimation(value)
 	}
 
-	registerDroppableData(id: string, data: Record<string, unknown>) {
-		this.registrar.registerDroppableData(id, data)
-	}
+	updateTransform(rawTransform: { x: number; y: number }) {
+		if (this.modifiers.length === 0) {
+			this.state.setTransform(rawTransform)
+			return
+		}
 
-	registerDroppableAccepts(id: string, accepts: string | string[] | undefined) {
-		this.registrar.registerDroppableAccepts(id, accepts)
-	}
+		const initialTransform = this.state.session?.ghostTransform ?? rawTransform
+		const ghostSize = this.state.size ?? { width: 0, height: 0 }
+		const originContainerId = this.state.session?.originContainerId ?? ''
 
-	registerDroppableCollision(id: string, algo: CollisionAlgorithm | undefined) {
-		this.registrar.registerDroppableCollision(id, algo)
-	}
-
-	unregisterDroppableData(id: string) {
-		this.registrar.unregisterDroppableData(id)
-	}
-
-	unregisterContainer(id: string) {
-		this.registrar.unregisterContainer(id)
-	}
-
-	startDrag(
-		element: HTMLElement,
-		itemId: string,
-		initialPosition: { x: number; y: number },
-		data?: Record<string, unknown>,
-		type?: string
-	) {
-		this.sessionManager.startDrag(element, itemId, initialPosition, data, type)
-	}
-
-	updateTransform(transform: { x: number; y: number }) {
-		this.sessionManager.updateTransform(transform)
+		let transform = rawTransform
+		for (const modifier of this.modifiers) {
+			transform = modifier({ transform, initialTransform, ghostSize, originContainerId })
+		}
+		this.state.setTransform(transform)
 	}
 
 	updateMousePosition(mouseX: number, mouseY: number) {
-		this.sessionManager.updateMousePosition(mouseX, mouseY)
+		if (this.state.dragging) {
+			this.animationCoordinator.updateDropPreview({ x: mouseX, y: mouseY })
+			this.scrollController.handleAutoScroll(mouseX, mouseY)
+		}
 	}
 
 	navigate(direction: NavigationDirection) {
@@ -303,10 +275,8 @@ export class DndController<TData = Record<string, unknown>> {
 		const offsetY = ghostSize ? ghostSize.height / 2 : 0
 
 		const ghostTransform = { x: centerX - offsetX, y: centerY - offsetY }
-		const mouseX = targetZone.rect.x + targetZone.rect.width / 2
-		const mouseY = targetZone.rect.y + targetZone.rect.height / 2
 
-		this.sessionManager.updateTransform(ghostTransform)
+		this.updateTransform(ghostTransform)
 		this.state.setDropPreview({
 			containerId: targetZone.containerId,
 			position: targetZone.position,
@@ -334,25 +304,9 @@ export class DndController<TData = Record<string, unknown>> {
 
 	/** Recalculate drop zones for a Droppable entity. Called by Droppable.invalidateZones(). */
 	refreshDroppableZones(droppable: Droppable) {
-		// Keep ContainerRegistry in sync for DndSimulator backward compat
-		this.registry.registerContainer(droppable.id, droppable.element, droppable.strategy)
 		const newZones = droppable.strategy.calculateDropZones(droppable, this.state.session)
 		const otherZones = this.state.zones.filter((z) => z.containerId !== droppable.id)
 		this.state.setDropZones([...otherZones, ...newZones])
-	}
-
-	/**
-	 * Legacy bridge — looks up the Droppable by id and delegates to refreshDroppableZones.
-	 * Kept for backward compatibility with DropHandler (removed in Phase 6).
-	 */
-	refreshContainerZones(
-		containerId: string,
-		_containerElement: HTMLElement,
-		_direction: DndDirection = 'vertical',
-		_mode: DndMode = 'sortable'
-	) {
-		const droppable = this.droppablesById.get(containerId)
-		if (droppable) this.refreshDroppableZones(droppable)
 	}
 
 	/** Update auto-scroll config at runtime. Changes take effect on the next scroll tick. */
@@ -362,7 +316,8 @@ export class DndController<TData = Record<string, unknown>> {
 
 	/** Update preview animation delays at runtime. */
 	setPreviewConfig(config: PreviewConfig) {
-		this.animationCoordinator.setPreviewConfig(config)
+		if (config.showDelay !== undefined) this.animationCoordinator.previewShowDelay = config.showDelay
+		if (config.collapseDelay !== undefined) this.animationCoordinator.previewCollapseDelay = config.collapseDelay
 	}
 
 	/** Toggle visual overlay of drop zones — useful for debugging layout. */
@@ -395,12 +350,9 @@ export class DndController<TData = Record<string, unknown>> {
 		return this.strategyMap.get(mode) ?? this.strategyMap.get('sortable')!
 	}
 
-	// --- New entity-based API ---
+	// --- Entity-based API ---
 
-	/**
-	 * @attach handler for DndDroppable — registers a Droppable in the new entity maps
-	 * and sets up backward-compat registration in ContainerRegistry/ContainerRegistrar.
-	 */
+	/** @attach handler for DndDroppable — registers a Droppable in the entity maps. */
 	attachDroppable(droppable: Droppable) {
 		return (element: HTMLElement) => {
 			droppable.element = element
@@ -408,16 +360,11 @@ export class DndController<TData = Record<string, unknown>> {
 			this.droppablesById.set(droppable.id, droppable)
 			droppable.setupEventListeners()
 
-			// Register metadata with old system for backward compat (TranslationEngine, DropResolver etc.)
-			this.registrar.registerDroppableData(droppable.id, droppable.data ?? {})
-			this.registrar.registerDroppableAccepts(droppable.id, droppable.accepts)
-			this.registrar.registerDroppableCollision(droppable.id, droppable.collision)
-
 			return () => {
 				this.droppables.delete(element)
 				this.droppablesById.delete(droppable.id)
 				droppable.destroy()
-				this.registrar.unregisterContainer(droppable.id)
+				this.state.setDropZones(this.state.zones.filter((z) => z.containerId !== droppable.id))
 			}
 		}
 	}
@@ -436,7 +383,7 @@ export class DndController<TData = Record<string, unknown>> {
 		this.session = newSession
 
 		// Sync with legacy DndState so TranslationEngine, DropResolver, DropAnimationCoordinator
-		// continue to work unchanged until they are migrated in Phase 4/5.
+		// continue to work unchanged until DndState is removed in a future phase.
 		this.state.startSession({
 			itemId: draggable.id,
 			itemData: draggable.data,
@@ -485,7 +432,6 @@ export class DndController<TData = Record<string, unknown>> {
 	destroy() {
 		this.animationCoordinator.destroy()
 		this.scrollController.destroy()
-		this.registry.clearAll()
 		this.eventEmitter.destroy()
 	}
 }

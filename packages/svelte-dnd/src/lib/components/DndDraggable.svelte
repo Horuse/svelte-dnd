@@ -104,7 +104,6 @@
 		aria-roledescription="draggable item"
 		data-dnd-draggable
 		data-dnd-drag-id={id}
-		data-dnd-draggable-item
 		style="transform: translate3d({translate.x}px, {translate.y}px, 0); transition: {isGhostActive || performingDrop ? 'none' : 'transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)'}"
 		onpointerdown={draggable.handlePointerDown}
 		onkeydown={draggable.handleKeyDown}

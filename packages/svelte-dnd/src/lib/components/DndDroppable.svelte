@@ -88,14 +88,12 @@
 	aria-dropeffect={disabled ? 'none' : 'move'}
 	data-dnd-droppable
 	data-dnd-drop-id={id}
-	data-dnd-direction={direction}
-	data-dnd-mode={mode}
 	{@attach dndController?.attachDroppable(droppable)}
 >
 	{@render children()}
 	{#if mode === 'sortable'}
 		<div style="position: relative">
-			<DndPreview containerId={id} position={tailPosition >= 0 ? tailPosition : lastValidTailPosition} />
+			<DndPreview {droppable} position={tailPosition >= 0 ? tailPosition : lastValidTailPosition} />
 		</div>
 	{/if}
 </div>

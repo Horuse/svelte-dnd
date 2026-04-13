@@ -2,15 +2,17 @@
 	import { getContext, onDestroy } from 'svelte'
 	import type { DndController } from '../core/dnd/dnd-controller.svelte'
 	import { PreviewHandler, type PreviewConfig } from '../core/handlers/preview-handler.svelte.js'
-	import { DOMHelper } from '../core/utils/dom-helper.js'
 	import type { Slot } from '../core/entities/slot.js'
+	import type { Droppable } from '../core/entities/droppable.svelte.js'
 
 	interface Props {
 		/** New: pass a Slot entity — direction is read from slot.droppable, no DOMHelper needed. */
 		slot?: Slot
-		/** Legacy: explicit container id (used by tail preview in DndDroppable). */
+		/** Tail preview: pass the Droppable entity directly. */
+		droppable?: Droppable
+		/** Legacy: explicit container id (used when neither slot nor droppable is available). */
 		containerId?: string
-		/** Legacy/tail: explicit position. */
+		/** Explicit position (used by tail preview and legacy path). */
 		position?: number
 		class?: string
 		previewConfig?: PreviewConfig
@@ -18,10 +20,10 @@
 		translateY?: number
 	}
 
-	let { slot, containerId, position, class: className = '', previewConfig, translateX = 0, translateY = 0 }: Props = $props()
+	let { slot, droppable, containerId, position, class: className = '', previewConfig, translateX = 0, translateY = 0 }: Props = $props()
 
-	// Resolve container id and position from slot when available
-	const resolvedContainerId = $derived(slot?.droppable.id ?? containerId ?? '')
+	// Resolve container id and position from slot or droppable when available
+	const resolvedContainerId = $derived(slot?.droppable.id ?? droppable?.id ?? containerId ?? '')
 	const resolvedPosition = $derived(slot?.position ?? position ?? -1)
 
 	const dndManager = getContext<DndController>('dnd')
@@ -44,14 +46,8 @@
 
 	$effect(() => {
 		if (visible) {
-			if (slot) {
-				// Use entity — no DOM query needed
-				horizontal = slot.droppable.isHorizontal
-			} else {
-				// Legacy path (tail preview): fall back to DOMHelper
-				const container = DOMHelper.findContainer(resolvedContainerId)
-				horizontal = container ? DOMHelper.getContainerDirection(container) === 'horizontal' : false
-			}
+			// Resolve direction from entity (slot or droppable), no DOM query needed
+			horizontal = slot?.droppable.isHorizontal ?? droppable?.isHorizontal ?? false
 			alignSecondary = horizontal ? translateX < 0 : translateY < 0
 			handler.show(dndManager)
 		} else {

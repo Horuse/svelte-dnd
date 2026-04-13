@@ -8,9 +8,7 @@ export const isBrowser = typeof window !== 'undefined'
 // DOM selectors
 const SELECTORS = {
 	container: (id: string) => `[data-dnd-drop-id="${id}"]`,
-	placeholder: (position: number) => `[data-dnd-preview-position="${position}"]`,
-	draggableItems: '[data-dnd-draggable-item]',
-	draggableItemsWithId: '[data-dnd-draggable-item][data-dnd-drag-id]'
+	placeholder: (position: number) => `[data-dnd-preview-position="${position}"]`
 } as const
 
 export class DOMHelper {
@@ -22,10 +20,6 @@ export class DOMHelper {
 	static getContainerRect(containerId: string): DOMRect | null {
 		const container = DOMHelper.findContainer(containerId)
 		return container ? container.getBoundingClientRect() : null
-	}
-
-	static getContainerDirection(container: HTMLElement): 'vertical' | 'horizontal' {
-		return (container.dataset.dndDirection as 'vertical' | 'horizontal') || 'vertical'
 	}
 
 	// Placeholder queries
@@ -41,37 +35,6 @@ export class DOMHelper {
 		const placeholder = DOMHelper.findPlaceholder(container, position)
 		if (!placeholder) return null
 		return placeholder.parentElement ?? placeholder
-	}
-
-	// Draggable items queries
-	static findDraggableItems(container: HTMLElement): HTMLElement[] {
-		return Array.from(container.querySelectorAll(SELECTORS.draggableItems))
-	}
-
-	static findDraggableItemsInContainer(container: HTMLElement): HTMLElement[] {
-		return DOMHelper.findDraggableItems(container).filter(
-			(item) => item.closest('[data-dnd-drop-id]') === container
-		)
-	}
-
-	/** Returns the position:relative wrapper elements (parent of draggable items).
-	 * These wrappers stay at their natural layout position regardless of CSS translations on the inner item. */
-	static findDraggableWrappers(container: HTMLElement): HTMLElement[] {
-		return DOMHelper.findDraggableItemsInContainer(container)
-			.map((item) => (item.parentElement as HTMLElement) ?? item)
-	}
-
-	static findDraggableItemsInContainerById(container: HTMLElement): HTMLElement[] {
-		return Array.from(
-			container.querySelectorAll<HTMLElement>(SELECTORS.draggableItemsWithId)
-		).filter((item) => item.closest('[data-dnd-drop-id]') === container)
-	}
-
-	static filterItemsByContainer(items: HTMLElement[], containerElement: HTMLElement): HTMLElement[] {
-		return items.filter((item) => {
-			const closestDropZone = item.closest('[data-dnd-drop-id]')
-			return closestDropZone === containerElement
-		})
 	}
 
 	// Visibility checks
@@ -90,49 +53,5 @@ export class DOMHelper {
 	// Rect helpers
 	static getRect(element: HTMLElement): DOMRect {
 		return element.getBoundingClientRect()
-	}
-
-	static calculateSlotSize(
-		element: HTMLElement,
-		items: HTMLElement[]
-	): { width: number; height: number } {
-		const position = items.indexOf(element)
-		const elementRect = element.getBoundingClientRect()
-		const nextItem = items[position + 1]
-		const prevItem = items[position - 1]
-
-		if (nextItem) {
-			const nextRect = nextItem.getBoundingClientRect()
-			return {
-				width: nextRect.left - elementRect.left,
-				height: nextRect.top - elementRect.top
-			}
-		} else if (prevItem) {
-			const prevRect = prevItem.getBoundingClientRect()
-			const gapH = elementRect.top - (prevRect.top + prevItem.offsetHeight)
-			const gapW = elementRect.left - (prevRect.left + prevItem.offsetWidth)
-			return {
-				width: element.offsetWidth + Math.max(0, gapW),
-				height: element.offsetHeight + Math.max(0, gapH)
-			}
-		} else {
-			// No draggable neighbors — try the next DOM sibling of the wrapper div
-			// (the always-mounted tail preview wrapper in DndDroppable) to capture gap/margin.
-			const wrapperEl = element.parentElement
-			const nextSibling = wrapperEl?.nextElementSibling as HTMLElement | null
-			if (nextSibling) {
-				const wrapperRect = wrapperEl!.getBoundingClientRect()
-				const siblingRect = nextSibling.getBoundingClientRect()
-				return {
-					width: siblingRect.left - wrapperRect.left || element.offsetWidth,
-					height: siblingRect.top - wrapperRect.top || element.offsetHeight
-				}
-			}
-			const styles = getComputedStyle(element)
-			return {
-				width: element.offsetWidth + parseFloat(styles.marginLeft) + parseFloat(styles.marginRight),
-				height: element.offsetHeight + parseFloat(styles.marginTop) + parseFloat(styles.marginBottom)
-			}
-		}
 	}
 }
