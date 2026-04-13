@@ -2,19 +2,27 @@
 	import { getContext, onDestroy } from 'svelte'
 	import type { DndController } from '../core/dnd/dnd-controller.svelte'
 	import { PreviewHandler, type PreviewConfig } from '../core/handlers/preview-handler.svelte.js'
-
 	import { DOMHelper } from '../core/utils/dom-helper.js'
+	import type { Slot } from '../core/entities/slot.js'
 
 	interface Props {
-		containerId: string
-		position: number
+		/** New: pass a Slot entity — direction is read from slot.droppable, no DOMHelper needed. */
+		slot?: Slot
+		/** Legacy: explicit container id (used by tail preview in DndDroppable). */
+		containerId?: string
+		/** Legacy/tail: explicit position. */
+		position?: number
 		class?: string
 		previewConfig?: PreviewConfig
 		translateX?: number
 		translateY?: number
 	}
 
-	let { containerId, position, class: className = '', previewConfig, translateX = 0, translateY = 0 }: Props = $props()
+	let { slot, containerId, position, class: className = '', previewConfig, translateX = 0, translateY = 0 }: Props = $props()
+
+	// Resolve container id and position from slot when available
+	const resolvedContainerId = $derived(slot?.droppable.id ?? containerId ?? '')
+	const resolvedPosition = $derived(slot?.position ?? position ?? -1)
 
 	const dndManager = getContext<DndController>('dnd')
 	const handler = new PreviewHandler()
@@ -26,8 +34,8 @@
 
 	const visible = $derived(
 		!!dndManager?.dropPreview &&
-		dndManager.dropPreview.containerId === containerId &&
-		dndManager.dropPreview.position === position &&
+		dndManager.dropPreview.containerId === resolvedContainerId &&
+		dndManager.dropPreview.position === resolvedPosition &&
 		dndManager.dropPreview.visible
 	)
 
@@ -36,8 +44,14 @@
 
 	$effect(() => {
 		if (visible) {
-			const container = DOMHelper.findContainer(containerId)
-			horizontal = container ? DOMHelper.getContainerDirection(container) === 'horizontal' : false
+			if (slot) {
+				// Use entity — no DOM query needed
+				horizontal = slot.droppable.isHorizontal
+			} else {
+				// Legacy path (tail preview): fall back to DOMHelper
+				const container = DOMHelper.findContainer(resolvedContainerId)
+				horizontal = container ? DOMHelper.getContainerDirection(container) === 'horizontal' : false
+			}
 			alignSecondary = horizontal ? translateX < 0 : translateY < 0
 			handler.show(dndManager)
 		} else {
@@ -50,7 +64,7 @@
 
 <div
 	data-dnd-preview
-	data-dnd-preview-position={position}
+	data-dnd-preview-position={resolvedPosition}
 	class="dnd-preview {className}"
 	class:dnd-preview--revealed={handler.revealed}
 	class:dnd-preview--instant={handler.instant}

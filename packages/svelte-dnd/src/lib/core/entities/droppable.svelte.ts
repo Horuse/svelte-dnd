@@ -7,11 +7,12 @@ import type { Slot } from './slot.js'
 // Minimal controller interface needed by Droppable
 export type DroppableControllerRef = {
 	session: { source: import('./draggable.svelte.js').Draggable } | null
+	element: HTMLElement | null
 	cancelSession(): void
 	slots: Map<HTMLElement, Slot>
-	onDragStart(cb: () => void): () => void
+	onDragStart(cb: (itemId: string) => void): () => void
 	onZonesInvalidated(cb: () => void): () => void
-	onDragEnd(cb: () => void): () => void
+	onDragEnd(cb: (itemId: string) => void): () => void
 	refreshContainerZones(id: string, element: HTMLElement, direction: DndDirection, mode: DndMode): void
 	dragging: boolean
 }
@@ -120,14 +121,14 @@ export class Droppable {
 
 	invalidateZones() {
 		if (!this.element || this.disabled) return
-		if ((this.controller as { element?: HTMLElement | null }).element?.contains(this.element)) return
+		if (this.controller.element?.contains(this.element)) return
 		this.controller.refreshContainerZones(this.id, this.element, this.direction, this.mode)
 	}
 
 	// --- Lifecycle (set up from attachDroppable in controller) ---
 
 	setupEventListeners() {
-		this.unsubscribeDragStart = this.controller.onDragStart(() => {
+		this.unsubscribeDragStart = this.controller.onDragStart((_itemId) => {
 			this.invalidateZones()
 			this.setupScrollListeners()
 		})
@@ -136,7 +137,7 @@ export class Droppable {
 			this.invalidateZones()
 		})
 
-		this.unsubscribeDragEnd = this.controller.onDragEnd(() => {
+		this.unsubscribeDragEnd = this.controller.onDragEnd((_itemId) => {
 			this.cleanupScrollListeners()
 		})
 	}

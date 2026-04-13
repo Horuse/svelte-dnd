@@ -60,4 +60,19 @@ export class Slot {
 	getBoundingRect(): DOMRect {
 		return this.element.getBoundingClientRect()
 	}
+
+	/**
+	 * @attach handler — sets element, links Draggable↔Slot, registers data-dnd-drag-id.
+	 * Called via {@attach slot.attachDraggable(draggable)} on the inner draggable div.
+	 */
+	attachDraggable(draggable: Draggable): (element: HTMLElement) => () => void {
+		return (element: HTMLElement) => {
+			draggable.element = element
+			draggable.slot = this
+			this.draggable = draggable
+			return () => {
+				draggable.destroy()
+			}
+		}
+	}
 }

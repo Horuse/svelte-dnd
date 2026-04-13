@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { getContext, onDestroy, setContext } from 'svelte'
+	import { getContext, setContext } from 'svelte'
 	import type { DndDirection, DndMode } from '../types.js'
 	import type { DndController } from '../core/dnd/dnd-controller.svelte.js'
 	import type { CollisionAlgorithm } from '../core/collision/collision-algorithm.js'
 	import type { Snippet } from 'svelte'
-	import { DropHandler } from '../core/handlers/drop-handler.svelte.js'
+	import { Droppable } from '../core/entities/droppable.svelte.js'
 	import DndPreview from './DndPreview.svelte'
 
 	interface Props {
@@ -48,38 +48,31 @@
 	}: Props = $props()
 
 	const dndController = getContext<DndController>('dnd')
+
+	// Keep for backward compat (DndDraggable debug position registry)
 	setContext('dnd-container-id', () => id)
 	if (dndController?.debug) setContext('dnd-position-registry', new Map<number, string>())
-	let element = $state<HTMLElement | undefined>(undefined)
 
-	$effect(() => {
-		if (dndController) dndController.registerDroppableData(id, data)
-	})
-
-	$effect(() => {
-		if (dndController) dndController.registerDroppableAccepts(id, accepts)
-	})
-
-	$effect(() => {
-		if (dndController) dndController.registerDroppableCollision(id, collision)
-	})
-
-	const handler = new DropHandler(
-		() => element,
-		() => ({ id, data, disabled, direction, mode, dndController })
+	const droppable = new Droppable(
+		{
+			id,
+			data,
+			disabled,
+			direction,
+			mode,
+			collision,
+			accepts,
+			strategy: dndController?.getStrategyForMode(mode)!
+		},
+		dndController
 	)
+	setContext('dnd-droppable', droppable)
 
-	onDestroy(() => handler.destroy())
-
-	// Tail preview: handles position = items.length (drop after the last item in cross-container drags).
-	// DndDraggable renders previews for positions 0..M-1; position M is never covered by an item wrapper.
-	// tailPosition stays -1 (inactive) unless this container is the current drop target.
-	// We keep the component always mounted so it can animate out properly — using -1 as
-	// an "inactive" position that never matches any real dropPreview.position.
+	// Tail preview: handles position = slots.size (drop after last item in cross-container drags).
+	// Returns -1 (inactive) unless this container is the current drop target.
 	const tailPosition = $derived.by(() => {
 		if (!dndController?.dropPreview?.visible || dndController.dropPreview.containerId !== id) return -1
-		if (!element) return -1
-		return element.querySelectorAll('[data-dnd-draggable-item]').length
+		return droppable.slots.size
 	})
 
 	// Keep the last valid tail position so the preview knows its size while animating out.
@@ -90,14 +83,15 @@
 </script>
 
 <div
-	bind:this={element}
 	class="dnd-droppable {className ?? ''}"
 	class:dnd-droppable--disabled={disabled}
 	aria-dropeffect={disabled ? 'none' : 'move'}
+	data-dnd-droppable
 	data-dnd-drop-id={id}
 	data-dnd-direction={direction}
 	data-dnd-mode={mode}
 	data-dnd-scroll
+	{@attach dndController?.attachDroppable(droppable)}
 >
 	{@render children()}
 	{#if mode === 'sortable'}

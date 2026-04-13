@@ -379,6 +379,11 @@ export class DndController<TData = Record<string, unknown>> {
 		return this.simulator.simulateBatchSwap(ids, applyState, duration)
 	}
 
+	/** Returns the ContainerStrategy registered for the given mode (or 'sortable' as fallback). */
+	getStrategyForMode(mode: DndMode): ContainerStrategy {
+		return this.strategyMap.get(mode) ?? this.strategyMap.get('sortable')!
+	}
+
 	// --- New entity-based API ---
 
 	/**
