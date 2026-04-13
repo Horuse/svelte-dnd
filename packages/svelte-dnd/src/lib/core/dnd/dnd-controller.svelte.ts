@@ -18,6 +18,10 @@ import { DragSessionManager } from './drag-session-manager.js'
 import type { Modifier } from '../modifiers/modifier.js'
 import { DndSimulator } from './dnd-simulator.js'
 import type { DropZone, DndDirection, DndMode, DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback, ZonesInvalidatedCallback } from '../../types.js'
+import { DragSession } from './drag-session.svelte.js'
+import type { Draggable } from '../entities/draggable.svelte.js'
+import type { Droppable } from '../entities/droppable.svelte.js'
+import type { Slot } from '../entities/slot.js'
 
 export type StrategyFactory = (state: DndState) => ContainerStrategy
 
@@ -60,6 +64,14 @@ export class DndController<TData = Record<string, unknown>> {
 	private sessionManager: DragSessionManager
 	private registrar: ContainerRegistrar
 	private simulator: DndSimulator
+
+	// --- Entity maps (new architecture) ---
+	private droppables = new Map<HTMLElement, Droppable>()
+	private droppablesById = new Map<string, Droppable>()
+	/** Global element→Slot lookup used by sensors and attachSlot. */
+	slots = new Map<HTMLElement, Slot>()
+	/** Current drag session (new DragSession class). Coexists with DndState.session during migration. */
+	session = $state<DragSession | null>(null)
 
 	debug = false
 	sensors: SensorDescriptor[] | undefined = undefined
@@ -309,11 +321,13 @@ export class DndController<TData = Record<string, unknown>> {
 		targetContainerId: string,
 		position: number
 	) {
+		this.session = null
 		this.animationCoordinator.performDrop(sourceId, sourceData, targetContainerId, position)
 	}
 
 	/** Cancel the current drag and animate the ghost back to its origin. */
 	endDrag(shouldAnimate = true) {
+		this.session = null
 		this.animationCoordinator.endDrag(shouldAnimate)
 	}
 
@@ -363,6 +377,92 @@ export class DndController<TData = Record<string, unknown>> {
 	/** Delegates to {@link DndSimulator.simulateBatchSwap}. */
 	simulateBatchSwap(ids: string[], applyState: () => void | Promise<void>, duration?: number): Promise<void> {
 		return this.simulator.simulateBatchSwap(ids, applyState, duration)
+	}
+
+	// --- New entity-based API ---
+
+	/**
+	 * @attach handler for DndDroppable — registers a Droppable in the new entity maps
+	 * and sets up backward-compat registration in ContainerRegistry/ContainerRegistrar.
+	 */
+	attachDroppable(droppable: Droppable) {
+		return (element: HTMLElement) => {
+			droppable.element = element
+			this.droppables.set(element, droppable)
+			this.droppablesById.set(droppable.id, droppable)
+			droppable.setupEventListeners()
+
+			// Register metadata with old system for backward compat (TranslationEngine, DropResolver etc.)
+			this.registrar.registerDroppableData(droppable.id, droppable.data ?? {})
+			this.registrar.registerDroppableAccepts(droppable.id, droppable.accepts)
+			this.registrar.registerDroppableCollision(droppable.id, droppable.collision)
+
+			return () => {
+				this.droppables.delete(element)
+				this.droppablesById.delete(droppable.id)
+				droppable.destroy()
+				this.registrar.unregisterContainer(droppable.id)
+			}
+		}
+	}
+
+	/**
+	 * Start a drag session from an entity-based Draggable.
+	 * Creates a new DragSession and syncs state with legacy DndState for backward compat.
+	 */
+	startSession(draggable: Draggable, initialTransform: { x: number; y: number }): DragSession {
+		const slot = draggable.slot
+		const sourceContainer = slot.droppable
+		const element = draggable.element
+		const rect = element.getBoundingClientRect()
+
+		const newSession = new DragSession(draggable, sourceContainer, rect, initialTransform, 'user')
+		this.session = newSession
+
+		// Sync with legacy DndState so TranslationEngine, DropResolver, DropAnimationCoordinator
+		// continue to work unchanged until they are migrated in Phase 4/5.
+		this.state.startSession({
+			itemId: draggable.id,
+			itemData: draggable.data,
+			element,
+			originContainerId: sourceContainer.id,
+			originPosition: slot.position,
+			startRect: rect,
+			ghostTransform: initialTransform,
+			dropPreview: null,
+			ghostSize: { width: element.offsetWidth, height: element.offsetHeight },
+			slotSize: slot.getSize(),
+			draggedItemType: draggable.type ?? null,
+			source: 'user'
+		})
+		this.state.setSkipDropPreviewAnimation(true)
+		this.eventEmitter.notifyDragStart(draggable.id)
+
+		return newSession
+	}
+
+	/** Cancel the current drag session (no drop, no return animation). */
+	cancelSession() {
+		this.session = null
+		this.animationCoordinator.endDrag(false)
+	}
+
+	/**
+	 * Commit the current drag session — perform drop if a valid target exists,
+	 * otherwise animate the ghost back to origin.
+	 */
+	commitSession() {
+		const dropPreview = this.state.dropPreview
+		const srcId = this.session?.source.id ?? this.state.draggedItem
+		const srcData = this.session?.source.data ?? this.state.draggedItemData
+		this.session = null
+
+		if (dropPreview?.visible && srcId) {
+			this.state.setSkipDropPreviewAnimation(true)
+			this.animationCoordinator.performDrop(srcId, srcData, dropPreview.containerId, dropPreview.position)
+		} else {
+			this.animationCoordinator.endDrag(true)
+		}
 	}
 
 	/** Release all resources. Call when the `DndProvider` is destroyed. */

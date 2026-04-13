@@ -7,7 +7,7 @@ import type { Slot } from './slot.js'
 export type DraggableControllerRef = {
 	session: { source: Draggable } | null
 	sensors: SensorDescriptor[] | undefined
-	startDrag(element: HTMLElement, itemId: string, initialPosition: { x: number; y: number }, data?: Record<string, unknown>, type?: string): void
+	startSession(draggable: Draggable, initialTransform: { x: number; y: number }): void
 	updateTransform(transform: { x: number; y: number }): void
 	updateMousePosition?(mouseX: number, mouseY: number): void
 	navigate(direction: import('../sensors/sensor.js').NavigationDirection): void
@@ -169,7 +169,7 @@ export class Draggable {
 		this.isDragging = true
 		this.dragOccurred = true
 
-		this.controller.startDrag(this.element, this.id, initialTransform, this.data, this.type)
+		this.controller.startSession(this, initialTransform)
 		this.controller.updateMousePosition?.(
 			initialTransform.x + this.dragOffset.x,
 			initialTransform.y + this.dragOffset.y
