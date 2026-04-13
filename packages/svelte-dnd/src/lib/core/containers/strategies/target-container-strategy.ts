@@ -11,7 +11,7 @@ import { GhostReturnStep } from '../../animation/steps/ghost-return-step.js'
 export class TargetContainerStrategy implements ContainerStrategy {
 	readonly mode: DndMode = 'target'
 
-	constructor(private state: DndState) {}
+	constructor(private state: DndState, private droppablesById: Map<string, Droppable> = new Map()) {}
 
 	calculateDropZones(droppable: Droppable, _session: DragSession | null): DropZone[] {
 		const rect = DOMHelper.getRect(droppable.element)
@@ -35,10 +35,10 @@ export class TargetContainerStrategy implements ContainerStrategy {
 	}
 
 	getDropAnimation(session: DragSession, targetZone: DropZone): AnimationStep {
-		return new GhostToTargetStep(this.state, targetZone)
+		return new GhostToTargetStep(this.state, targetZone, this.droppablesById)
 	}
 
 	getReturnAnimation(session: DragSession): AnimationStep {
-		return new GhostReturnStep(this.state, session.originContainerId, session.originPosition)
+		return new GhostReturnStep(this.state, session.originContainerId, session.originPosition, this.droppablesById)
 	}
 }

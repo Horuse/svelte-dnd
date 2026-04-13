@@ -5,6 +5,7 @@ import type { DropResolver } from '../zones/drop-resolver.js'
 import type { PreviewConfig } from '../handlers/preview-handler.svelte.js'
 import type { AnimationStep } from './steps/animation-step.js'
 import type { DropPreview } from '../../types.js'
+import type { Droppable } from '../entities/droppable.svelte.js'
 import { AnimationPipeline } from './steps/animation-pipeline.js'
 import { GhostToTargetStep } from './steps/ghost-to-target-step.js'
 import { GhostReturnStep } from './steps/ghost-return-step.js'
@@ -20,7 +21,8 @@ export class DropAnimationCoordinator {
 		private state: DndState,
 		private eventEmitter: DndEventEmitter,
 		private scrollController: ScrollController,
-		private dropResolver: DropResolver
+		private dropResolver: DropResolver,
+		private droppablesById: Map<string, Droppable> = new Map()
 	) {}
 
 	updateDropPreview(pointer: { x: number; y: number }) {
@@ -84,7 +86,7 @@ export class DropAnimationCoordinator {
 		this.state.setPerformingDrop(true)
 
 		if (targetZone && this.state.element && this.state.transform) {
-			this.animate(new GhostToTargetStep(this.state, targetZone), () => {
+			this.animate(new GhostToTargetStep(this.state, targetZone, this.droppablesById), () => {
 				this.eventEmitter.notifyDrop(sourceId, sourceData, targetContainerId, position)
 				this.finalizeDragEnd(sourceId)
 			})
@@ -113,7 +115,7 @@ export class DropAnimationCoordinator {
 		if (shouldAnimate && session) {
 			requestAnimationFrame(() => {
 				this.animate(
-					new GhostReturnStep(this.state, this.state.originContainerId, this.state.originPosition),
+					new GhostReturnStep(this.state, this.state.originContainerId, this.state.originPosition, this.droppablesById),
 					() => this.finalizeDragEnd(itemId)
 				)
 			})

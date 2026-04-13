@@ -1,14 +1,12 @@
 import type { DndState } from './dnd-state.svelte.js'
-import type { ContainerRegistry } from '../containers/container-registry.js'
-import type { ContainerStrategy } from '../containers/strategies/container-strategy.js'
 import type { DndEventEmitter } from './dnd-event-emitter.js'
 import type { DragSession } from './drag-session.js'
-import type { DropZone, DndMode } from '../../types.js'
-import { DOMHelper } from '../utils/dom-helper.js'
+import type { DropZone } from '../../types.js'
+import type { Droppable } from '../entities/droppable.svelte.js'
+import type { Slot } from '../entities/slot.js'
 import { AnimationPipeline } from '../animation/steps/animation-pipeline.js'
 import { GhostToTargetStep } from '../animation/steps/ghost-to-target-step.js'
 import { GhostReturnStep } from '../animation/steps/ghost-return-step.js'
-import { SortableContainerStrategy } from '../containers/strategies/sortable-container-strategy.js'
 
 export interface SimulateOptions {
 	emitEvents?: boolean
@@ -17,8 +15,8 @@ export interface SimulateOptions {
 export class DndSimulator {
 	constructor(
 		private state: DndState,
-		private registry: ContainerRegistry,
-		private strategyMap: Map<string, ContainerStrategy> = new Map(),
+		private droppablesById: Map<string, Droppable>,
+		private slots: Map<HTMLElement, Slot>,
 		private eventEmitter?: DndEventEmitter
 	) {}
 
@@ -35,9 +33,9 @@ export class DndSimulator {
 		toPosition: number
 	): Promise<void> {
 		const useSameContainerReturn = toContainerId === fromContainerId
-		const step = (session: DragSession) => useSameContainerReturn
-			? new GhostReturnStep(this.state, toContainerId, toPosition)
-			: new GhostToTargetStep(this.state, this.syntheticZone(toContainerId, toPosition))
+		const step = () => useSameContainerReturn
+			? new GhostReturnStep(this.state, toContainerId, toPosition, this.droppablesById)
+			: new GhostToTargetStep(this.state, this.syntheticZone(toContainerId, toPosition), this.droppablesById)
 
 		return this.run(itemId, fromContainerId, toContainerId, toPosition, step)
 	}
@@ -54,8 +52,8 @@ export class DndSimulator {
 		toPosition: number,
 		options: SimulateOptions = {}
 	): Promise<void> {
-		const step = (_session: DragSession) =>
-			new GhostToTargetStep(this.state, this.syntheticZone(toContainerId, toPosition))
+		const step = () =>
+			new GhostToTargetStep(this.state, this.syntheticZone(toContainerId, toPosition), this.droppablesById)
 
 		return this.run(itemId, fromContainerId, toContainerId, toPosition, step, options)
 	}
@@ -67,7 +65,7 @@ export class DndSimulator {
 		fromContainerId: string,
 		toContainerId: string,
 		toPosition: number,
-		makeStep: (session: DragSession) => GhostToTargetStep | GhostReturnStep,
+		makeStep: () => GhostToTargetStep | GhostReturnStep,
 		options: SimulateOptions = {}
 	): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
@@ -76,33 +74,31 @@ export class DndSimulator {
 				return
 			}
 
-			const fromContainer = DOMHelper.findContainer(fromContainerId)
-			if (!fromContainer) {
-				reject(new Error(`DndSimulator: container "${fromContainerId}" not found in DOM`))
+			const fromDroppable = this.droppablesById.get(fromContainerId)
+			if (!fromDroppable) {
+				reject(new Error(`DndSimulator: container "${fromContainerId}" not found`))
 				return
 			}
 
-			const items = DOMHelper.findDraggableItemsInContainer(fromContainer)
-			const element = items.find((el) => el.getAttribute('data-dnd-drag-id') === itemId) ?? null
-			if (!element) {
+			const fromSlot = fromDroppable.getSortedSlots().find((s) => s.draggable.id === itemId)
+			if (!fromSlot) {
 				reject(new Error(`DndSimulator: item "${itemId}" not found in container "${fromContainerId}"`))
 				return
 			}
 
+			const element = fromSlot.draggable.element
 			const rect = element.getBoundingClientRect()
-			const positionInFrom = items.indexOf(element)
+			const positionInFrom = fromSlot.position
 
-			// For cross-container moves use the dragged element's own size but with the
-			// target container's gap (e.g. space-y-2) so preview space is correct.
-			let slotSize = DOMHelper.calculateSlotSize(element, items)
+			let slotSize = fromSlot.getSize()
 			if (toContainerId !== fromContainerId) {
-				const toContainer = DOMHelper.findContainer(toContainerId)
-				if (toContainer) {
-					const toItems = DOMHelper.findDraggableItemsInContainer(toContainer)
-					if (toItems.length > 0) {
-						const toSlot = DOMHelper.calculateSlotSize(toItems[0], toItems)
-						const gapH = toSlot.height - toItems[0].offsetHeight
-						const gapW = toSlot.width - toItems[0].offsetWidth
+				const toDroppable = this.droppablesById.get(toContainerId)
+				if (toDroppable) {
+					const toSlots = toDroppable.getSortedSlots()
+					if (toSlots.length > 0) {
+						const toSlotSize = toSlots[0].getSize()
+						const gapH = toSlotSize.height - toSlots[0].draggable.element.offsetHeight
+						const gapW = toSlotSize.width - toSlots[0].draggable.element.offsetWidth
 						slotSize = {
 							height: element.offsetHeight + Math.max(0, gapH),
 							width: element.offsetWidth + Math.max(0, gapW)
@@ -132,19 +128,12 @@ export class DndSimulator {
 				source: 'programmatic'
 			}
 
-			// Register containers so TranslationEngine can compute item shifts
-			this.ensureContainerRegistered(fromContainerId, fromContainer)
-			if (toContainerId !== fromContainerId) {
-				const toContainer = DOMHelper.findContainer(toContainerId)
-				if (toContainer) this.ensureContainerRegistered(toContainerId, toContainer)
-			}
-
 			this.state.startSession(session)
 			// setAnimating(true) makes the dragged element opacity:0 immediately via
 			// the animatingReturn path, without disabling CSS transitions on siblings.
 			this.state.setAnimating(true)
 
-			const step = makeStep(session)
+			const step = makeStep()
 
 			// Wait one frame for DndPreview placeholder to render at toContainerId/toPosition
 			requestAnimationFrame(() => {
@@ -159,13 +148,6 @@ export class DndSimulator {
 				})
 			})
 		})
-	}
-
-	private ensureContainerRegistered(containerId: string, container: HTMLElement): void {
-		if (this.registry.getStrategy(containerId)) return
-		const mode = (container.getAttribute('data-dnd-mode') ?? 'sortable') as DndMode
-		const strategy = this.strategyMap.get(mode) ?? new SortableContainerStrategy(this.state)
-		this.registry.registerContainer(containerId, container, strategy)
 	}
 
 	private syntheticZone(containerId: string, position: number): DropZone {
@@ -188,17 +170,17 @@ export class DndSimulator {
 		duration = 300
 	): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
-			const fromContainerA = DOMHelper.findContainer(containerA)
-			const fromContainerB = DOMHelper.findContainer(containerB)
-			if (!fromContainerA || !fromContainerB) {
+			const droppableA = this.droppablesById.get(containerA)
+			const droppableB = this.droppablesById.get(containerB)
+			if (!droppableA || !droppableB) {
 				reject(new Error('DndSimulator.simulateSwap: container not found'))
 				return
 			}
 
-			const itemsA = DOMHelper.findDraggableItemsInContainer(fromContainerA)
-			const itemsB = DOMHelper.findDraggableItemsInContainer(fromContainerB)
-			const elA = itemsA.find((el) => el.getAttribute('data-dnd-drag-id') === idA) ?? null
-			const elB = itemsB.find((el) => el.getAttribute('data-dnd-drag-id') === idB) ?? null
+			const slotA = droppableA.getSortedSlots().find((s) => s.draggable.id === idA)
+			const slotB = droppableB.getSortedSlots().find((s) => s.draggable.id === idB)
+			const elA = slotA?.draggable.element ?? null
+			const elB = slotB?.draggable.element ?? null
 
 			if (!elA || !elB) {
 				reject(new Error(`DndSimulator.simulateSwap: item not found`))
@@ -260,7 +242,7 @@ export class DndSimulator {
 		// First — record current positions
 		const oldRects = new Map<string, DOMRect>()
 		for (const id of ids) {
-			const el = document.querySelector(`[data-dnd-drag-id="${id}"]`)
+			const el = this.findElementById(id)
 			if (el) oldRects.set(id, el.getBoundingClientRect())
 		}
 
@@ -274,7 +256,7 @@ export class DndSimulator {
 		// Invert — apply inverted transforms so elements appear in old positions
 		const elements: HTMLElement[] = []
 		for (const id of ids) {
-			const el = document.querySelector(`[data-dnd-drag-id="${id}"]`) as HTMLElement | null
+			const el = this.findElementById(id)
 			const oldRect = oldRects.get(id)
 			if (!el || !oldRect) continue
 			const newRect = el.getBoundingClientRect()
@@ -302,6 +284,13 @@ export class DndSimulator {
 		for (const el of elements) {
 			el.style.transition = ''
 		}
+	}
+
+	private findElementById(id: string): HTMLElement | null {
+		for (const slot of this.slots.values()) {
+			if (slot.draggable.id === id) return slot.draggable.element
+		}
+		return null
 	}
 
 	private cleanup(): void {

@@ -193,7 +193,7 @@ export class ScrollController {
 		const elementsAtPoint = document.elementsFromPoint(mouseX, mouseY)
 
 		for (const element of elementsAtPoint) {
-			if (element instanceof HTMLElement && element.hasAttribute('data-dnd-scroll')) {
+			if (element instanceof HTMLElement && element.hasAttribute('data-dnd-droppable')) {
 				const computedStyle = window.getComputedStyle(element)
 				const overflowY = computedStyle.overflowY
 				const overflowX = computedStyle.overflowX

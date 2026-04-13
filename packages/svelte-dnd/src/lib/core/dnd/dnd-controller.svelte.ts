@@ -82,8 +82,8 @@ export class DndController<TData = Record<string, unknown>> {
 		this.sensors = sensors ?? [new PointerSensor(), new KeyboardSensor()]
 		this.announcements = announcements
 
-		this.strategyMap.set('sortable', new SortableContainerStrategy(this.state))
-		this.strategyMap.set('target', new TargetContainerStrategy(this.state))
+		this.strategyMap.set('sortable', new SortableContainerStrategy(this.state, this.droppablesById))
+		this.strategyMap.set('target', new TargetContainerStrategy(this.state, this.droppablesById))
 		for (const entry of strategies) {
 			const strategy = typeof entry === 'function' ? entry(this.state) : entry
 			this.strategyMap.set(strategy.mode, strategy)
@@ -102,7 +102,8 @@ export class DndController<TData = Record<string, unknown>> {
 			this.state,
 			this.eventEmitter,
 			this.scrollController,
-			this.dropResolver
+			this.dropResolver,
+			this.droppablesById
 		)
 
 		if (preview.showDelay !== undefined) this.animationCoordinator.previewShowDelay = preview.showDelay
@@ -118,7 +119,7 @@ export class DndController<TData = Record<string, unknown>> {
 		)
 
 		this.registrar = new ContainerRegistrar(this.state, this.registry)
-		this.simulator = new DndSimulator(this.state, this.registry, this.strategyMap, this.eventEmitter)
+		this.simulator = new DndSimulator(this.state, this.droppablesById, this.slots, this.eventEmitter)
 	}
 
 	// --- Reactive state (read-only) ---

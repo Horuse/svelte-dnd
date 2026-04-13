@@ -1,5 +1,6 @@
 import type { AnimationStep } from './animation-step.js'
 import type { DndState } from '../../dnd/dnd-state.svelte.js'
+import type { Droppable } from '../../entities/droppable.svelte.js'
 import { DOMHelper } from '../../utils/dom-helper.js'
 import { ScrollSyncCalculator } from '../scroll-sync-calculator.js'
 import { getDirectionAdapter } from '../direction-adapter.js'
@@ -14,7 +15,8 @@ export class GhostReturnStep implements AnimationStep {
 	constructor(
 		private state: DndState,
 		private containerId: string | null,
-		private position: number
+		private position: number,
+		private droppablesById: Map<string, Droppable>
 	) {}
 
 	execute(): Promise<void> {
@@ -29,7 +31,8 @@ export class GhostReturnStep implements AnimationStep {
 				return
 			}
 
-			const container = DOMHelper.findContainer(this.containerId)
+			const droppable = this.droppablesById.get(this.containerId)
+			const container = droppable?.element ?? null
 			if (!container) {
 				this.startSimpleReturn(resolve)
 				return
@@ -79,7 +82,7 @@ export class GhostReturnStep implements AnimationStep {
 
 			const progress = Math.min((Date.now() - startTime) / RETURN_DURATION, 1)
 			const eased = easing.outCubic(progress)
-			const target = this.getCurrentPlaceholderPosition(fallbackPos)
+			const target = this.getCurrentSlotPosition(fallbackPos)
 
 			this.state.setTransform({
 				x: startPos.x + (target.x - startPos.x) * eased,
@@ -97,36 +100,35 @@ export class GhostReturnStep implements AnimationStep {
 		requestAnimationFrame(animate)
 	}
 
-	private getCurrentPlaceholderPosition(fallback: { x: number; y: number }): { x: number; y: number } {
+	private getCurrentSlotPosition(fallback: { x: number; y: number }): { x: number; y: number } {
 		if (!this.containerId) return fallback
-		const container = DOMHelper.findContainer(this.containerId)
-		if (!container) return fallback
-		const slot = DOMHelper.findPlaceholderSlot(container, this.position)
-		if (!slot) return fallback
-		const rect = slot.getBoundingClientRect()
+		const slotEl = this.getSlotWrapper()
+		if (!slotEl) return fallback
+		const rect = slotEl.getBoundingClientRect()
 		return { x: rect.left, y: rect.top }
 	}
 
 	private executeScrollSync(container: HTMLElement, resolve: () => void): void {
-		const slot = DOMHelper.findPlaceholderSlot(container, this.position)
-		if (!slot) {
+		const slotEl = this.getSlotWrapper()
+		if (!slotEl) {
 			requestAnimationFrame(() => {
 				if (this.cancelled) { resolve(); return }
-				const retrySlot = DOMHelper.findPlaceholderSlot(container, this.position)
-				if (retrySlot) {
-					this.runScrollSync(container, retrySlot, resolve)
+				const retry = this.getSlotWrapper()
+				if (retry) {
+					this.runScrollSync(container, retry, resolve)
 				} else {
 					resolve()
 				}
 			})
 			return
 		}
-		this.runScrollSync(container, slot, resolve)
+		this.runScrollSync(container, slotEl, resolve)
 	}
 
 	private runScrollSync(container: HTMLElement, slotWrapper: HTMLElement, resolve: () => void): void {
 		this.state.setAnimating(true)
-		const direction = DOMHelper.getContainerDirection(container)
+		const droppable = this.containerId ? this.droppablesById.get(this.containerId) : null
+		const direction = droppable?.direction ?? 'vertical'
 		const adapter = getDirectionAdapter(direction)
 		const startScroll = adapter.getScroll(container)
 		const startGhostPos = { ...this.state.transform! }
@@ -182,5 +184,18 @@ export class GhostReturnStep implements AnimationStep {
 		}
 
 		requestAnimationFrame(animate)
+	}
+
+	/** Returns the slot wrapper element for the origin position, using entity lookup. */
+	private getSlotWrapper(): HTMLElement | null {
+		if (!this.containerId) return null
+		const droppable = this.droppablesById.get(this.containerId)
+		// Entity lookup (works for all regular slot positions)
+		const slotEl = droppable?.getSlotAt(this.position)?.element
+		if (slotEl) return slotEl
+		// DOM fallback for tail preview or missing entity
+		const container = droppable?.element
+		if (!container) return null
+		return DOMHelper.findPlaceholderSlot(container, this.position)
 	}
 }

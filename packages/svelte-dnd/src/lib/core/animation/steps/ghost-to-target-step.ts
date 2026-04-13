@@ -1,6 +1,7 @@
 import type { AnimationStep } from './animation-step.js'
 import type { DndState } from '../../dnd/dnd-state.svelte.js'
 import type { DropZone } from '../../../types.js'
+import type { Droppable } from '../../entities/droppable.svelte.js'
 import { DOMHelper } from '../../utils/dom-helper.js'
 
 const ANIMATION_DURATION = 250
@@ -9,7 +10,11 @@ const easing = { outQuad: (t: number) => 1 - Math.pow(1 - t, 2) }
 export class GhostToTargetStep implements AnimationStep {
 	private cancelled = false
 
-	constructor(private state: DndState, private targetZone: DropZone) {}
+	constructor(
+		private state: DndState,
+		private targetZone: DropZone,
+		private droppablesById: Map<string, Droppable>
+	) {}
 
 	execute(): Promise<void> {
 		return new Promise((resolve) => {
@@ -56,10 +61,11 @@ export class GhostToTargetStep implements AnimationStep {
 	}
 
 	private calculateTargetPosition(): { x: number; y: number } {
-		const container = DOMHelper.findContainer(this.targetZone.containerId)
+		const droppable = this.droppablesById.get(this.targetZone.containerId)
+		const container = droppable?.element ?? null
 		if (!container) return this.fallbackPosition()
 
-		if (container.getAttribute('data-dnd-mode') === 'target') {
+		if (droppable?.mode === 'target') {
 			const rect = container.getBoundingClientRect()
 			const width = this.state.size?.width ?? 0
 			const height = this.state.size?.height ?? 0

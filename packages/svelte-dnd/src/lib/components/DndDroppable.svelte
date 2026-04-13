@@ -90,7 +90,6 @@
 	data-dnd-drop-id={id}
 	data-dnd-direction={direction}
 	data-dnd-mode={mode}
-	data-dnd-scroll
 	{@attach dndController?.attachDroppable(droppable)}
 >
 	{@render children()}
