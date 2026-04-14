@@ -15,6 +15,7 @@ The library sets these attributes automatically — you don't need to add them m
 |-----------------------------|--------|---------|
 | `data-dnd-droppable`        | `DndDroppable` | Presence marker on the container element. Used by the scroll controller to detect scrollable droppables. Carries no value. |
 | `data-dnd-drop-id`          | `DndDroppable` | Container ID string — used by internal helpers for DOM lookup of the container element. |
+| `data-dnd-scroll`           | User | Opt-in auto-scroll for **non-droppable** scroll containers (e.g. a page wrapper or a kanban board `div`). Add manually to any scrollable element that should participate in auto-scroll. |
 | `data-dnd-slot`             | `DndDraggable` | Presence marker on the slot wrapper element. Useful for `closest('[data-dnd-slot]')` traversal. Carries no value. |
 | `data-dnd-draggable`        | `DndDraggable` | Presence marker on the draggable element. Useful for `closest('[data-dnd-draggable]')` traversal. Carries no value. |
 | `data-dnd-drag-id`          | `DndDraggable` | Item ID string — set alongside `data-dnd-draggable` to identify the element. |

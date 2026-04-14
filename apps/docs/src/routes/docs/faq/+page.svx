@@ -49,6 +49,14 @@ Multiple handles are supported — just add the attribute to each element:
 
 Auto-scroll activates automatically for any `DndDroppable` element that has `overflow: auto` or `overflow: scroll`. No extra configuration is needed — the scroll controller detects it via the `data-dnd-droppable` marker that `DndDroppable` sets on its root element.
 
+For **non-droppable** scroll containers (e.g. a page wrapper or a kanban board outer `div`), add `data-dnd-scroll` manually:
+
+```svelte
+<div class="board-wrapper" data-dnd-scroll>
+    <!-- kanban columns here -->
+</div>
+```
+
 ---
 
 ## How do I restrict which items can be dropped into a container?

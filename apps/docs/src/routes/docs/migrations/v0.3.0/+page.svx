@@ -136,7 +136,9 @@ New optional props: `mode`, `overlap`.
 
 ## Auto-scroll
 
-In v0.3.0 you had to manually add `data-dnd-scroll` to scrollable elements. In v1 this attribute is gone — auto-scroll activates automatically for any `DndDroppable` that overflows. Remove all `data-dnd-scroll` attributes from your markup.
+In v0.3.0 you had to manually add `data-dnd-scroll` to every scrollable `DndDroppable`. In v1 auto-scroll activates automatically for any `DndDroppable` that overflows — remove `data-dnd-scroll` from all `DndDroppable` elements.
+
+`data-dnd-scroll` is still supported for **non-droppable** outer scroll containers (e.g. a page wrapper or a kanban board `div`). Keep it only on those elements:
 
 ## DndPreview
 
