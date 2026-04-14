@@ -57,6 +57,15 @@
 	})
 
 	const slot = new Slot(position ?? 0)
+
+	// Keep slot.position in sync with the reactive position prop.
+	// Slot is a plain class (not Svelte-reactive), so without this effect,
+	// slot.position stays at its initial value after {#each} reorders items,
+	// causing getSortedSlots() to return wrong order on subsequent drags.
+	$effect(() => {
+		slot.position = position ?? 0
+	})
+
 	const draggable = new Draggable(
 		{ id, type, data, disabled, sensors, onDragStart, onDrag, onDragEnd },
 		dndController
@@ -90,7 +99,7 @@
 
 <div data-dnd-slot style="position: relative; overflow: visible" {@attach droppable?.attachSlot(slot)}>
 	{#if position !== undefined}
-		<DndPreview {slot} translateX={translate.x} translateY={translate.y} />
+		<DndPreview {slot} {position} translateX={translate.x} translateY={translate.y} />
 	{/if}
 
 	<div

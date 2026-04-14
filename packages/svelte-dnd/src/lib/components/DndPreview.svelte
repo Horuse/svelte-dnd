@@ -24,7 +24,9 @@
 
 	// Resolve container id and position from slot or droppable when available
 	const resolvedContainerId = $derived(slot?.droppable.id ?? droppable?.id ?? containerId ?? '')
-	const resolvedPosition = $derived(slot?.position ?? position ?? -1)
+	// Prefer the explicit position prop (reactive $props) over slot.position (plain field that
+	// can be stale after {#each} reorders items). slot.position serves as fallback for custom usage.
+	const resolvedPosition = $derived(position ?? slot?.position ?? -1)
 
 	const dndManager = getContext<DndController>('dnd')
 	const handler = new PreviewHandler()
