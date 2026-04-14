@@ -48,7 +48,7 @@
 
 	const controller = new DndController()
 
-	controller.onDrop((sourceId, _data, toContainerId, position) => {
+	controller.onDrop(({ item: { id: sourceId }, target: { id: toContainerId, position } }) => {
 		const color = toContainerId as Color
 		let task: Task | undefined
 		for (const c of containerColors) {

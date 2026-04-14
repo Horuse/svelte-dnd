@@ -58,27 +58,19 @@
 	const ann = $derived({ ...defaultAnnouncements, ...dragController.announcements })
 
 	$effect(() => {
-		if (dragController.dragging && dragController.draggedItem) {
-			announcement = ann.onDragStart?.(dragController.draggedItem) ?? ''
-		}
-	})
-
-	$effect(() => {
-		const preview = dragController.dropPreview
-		const id = dragController.draggedItem
-		if (preview?.visible && id) {
-			announcement = ann.onDragOver?.(id, preview.containerId, preview.position) ?? ''
-		}
-	})
-
-	$effect(() => {
-		const unsubDrop = dragController.onDrop((sourceId, _data, containerId, position) => {
-			announcement = ann.onDrop?.(sourceId, containerId, position) ?? ''
+		const unsubStart = dragController.onDragStart(event => {
+			announcement = ann.onDragStart?.(event) ?? ''
 		})
-		const unsubCancel = dragController.onDropCancelled((id) => {
-			announcement = ann.onCancel?.(id) ?? ''
+		const unsubOver = dragController.onDragOver(event => {
+			announcement = ann.onDragOver?.(event) ?? ''
 		})
-		return () => { unsubDrop(); unsubCancel() }
+		const unsubDrop = dragController.onDrop(event => {
+			announcement = ann.onDrop?.(event) ?? ''
+		})
+		const unsubCancel = dragController.onDropCancelled(event => {
+			announcement = ann.onCancel?.(event) ?? ''
+		})
+		return () => { unsubStart(); unsubOver(); unsubDrop(); unsubCancel() }
 	})
 
 	let dragCursorStyle: HTMLStyleElement | null = null

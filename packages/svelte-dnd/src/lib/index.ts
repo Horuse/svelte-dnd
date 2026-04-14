@@ -7,7 +7,13 @@ export type { DndControllerConfig, StrategyFactory } from './core/dnd/dnd-contro
 export type { ScrollConfig } from './core/scroll/scroll-controller.js'
 export type { PreviewConfig } from './core/handlers/preview-handler.svelte.js'
 export { DndSimulator } from './core/dnd/dnd-simulator.js'
-export type { DndDragEvent, DndDropEvent, DropZone, DropPreview, DndDirection, DndMode, DropCancelledCallback, DragOverCallback, Announcements } from './types.js'
+export type {
+	DndDragEvent, DndDropEvent, DropZone, DropPreview, DndDirection, DndMode,
+	DndItemInfo, DndContainerInfo,
+	DragStartEvent, DropEvent, DragEndEvent, DragOverEvent, DropCancelledEvent,
+	DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback,
+	Announcements
+} from './types.js'
 export { defaultAnnouncements } from './types.js'
 export type { SimulateOptions } from './core/dnd/dnd-simulator.js'
 export type { DragSource } from './core/dnd/drag-session.js'

@@ -15,7 +15,7 @@
 
 	const controller = new DndController()
 
-	controller.onDrop((sourceId, _data, targetContainerId, position) => {
+	controller.onDrop(({ item: { id: sourceId }, target: { id: targetContainerId, position } }) => {
 		const isLeft = left.some((i) => i.id === sourceId)
 		const srcList = isLeft ? left : right
 		const setSrc = isLeft

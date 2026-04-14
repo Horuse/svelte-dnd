@@ -1,4 +1,8 @@
-import type { DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback, ZonesInvalidatedCallback } from '../../types.js'
+import type {
+	DragStartCallback, DragEndCallback, DropCallback, DragOverCallback,
+	DropCancelledCallback, ZonesInvalidatedCallback,
+	DragStartEvent, DragEndEvent, DropEvent, DragOverEvent, DropCancelledEvent
+} from '../../types.js'
 
 export class DndEventEmitter {
 	private dragStartCallbacks = new Set<DragStartCallback>()
@@ -33,24 +37,24 @@ export class DndEventEmitter {
 		return () => this.dropCancelledCallbacks.delete(cb)
 	}
 
-	notifyDragStart(itemId: string) {
-		this.dragStartCallbacks.forEach(cb => cb(itemId))
+	notifyDragStart(event: DragStartEvent) {
+		this.dragStartCallbacks.forEach(cb => cb(event))
 	}
 
-	notifyDragEnd(itemId: string) {
-		this.dragEndCallbacks.forEach(cb => cb(itemId))
+	notifyDragEnd(event: DragEndEvent) {
+		this.dragEndCallbacks.forEach(cb => cb(event))
 	}
 
-	notifyDrop(sourceId: string, sourceData: Record<string, unknown> | undefined, targetContainerId: string, position: number) {
-		this.dropCallbacks.forEach(cb => cb(sourceId, sourceData, targetContainerId, position))
+	notifyDrop(event: DropEvent) {
+		this.dropCallbacks.forEach(cb => cb(event))
 	}
 
-	notifyDragOver(sourceId: string, containerId: string, position: number, prevContainerId: string | null) {
-		this.dragOverCallbacks.forEach(cb => cb(sourceId, containerId, position, prevContainerId))
+	notifyDragOver(event: DragOverEvent) {
+		this.dragOverCallbacks.forEach(cb => cb(event))
 	}
 
-	notifyDropCancelled(itemId: string) {
-		this.dropCancelledCallbacks.forEach(cb => cb(itemId))
+	notifyDropCancelled(event: DropCancelledEvent) {
+		this.dropCancelledCallbacks.forEach(cb => cb(event))
 	}
 
 	onZonesInvalidated(cb: ZonesInvalidatedCallback) {

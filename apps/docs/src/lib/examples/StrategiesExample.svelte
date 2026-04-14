@@ -31,7 +31,7 @@
 		strategies: [(state) => new PriorityStrategy(state)],
 	})
 
-	controller.onDrop((sourceId, _data, targetContainerId, position) => {
+	controller.onDrop(({ item: { id: sourceId }, target: { id: targetContainerId, position } }) => {
 		const isInbox = inbox.some((i) => i.id === sourceId)
 		const item = { ...(isInbox ? inbox : triage).find((i) => i.id === sourceId)! }
 

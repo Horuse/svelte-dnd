@@ -14,7 +14,7 @@ import { DropResolver } from '../zones/drop-resolver.js'
 import { DropAnimationCoordinator } from '../animation/drop-animation-coordinator.js'
 import type { Modifier } from '../modifiers/modifier.js'
 import { DndSimulator } from './dnd-simulator.js'
-import type { DropZone, DndDirection, DndMode, DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback, ZonesInvalidatedCallback } from '../../types.js'
+import type { DropZone, DndDirection, DndMode, DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback, ZonesInvalidatedCallback, DndItemInfo, DndContainerInfo, DragStartEvent, DropEvent } from '../../types.js'
 import { DragSession } from './drag-session.svelte.js'
 import type { Draggable } from '../entities/draggable.svelte.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
@@ -44,7 +44,7 @@ export type { DragStartCallback, DragEndCallback, DropCallback, DragOverCallback
  * ```ts
  * const controller = new DndController()
  *
- * controller.onDrop((sourceId, sourceData, targetContainerId, position) => {
+ * controller.onDrop(({ item, source, target }) => {
  *   // reorder / move items in your data model
  * })
  * ```
@@ -170,12 +170,10 @@ export class DndController<TData = Record<string, unknown>> {
 	/**
 	 * Fired when an item is successfully dropped into a container.
 	 *
-	 * @param cb `(sourceId, sourceData, targetContainerId, position) => void`
+	 * @param cb `(event: DropEvent<TData>) => void`
 	 */
 	onDrop(cb: DropCallback<TData>) {
-		return this.eventEmitter.onDrop((id, data, containerId, pos) =>
-			cb(id, data as TData | undefined, containerId, pos)
-		)
+		return this.eventEmitter.onDrop(event => cb(event as unknown as DropEvent<TData>))
 	}
 
 	/** Fired each time the drag-over target (container + position) changes. */
@@ -399,7 +397,20 @@ export class DndController<TData = Record<string, unknown>> {
 			source: 'user'
 		})
 		this.state.setSkipDropPreviewAnimation(true)
-		this.eventEmitter.notifyDragStart(draggable.id)
+
+		const itemInfo: DndItemInfo = {
+			id: draggable.id,
+			data: draggable.data,
+			type: draggable.type,
+			element: draggable.element
+		}
+		const sourceInfo: DndContainerInfo = {
+			id: sourceContainer.id,
+			droppable: sourceContainer,
+			position: slot.position
+		}
+		const startEvent: DragStartEvent = { item: itemInfo, source: sourceInfo }
+		this.eventEmitter.notifyDragStart(startEvent)
 
 		return newSession
 	}

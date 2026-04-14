@@ -1,7 +1,7 @@
 import type { DndState } from './dnd-state.svelte.js'
 import type { DndEventEmitter } from './dnd-event-emitter.js'
 import type { DragSession } from './drag-session.js'
-import type { DropZone } from '../../types.js'
+import type { DropZone, DropEvent, DndItemInfo, DndContainerInfo } from '../../types.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
 import type { Slot } from '../entities/slot.js'
 import { AnimationPipeline } from '../animation/steps/animation-pipeline.js'
@@ -141,7 +141,14 @@ export class DndSimulator {
 					// setPerformingDrop(true) here so PreviewHandler.hide() collapses instantly
 					this.state.setPerformingDrop(true)
 					if (options.emitEvents) {
-						this.eventEmitter?.notifyDrop(itemId, undefined, toContainerId, toPosition)
+						const toDroppable = this.droppablesById.get(toContainerId)
+						if (toDroppable && this.eventEmitter) {
+							const itemInfo: DndItemInfo = { id: itemId, data: undefined, type: undefined, element }
+							const sourceInfo: DndContainerInfo = { id: fromContainerId, droppable: fromDroppable, position: positionInFrom >= 0 ? positionInFrom : 0 }
+							const targetInfo: DndContainerInfo = { id: toContainerId, droppable: toDroppable, position: toPosition }
+							const dropEvent: DropEvent = { item: itemInfo, source: sourceInfo, target: targetInfo }
+							this.eventEmitter.notifyDrop(dropEvent)
+						}
 					}
 					this.cleanup()
 					resolve()

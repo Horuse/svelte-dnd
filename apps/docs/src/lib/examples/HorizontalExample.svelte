@@ -11,7 +11,7 @@
 
 	const controller = new DndController();
 
-	controller.onDrop((sourceId: string, _sourceData: any, _targetContainerId: string, position: number) => {
+	controller.onDrop(({ item: { id: sourceId }, target: { position } }) => {
 		const fromIndex = items.findIndex((item) => item.id === sourceId);
 		if (fromIndex === -1) return;
 

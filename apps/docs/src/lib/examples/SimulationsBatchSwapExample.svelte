@@ -12,7 +12,7 @@
 
 	const controller = new DndController()
 
-	controller.onDrop((sourceId, _data, containerId, position) => {
+	controller.onDrop(({ item: { id: sourceId }, target: { id: containerId, position } }) => {
 		const fromA = teamA.findIndex((i) => i.id === sourceId)
 		const fromB = teamB.findIndex((i) => i.id === sourceId)
 

@@ -4,7 +4,7 @@ import type { ScrollController } from '../scroll/scroll-controller.js'
 import type { DropResolver } from '../zones/drop-resolver.js'
 import type { PreviewConfig } from '../handlers/preview-handler.svelte.js'
 import type { AnimationStep } from './steps/animation-step.js'
-import type { DropPreview } from '../../types.js'
+import type { DropPreview, DndItemInfo, DndContainerInfo, DropEvent, DragEndEvent, DragOverEvent, DropCancelledEvent } from '../../types.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
 import { AnimationPipeline } from './steps/animation-pipeline.js'
 import { GhostToTargetStep } from './steps/ghost-to-target-step.js'
@@ -45,11 +45,53 @@ export class DropAnimationCoordinator {
 
 			const previewKey = `${targetZone.containerId}:${targetZone.position}`
 			if (previewKey !== this.lastPreviewKey) {
-				const prevContainerId = this.lastPreviewKey?.split(':')[0] ?? null
+				const prevKey = this.lastPreviewKey
 				this.lastPreviewKey = previewKey
+
 				const sourceId = this.state.draggedItem
-				if (sourceId) {
-					this.eventEmitter.notifyDragOver(sourceId, targetZone.containerId, targetZone.position, prevContainerId)
+				const element = this.state.element
+				if (sourceId && element) {
+					const itemInfo: DndItemInfo = {
+						id: sourceId,
+						data: this.state.draggedItemData,
+						type: this.state.draggedType ?? undefined,
+						element
+					}
+					const originContainerId = this.state.originContainerId
+					const sourceDroppable = originContainerId ? this.droppablesById.get(originContainerId) : null
+					const targetDroppable = this.droppablesById.get(targetZone.containerId)
+
+					if (sourceDroppable && targetDroppable) {
+						const sourceInfo: DndContainerInfo = {
+							id: originContainerId!,
+							droppable: sourceDroppable,
+							position: this.state.originPosition
+						}
+						const currentInfo: DndContainerInfo = {
+							id: targetZone.containerId,
+							droppable: targetDroppable,
+							position: targetZone.position
+						}
+
+						let previousInfo: DndContainerInfo | null = null
+						if (prevKey) {
+							const sepIdx = prevKey.lastIndexOf(':')
+							const prevContainerId = prevKey.slice(0, sepIdx)
+							const prevPosition = parseInt(prevKey.slice(sepIdx + 1))
+							const prevDroppable = this.droppablesById.get(prevContainerId)
+							if (prevDroppable) {
+								previousInfo = { id: prevContainerId, droppable: prevDroppable, position: prevPosition }
+							}
+						}
+
+						const event: DragOverEvent = {
+							item: itemInfo,
+							source: sourceInfo,
+							current: currentInfo,
+							previous: previousInfo
+						}
+						this.eventEmitter.notifyDragOver(event)
+					}
 				}
 			}
 
@@ -79,20 +121,38 @@ export class DropAnimationCoordinator {
 		targetContainerId: string,
 		position: number
 	) {
+		// Capture session data upfront — state.reset() clears it later
+		const element = this.state.element
+		const type = this.state.draggedType ?? undefined
+		const originContainerId = this.state.originContainerId
+		const originPosition = this.state.originPosition
+		const sourceDroppable = originContainerId ? this.droppablesById.get(originContainerId) : null
+		const targetDroppable = this.droppablesById.get(targetContainerId)
+
 		const targetZone = this.state.zones.find(
 			(zone) => zone.containerId === targetContainerId && zone.position === position
 		)
 
 		this.state.setPerformingDrop(true)
 
+		const onDropComplete = () => {
+			if (element && sourceDroppable && targetDroppable) {
+				const itemInfo: DndItemInfo = { id: sourceId, data: sourceData, type, element }
+				const sourceInfo: DndContainerInfo = { id: originContainerId!, droppable: sourceDroppable, position: originPosition }
+				const targetInfo: DndContainerInfo = { id: targetContainerId, droppable: targetDroppable, position }
+				const dropEvent: DropEvent = { item: itemInfo, source: sourceInfo, target: targetInfo }
+				this.eventEmitter.notifyDrop(dropEvent)
+				const dragEndEvent: DragEndEvent = { item: itemInfo, source: sourceInfo, target: targetInfo, cancelled: false }
+				this.finalizeDragEnd(dragEndEvent)
+			} else {
+				this.finalizeDragEnd(null)
+			}
+		}
+
 		if (targetZone && this.state.element && this.state.transform) {
-			this.animate(new GhostToTargetStep(this.state, targetZone, this.droppablesById), () => {
-				this.eventEmitter.notifyDrop(sourceId, sourceData, targetContainerId, position)
-				this.finalizeDragEnd(sourceId)
-			})
+			this.animate(new GhostToTargetStep(this.state, targetZone, this.droppablesById), onDropComplete)
 		} else {
-			this.eventEmitter.notifyDrop(sourceId, sourceData, targetContainerId, position)
-			this.finalizeDragEnd(sourceId)
+			onDropComplete()
 		}
 	}
 
@@ -100,7 +160,24 @@ export class DropAnimationCoordinator {
 		const itemId = this.state.draggedItem
 		const session = this.state.session
 
-		if (itemId) this.eventEmitter.notifyDropCancelled(itemId)
+		// Capture session data before any async animation
+		const element = this.state.element
+		const type = this.state.draggedType ?? undefined
+		const originContainerId = this.state.originContainerId
+		const originPosition = this.state.originPosition
+		const sourceDroppable = originContainerId ? this.droppablesById.get(originContainerId) : null
+
+		let cancelledEvent: DropCancelledEvent | null = null
+		let dragEndEvent: DragEndEvent | null = null
+
+		if (itemId && element && sourceDroppable) {
+			const itemInfo: DndItemInfo = { id: itemId, data: this.state.draggedItemData, type, element }
+			const sourceInfo: DndContainerInfo = { id: originContainerId!, droppable: sourceDroppable, position: originPosition }
+			cancelledEvent = { item: itemInfo, source: sourceInfo }
+			dragEndEvent = { item: itemInfo, source: sourceInfo, target: null, cancelled: true }
+		}
+
+		if (cancelledEvent) this.eventEmitter.notifyDropCancelled(cancelledEvent)
 
 		if (shouldAnimate && session?.originContainerId) {
 			this.state.setDropPreview({
@@ -116,11 +193,11 @@ export class DropAnimationCoordinator {
 			requestAnimationFrame(() => {
 				this.animate(
 					new GhostReturnStep(this.state, this.state.originContainerId, this.state.originPosition, this.droppablesById),
-					() => this.finalizeDragEnd(itemId)
+					() => this.finalizeDragEnd(dragEndEvent)
 				)
 			})
 		} else {
-			this.finalizeDragEnd(itemId)
+			this.finalizeDragEnd(dragEndEvent)
 		}
 	}
 
@@ -150,7 +227,7 @@ export class DropAnimationCoordinator {
 		})
 	}
 
-	private finalizeDragEnd(itemId: string | null) {
+	private finalizeDragEnd(dragEndEvent: DragEndEvent | null) {
 		this.lastPreviewKey = null
 		this.state.setSkipDropPreviewAnimation(true)
 		this.scrollController.clearAll()
@@ -159,8 +236,8 @@ export class DropAnimationCoordinator {
 			this.state.setPerformingDrop(false)
 		})
 
-		if (itemId) {
-			this.eventEmitter.notifyDragEnd(itemId)
+		if (dragEndEvent) {
+			this.eventEmitter.notifyDragEnd(dragEndEvent)
 		}
 
 		setTimeout(() => {

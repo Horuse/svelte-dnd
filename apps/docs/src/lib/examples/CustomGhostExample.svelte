@@ -21,7 +21,7 @@
 
 	const controller = new DndController();
 
-	controller.onDrop((sourceId: string, _sourceData, targetContainerId: string, position: number) => {
+	controller.onDrop(({ item: { id: sourceId }, target: { id: targetContainerId, position } }) => {
 		let sourceColumn = '';
 		let sourceIndex = -1;
 

@@ -20,8 +20,8 @@
 		announcements: {
 			...defaultAnnouncements,
 			onDragStart: () => 'Picked up a task.',
-			onDragOver: (containerId, position, total) =>
-				`Moving to "${columns[containerId] ?? containerId}", position ${position + 1} of ${total}.`,
+			onDragOver: ({ current }) =>
+				`Moving to "${columns[current.id] ?? current.id}", position ${current.position + 1}.`,
 			onDrop: () => 'Task dropped.',
 			onCancel: () => 'Move cancelled.',
 		},
@@ -29,10 +29,10 @@
 
 	controller.onDragStart(() => { lastAnnouncement = 'Picked up a task.' })
 	controller.onDragEnd(() => { setTimeout(() => { lastAnnouncement = '' }, 2000) })
-	controller.onDrop((_sourceId, _data, _containerId) => { lastAnnouncement = 'Task dropped.' })
+	controller.onDrop(() => { lastAnnouncement = 'Task dropped.' })
 	controller.onDropCancelled(() => { lastAnnouncement = 'Move cancelled.' })
 
-	controller.onDrop((sourceId, _data, targetContainerId, position) => {
+	controller.onDrop(({ item: { id: sourceId }, target: { id: targetContainerId, position } }) => {
 		const srcCol = Object.keys(board).find((col) => board[col].some((i) => i.id === sourceId))!
 		const item = board[srcCol].find((i) => i.id === sourceId)!
 		board[srcCol] = board[srcCol].filter((i) => i.id !== sourceId)

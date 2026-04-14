@@ -34,11 +34,11 @@
 
 	let items = $state<TrashItem[]>([])
 
-	const unsubscribe = controller?.onDrop((sourceId, sourceData, targetContainerId) => {
-		if (targetContainerId !== 'trash-zone') return
-		if (!sourceData?.columnId) return
+	const unsubscribe = controller?.onDrop(({ item: dropped, target }) => {
+		if (target.id !== 'trash-zone') return
+		if (!dropped.data?.columnId) return
 
-		const task = onRemove(sourceId, sourceData.columnId)
+		const task = onRemove(dropped.id, dropped.data.columnId as string)
 		if (!task) return
 
 		const item: TrashItem = { task, progress: 100, rafId: null }

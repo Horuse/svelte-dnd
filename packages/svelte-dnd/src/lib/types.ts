@@ -1,20 +1,78 @@
 import type { Snippet } from 'svelte'
+import type { Droppable } from './core/entities/droppable.svelte.js'
 
 export type DndDirection = 'vertical' | 'horizontal' | 'grid'
 
+// --- Rich event types ---
+
+export interface DndItemInfo<TData = Record<string, unknown>> {
+	id: string
+	data: TData | undefined
+	type: string | undefined
+	element: HTMLElement
+}
+
+export interface DndContainerInfo {
+	id: string
+	droppable: Droppable
+	position: number
+}
+
+export interface DragStartEvent {
+	item: DndItemInfo
+	source: DndContainerInfo
+}
+
+export interface DropEvent<TData = Record<string, unknown>> {
+	item: DndItemInfo<TData>
+	source: DndContainerInfo
+	target: DndContainerInfo
+}
+
+export interface DragEndEvent {
+	item: DndItemInfo
+	source: DndContainerInfo
+	target: DndContainerInfo | null
+	cancelled: boolean
+}
+
+export interface DragOverEvent {
+	item: DndItemInfo
+	source: DndContainerInfo
+	current: DndContainerInfo
+	previous: DndContainerInfo | null
+}
+
+export interface DropCancelledEvent {
+	item: DndItemInfo
+	source: DndContainerInfo
+}
+
+// --- Callback types ---
+
+export type DragStartCallback = (event: DragStartEvent) => void
+export type DragEndCallback = (event: DragEndEvent) => void
+export type DropCallback<TData = Record<string, unknown>> = (event: DropEvent<TData>) => void
+export type DragOverCallback = (event: DragOverEvent) => void
+export type DropCancelledCallback = (event: DropCancelledEvent) => void
+export type ZonesInvalidatedCallback = () => void
+
+// --- Announcements ---
+
 export interface Announcements {
-	onDragStart?: (id: string) => string
-	onDragOver?: (id: string, containerId: string, position: number) => string
-	onDrop?: (id: string, containerId: string, position: number) => string
-	onCancel?: (id: string) => string
+	onDragStart?: (event: DragStartEvent) => string
+	onDragOver?: (event: DragOverEvent) => string
+	onDrop?: (event: DropEvent) => string
+	onCancel?: (event: DropCancelledEvent) => string
 }
 
 export const defaultAnnouncements: Announcements = {
-	onDragStart:  (id) => `Started dragging item ${id}.`,
-	onDragOver:   (id, containerId, position) => `Item ${id} is over ${containerId} at position ${position}.`,
-	onDrop:       (id, containerId, position) => `Dropped item ${id} into ${containerId} at position ${position}.`,
-	onCancel:     (id) => `Dragging ${id} was cancelled.`
+	onDragStart: ({ item }) => `Started dragging item ${item.id}.`,
+	onDragOver: ({ item, current }) => `Item ${item.id} is over ${current.id} at position ${current.position}.`,
+	onDrop: ({ item, target }) => `Dropped item ${item.id} into ${target.id} at position ${target.position}.`,
+	onCancel: ({ item }) => `Dragging ${item.id} was cancelled.`
 }
+
 export type DndMode = 'sortable' | 'target' | (string & {})
 
 export interface DndDragEvent<TData = Record<string, unknown>> {
@@ -75,20 +133,3 @@ export interface GhostSnippetProps {
 }
 
 export type GhostSnippet = Snippet<[GhostSnippetProps]>
-
-export type DragStartCallback = (itemId: string) => void
-export type DragEndCallback = (itemId: string) => void
-export type DropCallback<TData = Record<string, unknown>> = (
-	sourceId: string,
-	sourceData: TData | undefined,
-	targetContainerId: string,
-	position: number
-) => void
-export type DragOverCallback = (
-	sourceId: string,
-	containerId: string,
-	position: number,
-	prevContainerId: string | null
-) => void
-export type DropCancelledCallback = (itemId: string) => void
-export type ZonesInvalidatedCallback = () => void

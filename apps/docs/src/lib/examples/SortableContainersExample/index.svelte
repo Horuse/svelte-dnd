@@ -36,7 +36,7 @@
 	const controller = new DndController();
 
 
-	controller.onDrop((sourceId: string, sourceData: any, targetContainerId: string, position: number) => {
+	controller.onDrop(({ item: { id: sourceId }, target: { id: targetContainerId, position } }) => {
 		if (targetContainerId === 'trash-zone') return
 
 		if (columns.some((col) => col.id === sourceId)) {

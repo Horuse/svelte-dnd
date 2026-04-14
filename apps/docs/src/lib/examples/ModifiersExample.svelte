@@ -24,7 +24,7 @@
 
 	function buildController(modifiers: Modifier[]) {
 		const ctrl = new DndController({ modifiers })
-		ctrl.onDrop((sourceId, _data, _containerId, position) => {
+		ctrl.onDrop(({ item: { id: sourceId }, target: { position } }) => {
 			const from = items.findIndex((i) => i.id === sourceId)
 			if (from === -1) return
 			const updated = [...items]

@@ -10,7 +10,7 @@
 
 	const controller = new DndController()
 
-	controller.onDrop((sourceId, _data, _containerId, position) => {
+	controller.onDrop(({ item: { id: sourceId }, target: { position } }) => {
 		const from = items.findIndex((i) => i.id === sourceId)
 		if (from === -1) return
 		history.push({ id: sourceId, from, to: position })
