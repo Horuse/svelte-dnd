@@ -13,7 +13,7 @@ Drag a container by its header to reorder columns horizontally. Drag tasks withi
 - Each **column** droppable uses `direction="vertical"` and accepts `'task'` type items
 - The column's `DndDraggable` has a `data-dnd-handle` on its header — dragging is only possible from the header, so dragging from the task area moves a task instead of the column
 
-The existing drop zone calculator filters `[data-dnd-draggable-item]` elements by their closest `[data-dnd-drop-id]` parent, so nested droppables work correctly without extra configuration.
+Each slot is tracked via `[data-dnd-slot]` and scoped to its nearest `[data-dnd-drop-id]` parent, so nested droppables work correctly without extra configuration.
 
 <script lang="ts">
 	import { ComponentPreview } from '$lib/components';

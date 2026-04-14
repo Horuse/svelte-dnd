@@ -47,22 +47,7 @@ Multiple handles are supported — just add the attribute to each element:
 
 ## How do I enable auto-scroll in a scrollable container?
 
-Auto-scroll activates for any element that has the `data-dnd-scroll` attribute **and** `overflow: auto` or `overflow: scroll`, when the pointer is near its edge during a drag.
-
-> `DndDroppable` adds `data-dnd-scroll` automatically, so its own scrolling works out of the box.
-
-If you have an **external** scrollable wrapper around several droppables (e.g. a horizontal kanban board), add `data-dnd-scroll` manually:
-
-```svelte
-<!-- Outer horizontal scroll area -->
-<div class="board" data-dnd-scroll style="overflow-x: auto; display: flex;">
-  {#each columns as col}
-    <DndDroppable id={col.id}>
-      ...
-    </DndDroppable>
-  {/each}
-</div>
-```
+Auto-scroll activates automatically for any `DndDroppable` element that has `overflow: auto` or `overflow: scroll`. No extra configuration is needed — the scroll controller detects it via the `data-dnd-droppable` marker that `DndDroppable` sets on its root element.
 
 ---
 
@@ -90,8 +75,10 @@ Use a single `DndController` shared across all containers. Read `targetContainer
 <script>
     const controller = new DndController();
 
-    controller.onDrop((sourceId, sourceData, targetContainerId, position) => {
-        // find source container, move item to target container at position
+    controller.onDrop(({ item, target }) => {
+        // item.id — dragged item ID
+        // target.id — container where item was dropped
+        // target.position — index within the target container
     });
 </script>
 

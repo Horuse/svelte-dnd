@@ -57,7 +57,7 @@ In v1 all of this is handled automatically:
 <!-- v1 -->
 <script>
     const controller = new DndController();
-    controller.onDrop((sourceId, _, targetContainerId, position) => { /* reorder */ });
+    controller.onDrop(({ item, target }) => { /* reorder using item.id, target.id, target.position */ });
 </script>
 
 <DndProvider {controller}>
@@ -136,7 +136,7 @@ New optional props: `mode`, `overlap`.
 
 ## Auto-scroll
 
-In v0.3.0 you had to manually add `data-dnd-scroll` to external scrollable wrappers. This is still the case in v1 — no change here.
+In v0.3.0 you had to manually add `data-dnd-scroll` to scrollable elements. In v1 this attribute is gone — auto-scroll activates automatically for any `DndDroppable` that overflows. Remove all `data-dnd-scroll` attributes from your markup.
 
 ## DndPreview
 
@@ -151,14 +151,38 @@ In v0.3.0 these returned an unsubscribe function you had to call in `onDestroy`.
 const unsub = controller.onDragStart((id) => { ... });
 onDestroy(() => unsub());
 
-// after
-controller.onDragStart((id) => { ... });
+// after — no onDestroy needed
+controller.onDragStart(({ item }) => { ... });
 ```
+
+## Event callbacks now receive rich objects
+
+All callbacks changed from positional primitives to a single event object:
+
+```ts
+// before
+controller.onDrop((sourceId, sourceData, targetContainerId, position) => { ... })
+controller.onDragStart((itemId) => { ... })
+controller.onDragEnd((itemId) => { ... })
+controller.onDropCancelled((itemId) => { ... })
+controller.onDragOver((containerId, position, prevContainerId) => { ... })
+
+// after
+controller.onDrop(({ item, source, target }) => { ... })
+controller.onDragStart(({ item, source }) => { ... })
+controller.onDragEnd(({ item, source, target, cancelled }) => { ... })
+controller.onDropCancelled(({ item, source }) => { ... })
+controller.onDragOver(({ item, source, current, previous }) => { ... })
+```
+
+`item.id`, `target.id`, and `target.position` replace the old positional `sourceId`, `targetContainerId`, and `position` respectively. Each event also carries `item.data`, `item.type`, `item.element`, plus full `Droppable` entity references on source/target containers.
 
 ## New callback: onDropCancelled
 
+Already available in v1 with the new signature:
+
 ```ts
-controller.onDropCancelled((itemId) => {
+controller.onDropCancelled(({ item, source }) => {
     // drag ended without a drop
 })
 ```
@@ -167,4 +191,4 @@ controller.onDropCancelled((itemId) => {
 
 `DragController` type is removed — use `DndController`.
 
-New exports: `DndControllerConfig`, `ScrollConfig`, `PreviewConfig`, `StrategyFactory`, `DndMode`, `DragSource`.
+New exports: `DndControllerConfig`, `ScrollConfig`, `PreviewConfig`, `StrategyFactory`, `DndMode`, `DragSource`, `DndItemInfo`, `DndContainerInfo`, `DragStartEvent`, `DropEvent`, `DragEndEvent`, `DragOverEvent`, `DropCancelledEvent`.

@@ -39,7 +39,7 @@ const controller = new DndController({
     modifiers: [restrictToVerticalAxis],      // see /docs/modifiers
     announcements: {                          // see /docs/accessibility
         ...defaultAnnouncements,
-        onDragStart: () => 'Picked up item.',
+        onDragStart: ({ item }) => `Picked up ${item.id}.`,
     },
     strategies: [],                          // custom container strategies, see /docs/custom-strategies
 });
@@ -59,10 +59,10 @@ const controller = new DndController({
     collision: centerPoint,  // ghost center must be inside zone rect
     modifiers: [],
     announcements: {
-        onDragStart: () => 'Picked up item.',
-        onDragOver: (_id, pos, total) => `Moving to position ${pos + 1} of ${total}.`,
-        onDrop: () => 'Dropped item.',
-        onCancel: () => 'Drop cancelled.',
+        onDragStart: ({ item }) => `Started dragging item ${item.id}.`,
+        onDragOver: ({ item, current }) => `Item ${item.id} is over ${current.id} at position ${current.position}.`,
+        onDrop: ({ item, target }) => `Dropped item ${item.id} into ${target.id} at position ${target.position}.`,
+        onCancel: ({ item }) => `Dragging ${item.id} was cancelled.`,
     },
     strategies: [], // built-in 'sortable' and 'target' are always registered
 });
@@ -107,8 +107,8 @@ All event methods return an unsubscribe function.
 ### onDragStart
 
 ```ts
-const unsubscribe = controller.onDragStart((itemId: string) => {
-  console.log('Started dragging:', itemId);
+const unsubscribe = controller.onDragStart(({ item, source }) => {
+    console.log('Started dragging:', item.id, 'from', source.id, 'at position', source.position);
 });
 
 // Later: unsubscribe()
@@ -119,8 +119,12 @@ const unsubscribe = controller.onDragStart((itemId: string) => {
 Fired when a drag ends — regardless of whether it was dropped or cancelled.
 
 ```ts
-controller.onDragEnd((itemId: string) => {
-    console.log('Stopped dragging:', itemId);
+controller.onDragEnd(({ item, source, target, cancelled }) => {
+    if (cancelled) {
+        console.log(item.id, 'returned to', source.id);
+    } else {
+        console.log(item.id, 'moved to', target?.id);
+    }
 });
 ```
 
@@ -129,25 +133,27 @@ controller.onDragEnd((itemId: string) => {
 Fired when a drag is cancelled — the ghost returns to origin and no drop occurred. Use this to distinguish a cancel from a successful drop.
 
 ```ts
-controller.onDropCancelled((itemId: string) => {
-    console.log('Drag cancelled:', itemId);
+controller.onDropCancelled(({ item, source }) => {
+    console.log('Drag cancelled:', item.id, 'back to', source.id);
 });
 ```
 
 ### onDrop
 
-The main callback for handling item reordering or moving between containers. `DndController` is generic — the `TData` type parameter flows through to `sourceData` in `onDrop`.
+The main callback for handling item reordering or moving between containers. `DndController` is generic — the `TData` type parameter narrows `item.data` in `onDrop`.
 
 ```ts
 interface TaskData { label: string; priority: number }
 
 const controller = new DndController<TaskData>()
 
-controller.onDrop((sourceId, sourceData, targetContainerId, position) => {
-    // sourceId: ID of the dragged item
-    // sourceData: TaskData | undefined  ← typed!
-    // targetContainerId: ID of the container where item was dropped
-    // position: index within the target container
+controller.onDrop(({ item, source, target }) => {
+    // item.id:          ID of the dragged item
+    // item.data:        TaskData | undefined  ← typed!
+    // source.id:        container the item came from
+    // source.position:  original position in source container
+    // target.id:        container where item was dropped
+    // target.position:  insertion index in target container
 });
 ```
 
@@ -156,8 +162,9 @@ controller.onDrop((sourceId, sourceData, targetContainerId, position) => {
 Fired each time the drag-over target (container + position) changes. Useful for highlighting the active drop zone in custom UIs.
 
 ```ts
-controller.onDragOver((containerId: string, position: number) => {
-    console.log('hovering over', containerId, 'at position', position);
+controller.onDragOver(({ item, current, previous }) => {
+    console.log(item.id, 'moved to', current.id, 'position', current.position);
+    if (previous) console.log('was over', previous.id);
 });
 ```
 
@@ -173,19 +180,6 @@ controller.onZonesInvalidated(() => {
 Subscribe to recalculate zones if you manage them manually.
 
 ## Methods
-
-### startDrag
-
-```ts
-controller.startDrag(
-    element: HTMLElement,
-    itemId: string,
-    initialPosition: { x: number; y: number },
-    data?: Record<string, unknown>
-): void
-```
-
-Initiates a drag operation. Called internally by `DndDraggable`.
 
 ### updateTransform
 
@@ -266,16 +260,6 @@ Cleans up all internal state, listeners, and registries. Called automatically wh
 
 For running animations without user interaction see the [Simulations](/docs/simulations) page. The controller exposes `simulateReturn()` and `simulateDrop()` as thin delegates to `DndSimulator`.
 
-## Drop Zone Management
-
-These methods are used internally by `DndDroppable` but can be called directly for advanced use cases.
-
-| Method | Description |
-|--------|-------------|
-| `controller.refreshContainerZones(containerId, element, direction?, mode?)` | Recalculate and register drop zones for a container |
-| `controller.registerDroppableData(id, data)` | Register container data |
-| `controller.unregisterContainer(id)` | Unregister container data and remove its drop zones |
-
 ## Types
 
 All types below are exported from `@horuse/svelte-dnd`.
@@ -321,11 +305,29 @@ interface DndControllerConfig {
 
 type StrategyFactory = (state: DndState) => ContainerStrategy;
 
-type DragStartCallback = (itemId: string) => void;
-type DragEndCallback = (itemId: string) => void;
-type DropCancelledCallback = (itemId: string) => void;
-type DropCallback<TData = Record<string, unknown>> = (sourceId: string, sourceData: TData | undefined, targetContainerId: string, position: number) => void;
-type DragOverCallback = (containerId: string, position: number) => void;
+// Rich event objects passed to all callbacks:
+interface DndItemInfo<TData = Record<string, unknown>> {
+    id: string;
+    data: TData | undefined;
+    type: string | undefined;
+    element: HTMLElement;
+}
+interface DndContainerInfo {
+    id: string;
+    droppable: Droppable;
+    position: number;
+}
+interface DragStartEvent     { item: DndItemInfo; source: DndContainerInfo }
+interface DragEndEvent       { item: DndItemInfo; source: DndContainerInfo; target: DndContainerInfo | null; cancelled: boolean }
+interface DropEvent<TData>   { item: DndItemInfo<TData>; source: DndContainerInfo; target: DndContainerInfo }
+interface DragOverEvent      { item: DndItemInfo; source: DndContainerInfo; current: DndContainerInfo; previous: DndContainerInfo | null }
+interface DropCancelledEvent { item: DndItemInfo; source: DndContainerInfo }
+
+type DragStartCallback    = (event: DragStartEvent) => void;
+type DragEndCallback      = (event: DragEndEvent) => void;
+type DropCancelledCallback = (event: DropCancelledEvent) => void;
+type DropCallback<TData = Record<string, unknown>> = (event: DropEvent<TData>) => void;
+type DragOverCallback     = (event: DragOverEvent) => void;
 type DndDirection = 'vertical' | 'horizontal' | 'grid';
 type DndMode = 'sortable' | 'target' | (string & {}); // custom modes allowed
 type DragSource = 'user' | 'programmatic';

@@ -41,23 +41,27 @@ import { DndController, defaultAnnouncements } from '@horuse/svelte-dnd';
 const controller = new DndController({
     announcements: {
         ...defaultAnnouncements,
-        onDragStart: () => 'Picked up a task. Use arrow keys to move it.',
-        onDragOver: (containerId, position, total) =>
-            `Moving to column ${containerId}, position ${position + 1} of ${total}.`,
-        onDrop: () => 'Task placed.',
-        onCancel: () => 'Move cancelled, task returned to original position.',
+        onDragStart: ({ item }) => `Picked up ${item.id}. Use arrow keys to move it.`,
+        onDragOver: ({ item, current }) =>
+            `Moving ${item.id} to column ${current.id}, position ${current.position + 1}.`,
+        onDrop: ({ item, target }) => `Dropped ${item.id} into ${target.id}.`,
+        onCancel: ({ item }) => `Cancelled moving ${item.id}.`,
     },
 });
 ```
 
+Each callback receives a rich event object. All event types are exported from `@horuse/svelte-dnd`.
+
 ### Announcements type
 
 ```ts
+import type { DragStartEvent, DragOverEvent, DropEvent, DropCancelledEvent } from '@horuse/svelte-dnd';
+
 interface Announcements {
-    onDragStart: () => string;
-    onDragOver: (containerId: string, position: number, total: number) => string;
-    onDrop: () => string;
-    onCancel: () => string;
+    onDragStart?: (event: DragStartEvent) => string;
+    onDragOver?: (event: DragOverEvent) => string;
+    onDrop?: (event: DropEvent) => string;
+    onCancel?: (event: DropCancelledEvent) => string;
 }
 ```
 

@@ -13,29 +13,22 @@ The library sets these attributes automatically — you don't need to add them m
 
 | Attribute                   | Set by | Purpose |
 |-----------------------------|--------|---------|
-| `data-dnd-drop-id`          | `DndDroppable` | Unique container ID — used for DOM lookup of the container |
-| `data-dnd-direction`        | `DndDroppable` | `"vertical"`, `"horizontal"`, or `"grid"` — read when calculating drop zones |
-| `data-dnd-mode`             | `DndDroppable` | `"sortable"` or `"target"` — determines drop zone strategy |
-| `data-dnd-overlap`          | `DndDroppable` | Overlap threshold value when the `overlap` prop is set |
-| `data-dnd-scroll`           | `DndDroppable` | Flag — auto-scroll activates only for elements with this attribute |
-| `data-dnd-drag-id`          | `DndDraggable` | Unique item ID — used when identifying a draggable element |
-| `data-dnd-handle`           | `DndDraggable` | Marks an element as the drag handle. When present, dragging starts only from handle elements; `data-dnd-no-drag` is ignored. |
-| `data-dnd-no-drag`          | `DndDraggable` | Disables dragging for this element. Ignored when `data-dnd-handle` is used. |
-| `data-dnd-draggable-item`   | `DndDraggable` | Marker — the selector `:scope > [data-dnd-draggable-item]` collects container items |
-| `data-dnd-preview`          | `DndPreview` | Marks a preview (placeholder) element |
-| `data-dnd-preview-position` | `DndPreview` | Numeric position of the preview — used to find a specific placeholder |
-| `data-dnd-dragged-element`  | `DndProvider` | Marks the ghost element (the div that follows the cursor) |
+| `data-dnd-droppable`        | `DndDroppable` | Presence marker on the container element. Used by the scroll controller to detect scrollable droppables. Carries no value. |
+| `data-dnd-drop-id`          | `DndDroppable` | Container ID string — used by internal helpers for DOM lookup of the container element. |
+| `data-dnd-slot`             | `DndDraggable` | Presence marker on the slot wrapper element. Useful for `closest('[data-dnd-slot]')` traversal. Carries no value. |
+| `data-dnd-draggable`        | `DndDraggable` | Presence marker on the draggable element. Useful for `closest('[data-dnd-draggable]')` traversal. Carries no value. |
+| `data-dnd-drag-id`          | `DndDraggable` | Item ID string — set alongside `data-dnd-draggable` to identify the element. |
+| `data-dnd-handle`           | User | Marks an element as the drag handle. When present anywhere inside a `DndDraggable`, dragging only starts from handle elements; `data-dnd-no-drag` is ignored. |
+| `data-dnd-no-drag`          | User | Disables drag initiation for this element and its descendants. Ignored when `data-dnd-handle` is used. |
+| `data-dnd-preview`          | `DndPreview` | Presence marker on a preview (placeholder) slot element. |
+| `data-dnd-preview-position` | `DndPreview` | Numeric position of the preview — used by internal helpers to locate a specific placeholder. |
+| `data-dnd-dragged-element`  | `DndProvider` | Marks the ghost element (the floating `div` that follows the cursor). |
 
-### External scrollable containers
+---
 
-`DndDroppable` automatically adds `data-dnd-scroll` to itself, so its own scrolling works out of the box. If you have an **external** scrollable wrapper around several droppables, add `data-dnd-scroll` manually:
+### Auto-scroll
 
-```html
-<div class="scroll-wrapper" data-dnd-scroll style="overflow: auto;">
-  <DndDroppable ... />
-  <DndDroppable ... />
-</div>
-```
+Auto-scroll activates automatically for any `DndDroppable` element that has scrollable overflow (`overflow: auto` / `overflow: scroll`). `DndDroppable` sets `data-dnd-droppable` on its root element, and the scroll controller uses that marker to discover scrollable containers at runtime. No extra configuration is required.
 
 ### Disabling drag on child elements
 

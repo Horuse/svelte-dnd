@@ -28,12 +28,15 @@ import {
     type DropZone,
     type DndMode,
 } from '@horuse/svelte-dnd';
+import type { Droppable } from '@horuse/svelte-dnd';
 
 class MasonryStrategy extends SortableContainerStrategy {
     override readonly mode: DndMode = 'masonry'
 
-    override calculateDropZones(containerId: string, container: HTMLElement, session): DropZone[] {
-        // your masonry-specific zone calculation
+    override calculateDropZones(droppable: Droppable, session): DropZone[] {
+        const slots = droppable.getSortedSlots()
+        const direction = droppable.direction
+        // your masonry-specific zone calculation using droppable.element, slots, direction, etc.
         return []
     }
 }
@@ -55,7 +58,7 @@ Then use the custom mode on a droppable:
 
 ## Passing a plain instance
 
-If your strategy doesn't need `DndState` (e.g. it only overrides `calculateDropZones` and delegates animations elsewhere), you can pass a plain instance directly:
+If your strategy doesn't need `DndState` (i.e. it implements `ContainerStrategy` directly without extending a built-in class), you can pass a plain instance:
 
 ```ts
 const controller = new DndController({
@@ -65,21 +68,34 @@ const controller = new DndController({
 
 ## Overriding built-in strategies
 
-Passing a strategy with `mode: 'sortable'` or `mode: 'target'` **overrides** the built-in behaviour for that mode globally:
+Passing a factory with `mode: 'sortable'` or `mode: 'target'` **replaces** the built-in behaviour for that mode globally:
 
 ```ts
+class MySortableStrategy extends SortableContainerStrategy {
+    override readonly mode: DndMode = 'sortable'
+
+    override calculateDropZones(droppable: Droppable, session): DropZone[] {
+        // replaces built-in sortable zone calculation
+        return super.calculateDropZones(droppable, session)
+    }
+}
+
 const controller = new DndController({
-    strategies: [new MySortableStrategy(state)] // replaces built-in sortable
+    strategies: [(state) => new MySortableStrategy(state)]
 })
 ```
 
 ## Types
 
 ```ts
+import type { Droppable } from '@horuse/svelte-dnd';
+
 interface ContainerStrategy {
     readonly mode: DndMode;
-    calculateDropZones(containerId: string, container: HTMLElement, session: DragSession): DropZone[];
-    getTranslations(session: DragSession, registry: ContainerRegistry): Map<string, { x: number; y: number }>;
+    calculateDropZones(droppable: Droppable, session: DragSession | null): DropZone[];
+    getTranslations(droppable: Droppable, session: DragSession): Map<string, { x: number; y: number }>;
+    getDropAnimation(session: DragSession, targetZone: DropZone): AnimationStep;
+    getReturnAnimation(session: DragSession): AnimationStep;
 }
 
 type StrategyFactory = (state: DndState) => ContainerStrategy;
