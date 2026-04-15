@@ -113,6 +113,13 @@ export class DndController<TData = Record<string, unknown>> {
 	/** CSS translate offsets for each draggable item during an active drag. Keyed by item id. */
 	get translations() { return this.translationEngine.translations }
 
+	/**
+	 * Extra margin for the cross-container drop target so it grows in layout flow,
+	 * preventing translated items from visually overflowing into siblings.
+	 * null when not in a cross-container drag.
+	 */
+	get dropTargetPadding() { return this.translationEngine.dropTargetPadding }
+
 	/** `true` while the user is dragging an item. */
 	get dragging() { return this.state.dragging }
 

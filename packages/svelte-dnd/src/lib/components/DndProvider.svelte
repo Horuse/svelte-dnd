@@ -110,7 +110,7 @@
 			top: {dragController.transform.y}px;
 			width: {dragController.size.width}px;
 			height: {dragController.size.height}px;
-			transform: rotate({dragController.animatingReturn ? '0deg' : rotated ? 'var(--dnd-ghost-rotation, 3deg)' : '0deg'});
+			transform: rotate({dragController.animatingReturn ? '0deg' : rotated ? 'var(--dnd-ghost-rotation, 0deg)' : '0deg'});
 		"
 	>
 		{#if ghost && dragController.draggedItem}

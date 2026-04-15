@@ -75,6 +75,17 @@
 	let draggableEl = $state<HTMLElement | undefined>(undefined)
 
 	const translate = $derived(dndController?.translations.get(id) ?? { x: 0, y: 0 })
+
+	// Suppress spacing margin on the last slot unless the tail preview is active.
+	// When the tail preview is active, the last slot needs its margin so the preview has visual space.
+	const suppressSpacing = $derived.by(() => {
+		if (position === undefined || !droppable) return false
+		const isLast = position === droppable.slots.size - 1
+		if (!isLast) return false
+		const preview = dndController?.dropPreview
+		const tailActive = preview?.visible && preview.containerId === droppable.id && preview.position === droppable.slots.size
+		return !tailActive
+	})
 	const performingDrop = $derived(dndController?.performingDrop ?? false)
 	const isGhostActive = $derived(
 		draggable.isDragging ||
@@ -97,7 +108,7 @@
 	})
 </script>
 
-<div data-dnd-slot style="position: relative; overflow: visible" {@attach droppable?.attachSlot(slot)}>
+<div class="dnd-slot" data-dnd-slot style="position: relative; overflow: visible; {suppressSpacing ? '--dnd-slot-spacing-y: 0; --dnd-slot-spacing-x: 0' : ''}" {@attach droppable?.attachSlot(slot)}>
 	{#if position !== undefined}
 		<DndPreview {slot} {position} translateX={translate.x} translateY={translate.y} />
 	{/if}
@@ -123,6 +134,10 @@
 </div>
 
 <style>
+	.dnd-slot {
+        margin-right: var(--dnd-slot-spacing-x, 0);
+        margin-bottom: var(--dnd-slot-spacing-y, 0);
+	}
 	.dnd-draggable {
 		cursor: var(--dnd-draggable-cursor, grab);
 		user-select: none;

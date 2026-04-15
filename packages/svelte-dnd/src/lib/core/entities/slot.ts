@@ -38,21 +38,14 @@ export class Slot {
 				height: this.draggable.element.offsetHeight + Math.max(0, gapH)
 			}
 		} else {
-			// No slot neighbors — check the next DOM sibling of the wrapper
-			// (the always-mounted tail preview wrapper in DndDroppable) to capture gap/margin.
-			const nextSibling = this.element.nextElementSibling as HTMLElement | null
-			if (nextSibling) {
-				const wrapperRect = this.element.getBoundingClientRect()
-				const siblingRect = nextSibling.getBoundingClientRect()
-				return {
-					width: siblingRect.left - wrapperRect.left || this.draggable.element.offsetWidth,
-					height: siblingRect.top - wrapperRect.top || this.draggable.element.offsetHeight
-				}
-			}
-			const styles = getComputedStyle(this.draggable.element)
+			// No slot neighbors — use element size + CSS spacing variable.
+			// Cannot rely on DOM margin because suppressSpacing may have zeroed it on the last slot.
+			const slotStyles = getComputedStyle(this.element)
+			const spacingY = parseFloat(slotStyles.getPropertyValue('--dnd-slot-spacing-y')) || 0
+			const spacingX = parseFloat(slotStyles.getPropertyValue('--dnd-slot-spacing-x')) || 0
 			return {
-				width: this.draggable.element.offsetWidth + parseFloat(styles.marginLeft) + parseFloat(styles.marginRight),
-				height: this.draggable.element.offsetHeight + parseFloat(styles.marginTop) + parseFloat(styles.marginBottom)
+				width: this.draggable.element.offsetWidth + spacingX,
+				height: this.draggable.element.offsetHeight + spacingY
 			}
 		}
 	}

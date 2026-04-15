@@ -31,6 +31,12 @@
 		collision?: CollisionAlgorithm
 		/** Item type(s) this container accepts. If omitted, accepts everything. */
 		accepts?: string | string[]
+		/**
+		 * Gap between draggable items in pixels.
+		 * Applied as margin between adjacent `[data-dnd-slot]` elements (not after the last one).
+		 * Useful as a drop-in for `space-y-*` / `space-x-*` without requiring Tailwind.
+		 */
+		spacing?: number
 		children: Snippet
 		class?: string
 	}
@@ -43,6 +49,7 @@
 		mode = 'sortable',
 		collision = undefined,
 		accepts = undefined,
+		spacing = undefined,
 		children,
 		class: className
 	}: Props = $props()
@@ -68,6 +75,14 @@
 	)
 	setContext('dnd-droppable', droppable)
 
+	// Extra margin added during cross-container drag so the container grows in layout flow,
+	// preventing translated items from overflowing into siblings below/right.
+	const crossContainerSpacer = $derived.by(() => {
+		const info = dndController?.dropTargetPadding
+		if (!info || info.containerId !== id) return { x: 0, y: 0 }
+		return { x: info.x, y: info.y }
+	})
+
 	// Tail preview: handles position = slots.size (drop after last item in cross-container drags).
 	// Returns -1 (inactive) unless this container is the current drop target.
 	const tailPosition = $derived.by(() => {
@@ -80,6 +95,14 @@
 	$effect(() => {
 		if (tailPosition >= 0) lastValidTailPosition = tailPosition
 	})
+
+	// When the tail preview is active, the last slot already shows its spacing margin.
+	// Subtract that margin from the spacer to avoid double-spacing.
+	const spacerHeight = $derived.by(() => {
+		if (crossContainerSpacer.y === 0) return 0
+		const tailActive = tailPosition >= 0 && dndController?.dropPreview?.position === tailPosition
+		return Math.max(0, crossContainerSpacer.y - (tailActive ? (spacing ?? 0) : 0))
+	})
 </script>
 
 <div
@@ -88,14 +111,21 @@
 	aria-dropeffect={disabled ? 'none' : 'move'}
 	data-dnd-droppable
 	data-dnd-drop-id={id}
+	style={spacing != null ? (direction === 'horizontal' ? `--dnd-slot-spacing-x: ${spacing}px` : `--dnd-slot-spacing-y: ${spacing}px`) : undefined}
 	{@attach dndController?.attachDroppable(droppable)}
 >
-	{@render children()}
+	{@render children?.()}
 	{#if mode === 'sortable'}
 		<div style="position: relative">
 			<DndPreview {droppable} position={tailPosition >= 0 ? tailPosition : lastValidTailPosition} />
 		</div>
 	{/if}
+	<!-- Spacer that grows the container (including background) during cross-container drag,
+	     so translated items don't visually overflow outside the container's bounds. -->
+	<div
+		aria-hidden="true"
+		style="height: {spacerHeight}px; width: {crossContainerSpacer.x > 0 ? crossContainerSpacer.x + 'px' : '0'}; flex-shrink: 0; transition: {dndController?.dragging ? 'height 200ms ease, width 200ms ease' : 'none'}"
+	></div>
 </div>
 
 <style>

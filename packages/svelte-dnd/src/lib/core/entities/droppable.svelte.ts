@@ -1,3 +1,4 @@
+import { SvelteMap } from 'svelte/reactivity'
 import { isBrowser } from '../utils/dom-helper.js'
 import type { DndDirection, DndMode } from '../../types.js'
 import type { CollisionAlgorithm } from '../collision/collision-algorithm.js'
@@ -41,8 +42,7 @@ export class Droppable {
 	accepts: string | string[] | undefined
 	strategy: ContainerStrategy
 
-	// Map mutated only on mount/unmount — not $state
-	slots = new Map<HTMLElement, Slot>()
+	slots = new SvelteMap<HTMLElement, Slot>()
 
 	private controller: DroppableControllerRef
 	private scrollListeners: HTMLElement[] = []
