@@ -1,76 +1,55 @@
 <script lang="ts">
-	import { getContext, onDestroy } from 'svelte'
+	import { getContext } from 'svelte'
 	import type { DndController } from '../core/dnd/dnd-controller.svelte'
-	import { PreviewHandler, type PreviewConfig } from '../core/handlers/preview-handler.svelte.js'
+	import { Preview, type PreviewConfig } from '../core/entities/preview.svelte.js'
 	import type { Slot } from '../core/entities/slot.js'
 	import type { Droppable } from '../core/entities/droppable.svelte.js'
 
 	interface Props {
-		/** New: pass a Slot entity — direction is read from slot.droppable, no DOMHelper needed. */
+		/** Pass a Slot entity — container and direction are resolved from slot.droppable. */
 		slot?: Slot
 		/** Tail preview: pass the Droppable entity directly. */
 		droppable?: Droppable
-		/** Legacy: explicit container id (used when neither slot nor droppable is available). */
-		containerId?: string
-		/** Explicit position (used by tail preview and legacy path). */
-		position?: number
+		/** Position within the droppable (required). */
+		position: number
 		class?: string
 		previewConfig?: PreviewConfig
-		translateX?: number
-		translateY?: number
 	}
 
-	let { slot, droppable, containerId, position, class: className = '', previewConfig, translateX = 0, translateY = 0 }: Props = $props()
+	let { slot, droppable, position, class: className = '', previewConfig }: Props = $props()
 
-	// Resolve container id and position from slot or droppable when available
-	const resolvedContainerId = $derived(slot?.droppable.id ?? droppable?.id ?? containerId ?? '')
-	// Prefer the explicit position prop (reactive $props) over slot.position (plain field that
-	// can be stale after {#each} reorders items). slot.position serves as fallback for custom usage.
-	const resolvedPosition = $derived(position ?? slot?.position ?? -1)
-
-	const dndManager = getContext<DndController>('dnd')
-	const handler = new PreviewHandler()
+	const dndController = getContext<DndController>('dnd')
+	const preview = new Preview(dndController, { slot, droppable, position, config: previewConfig })
 
 	$effect(() => {
-		handler.showDelay = previewConfig?.showDelay ?? 300
-		handler.collapseDelay = previewConfig?.collapseDelay ?? 200
+		preview.slot = slot
+		preview.droppable = droppable
+		preview.position = position
+		preview.showDelay = previewConfig?.showDelay ?? 300
+		preview.collapseDelay = previewConfig?.collapseDelay ?? 200
 	})
 
-	const visible = $derived(
-		!!dndManager?.dropPreview &&
-		dndManager.dropPreview.containerId === resolvedContainerId &&
-		dndManager.dropPreview.position === resolvedPosition &&
-		dndManager.dropPreview.visible
-	)
-
-	let alignSecondary = $state(false)
-	let horizontal = $state(false)
-
 	$effect(() => {
-		if (visible) {
-			// Resolve direction from entity (slot or droppable), no DOM query needed
-			horizontal = slot?.droppable.isHorizontal ?? droppable?.isHorizontal ?? false
-			alignSecondary = horizontal ? translateX < 0 : translateY < 0
-			handler.show(dndManager)
+		if (preview.isVisible) {
+			preview.show()
 		} else {
-			handler.hide(dndManager?.performingDrop ?? false)
+			preview.hide(dndController?.performingDrop ?? false)
 		}
 	})
-
-	onDestroy(() => handler.destroy())
 </script>
 
 <div
 	data-dnd-preview
-	data-dnd-preview-position={resolvedPosition}
+	data-dnd-preview-position={position}
 	class="dnd-preview {className}"
-	class:dnd-preview--revealed={handler.revealed}
-	class:dnd-preview--instant={handler.instant}
-	class:dnd-preview--align-bottom={alignSecondary && !horizontal}
-	class:dnd-preview--align-right={alignSecondary && horizontal}
-	style:height={`${handler.height}px`}
-	style:width={`${handler.width}px`}
-	style:visibility={handler.height === 0 ? 'hidden' : undefined}
+	class:dnd-preview--revealed={preview.revealed}
+	class:dnd-preview--instant={preview.instant}
+	class:dnd-preview--align-bottom={preview.align === 'end' && !preview.isHorizontal}
+	class:dnd-preview--align-right={preview.align === 'end' && preview.isHorizontal}
+	style:height={`${preview.height}px`}
+	style:width={`${preview.width}px`}
+	style:visibility={preview.height === 0 ? 'hidden' : undefined}
+	{@attach preview.attach()}
 >
 </div>
 

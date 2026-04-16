@@ -2,7 +2,6 @@ import type { AnimationStep } from './animation-step.js'
 import type { DndState } from '../../dnd/dnd-state.svelte.js'
 import type { DropZone } from '../../../types.js'
 import type { Droppable } from '../../entities/droppable.svelte.js'
-import { DOMHelper } from '../../utils/dom-helper.js'
 
 const ANIMATION_DURATION = 250
 const easing = { outQuad: (t: number) => 1 - Math.pow(1 - t, 2) }
@@ -75,16 +74,19 @@ export class GhostToTargetStep implements AnimationStep {
 			}
 		}
 
-		const preview = DOMHelper.findPreview(container, this.targetZone.position)
-		if (preview) {
-			const slotWrapper = (preview.parentElement ?? preview) as HTMLElement
+		const previewEntity =
+			droppable?.getSlotAt(this.targetZone.position)?.preview ?? droppable?.tailPreview
+		const previewEl = previewEntity?.element
+		if (previewEl && previewEntity) {
+			const slotWrapper = (previewEl.parentElement ?? previewEl) as HTMLElement
 			const wrapperRect = slotWrapper.getBoundingClientRect()
-			const isAlignBottom = preview.classList.contains('dnd-preview--align-bottom')
-			const isAlignRight = preview.classList.contains('dnd-preview--align-right')
-			const y = isAlignBottom
+			const isHorizontal = previewEntity.isHorizontal
+			const alignEndY = previewEntity.align === 'end' && !isHorizontal
+			const alignEndX = previewEntity.align === 'end' && isHorizontal
+			const y = alignEndY
 				? wrapperRect.bottom - (this.state.size?.height ?? 0)
 				: wrapperRect.top
-			const x = isAlignRight
+			const x = alignEndX
 				? wrapperRect.right - (this.state.size?.width ?? 0)
 				: wrapperRect.left
 			return { x, y }

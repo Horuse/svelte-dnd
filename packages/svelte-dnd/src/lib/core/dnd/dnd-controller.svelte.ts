@@ -1,6 +1,6 @@
 import { DndState } from './dnd-state.svelte.js'
 import { ScrollController, type ScrollConfig } from '../scroll/scroll-controller.js'
-import { type PreviewConfig } from '../handlers/preview-handler.svelte.js'
+import { type PreviewConfig } from '../entities/preview.svelte.js'
 import { DndEventEmitter } from './dnd-event-emitter.js'
 import { TranslationEngine } from '../zones/translation-engine.svelte.js'
 import { SortableContainerStrategy } from '../containers/strategies/sortable-container-strategy.js'

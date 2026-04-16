@@ -1,5 +1,7 @@
 import { untrack } from 'svelte'
 import type { Slot } from './slot.js'
+import type { Droppable } from './droppable.svelte.js'
+import type { DropPreview } from '../../types.js'
 
 export interface PreviewConfig {
 	/** Debounce delay (ms) before revealing the preview slot. Default: 300 */
@@ -10,23 +12,30 @@ export interface PreviewConfig {
 
 // Minimal controller interface needed by Preview
 export type PreviewControllerRef = {
-	session: { source: import('./draggable.svelte.js').Draggable; currentTarget: import('./droppable.svelte.js').Droppable | null; previewPosition: number | null } | null
+	dropPreview: DropPreview | null
 	skipDropPreviewAnimation: boolean
 	performingDrop: boolean
-	dropPreview: import('../../types.js').DropPreview | null
+	translations: Map<string, { x: number; y: number }>
+}
+
+export interface PreviewInit {
+	slot?: Slot
+	droppable?: Droppable
+	position: number
+	config?: PreviewConfig
 }
 
 export class Preview {
 	element!: HTMLElement
-	slot!: Slot
+	slot = $state<Slot | undefined>(undefined)
+	droppable = $state<Droppable | undefined>(undefined)
+	position = $state(0)
 
-	// State (was in PreviewHandler)
 	height = $state(0)
 	width = $state(0)
 	revealed = $state(false)
 	instant = $state(false)
 
-	// Config delays
 	showDelay: number
 	collapseDelay: number
 
@@ -34,47 +43,50 @@ export class Preview {
 	private showTimer: ReturnType<typeof setTimeout> | null = null
 	private collapseTimer: ReturnType<typeof setTimeout> | null = null
 
-	constructor(controller: PreviewControllerRef, config?: PreviewConfig) {
+	constructor(controller: PreviewControllerRef, init: PreviewInit) {
 		this.controller = controller
-		this.showDelay = config?.showDelay ?? 300
-		this.collapseDelay = config?.collapseDelay ?? 200
+		this.slot = init.slot
+		this.droppable = init.droppable
+		this.position = init.position
+		this.showDelay = init.config?.showDelay ?? 300
+		this.collapseDelay = init.config?.collapseDelay ?? 200
+	}
+
+	get containerId(): string {
+		return this.slot?.droppable.id ?? this.droppable?.id ?? ''
+	}
+
+	get isHorizontal(): boolean {
+		return this.slot?.droppable.isHorizontal ?? this.droppable?.isHorizontal ?? false
 	}
 
 	get isVisible(): boolean {
-		const session = this.controller.session
-		if (!session?.currentTarget || session.previewPosition === null) return false
-		return (
-			session.currentTarget === this.slot.droppable &&
-			session.previewPosition === this.slot.position
-		)
+		const dp = this.controller.dropPreview
+		return !!dp?.visible && dp.containerId === this.containerId && dp.position === this.position
 	}
 
 	/**
-	 * Whether the preview should align to the bottom edge of the slot.
-	 * Used by GhostToTargetStep and for CSS class application.
-	 * Computed from the ghost transform direction relative to slot position.
+	 * Which edge of the slot wrapper the preview anchors to.
+	 * Computed from this slot's translate — a negative translate means the slot
+	 * has moved backward, so the ghost lands at the far edge of the wrapper.
+	 * Tail previews (no slot) always anchor to 'start'.
 	 */
-	get isAlignBottom(): boolean {
-		const session = this.controller.session
-		if (!session) return false
-		const transform = session.source.translate
-		return !this.slot.droppable.isHorizontal && transform.y < 0
+	get align(): 'start' | 'end' {
+		const id = this.slot?.draggable?.id
+		if (!id) return 'start'
+		const translate = this.controller.translations.get(id) ?? { x: 0, y: 0 }
+		const val = this.isHorizontal ? translate.x : translate.y
+		return val < 0 ? 'end' : 'start'
 	}
 
-	get isAlignRight(): boolean {
-		const session = this.controller.session
-		if (!session) return false
-		const transform = session.source.translate
-		return this.slot.droppable.isHorizontal && transform.x < 0
-	}
-
-	show(skipAnimation: boolean) {
-		this.height = this.controller.dropPreview?.draggedElementHeight ?? 0
-		this.width = this.controller.dropPreview?.draggedElementWidth ?? 0
+	show() {
+		const dp = this.controller.dropPreview
+		this.height = dp?.draggedElementHeight ?? 0
+		this.width = dp?.draggedElementWidth ?? 0
 
 		if (this.collapseTimer) { clearTimeout(this.collapseTimer); this.collapseTimer = null }
 
-		const skip = untrack(() => skipAnimation)
+		const skip = untrack(() => this.controller.skipDropPreviewAnimation)
 		if (skip) {
 			if (this.showTimer) { clearTimeout(this.showTimer); this.showTimer = null }
 			this.revealed = true
@@ -113,14 +125,16 @@ export class Preview {
 		if (this.collapseTimer) clearTimeout(this.collapseTimer)
 	}
 
-	/** @attach handler — sets element reference on the Preview instance */
+	/** @attach handler — sets element reference and links to slot or droppable (tail preview). */
 	attach() {
 		return (element: HTMLElement) => {
 			this.element = element
-			this.slot.preview = this
+			if (this.slot) this.slot.preview = this
+			else if (this.droppable) this.droppable.tailPreview = this
 			return () => {
 				this.destroy()
-				this.slot.preview = undefined
+				if (this.slot) this.slot.preview = undefined
+				else if (this.droppable) this.droppable.tailPreview = undefined
 			}
 		}
 	}

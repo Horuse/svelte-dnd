@@ -115,7 +115,7 @@
 
 <div class="dnd-slot" data-dnd-slot style="position: relative; overflow: visible; {droppable?.direction === 'horizontal' ? `margin-right: ${spacingPx}px` : `margin-bottom: ${spacingPx}px`}" {@attach droppable?.attachSlot(slot)}>
 	{#if position !== undefined}
-		<DndPreview {slot} {position} translateX={translate.x} translateY={translate.y} />
+		<DndPreview {slot} {position} />
 	{/if}
 
 	<div

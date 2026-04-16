@@ -5,7 +5,7 @@ export { default as DndPreview } from './components/DndPreview.svelte'
 export { DndController } from './core/dnd/dnd-controller.svelte.js'
 export type { DndControllerConfig, StrategyFactory } from './core/dnd/dnd-controller.svelte.js'
 export type { ScrollConfig } from './core/scroll/scroll-controller.js'
-export type { PreviewConfig } from './core/handlers/preview-handler.svelte.js'
+export type { PreviewConfig } from './core/entities/preview.svelte.js'
 export { DndSimulator } from './core/dnd/dnd-simulator.js'
 export type {
 	DndDragEvent, DndDropEvent, DropZone, DropPreview, DndDirection, DndMode,

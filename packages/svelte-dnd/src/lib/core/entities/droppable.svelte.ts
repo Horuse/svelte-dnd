@@ -4,6 +4,7 @@ import type { DndDirection, DndMode } from '../../types.js'
 import type { CollisionAlgorithm } from '../collision/collision-algorithm.js'
 import type { ContainerStrategy } from '../containers/strategies/container-strategy.js'
 import type { Slot } from './slot.js'
+import type { Preview } from './preview.svelte.js'
 
 // Minimal controller interface needed by Droppable
 export type DroppableControllerRef = {
@@ -44,6 +45,7 @@ export class Droppable {
 	strategy: ContainerStrategy
 
 	slots = new SvelteMap<HTMLElement, Slot>()
+	tailPreview: Preview | undefined = undefined
 
 	private controller: DroppableControllerRef
 	private scrollListeners: HTMLElement[] = []

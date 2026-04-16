@@ -138,7 +138,7 @@ export class DndSimulator {
 			// Wait one frame for DndPreview to render at toContainerId/toPosition
 			requestAnimationFrame(() => {
 				AnimationPipeline.chain(step).execute().then(() => {
-					// setPerformingDrop(true) here so PreviewHandler.hide() collapses instantly
+					// setPerformingDrop(true) here so Preview.hide() collapses instantly
 					this.state.setPerformingDrop(true)
 					if (options.emitEvents) {
 						const toDroppable = this.droppablesById.get(toContainerId)
