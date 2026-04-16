@@ -28,6 +28,7 @@ const controller = new DndController({
     scroll: {
         scrollZoneRatio: 0.2, // trigger zone = 20% of container height/width (default: 0.3)
         maxSpeed: 20,          // max px/frame at 60fps (default: 30)
+        stopOnDrop: true,      // stop scroll immediately on drop (default: false — scroll continues during ghost animation)
     },
     preview: {
         showDelay: 150,     // ms before preview slot appears (default: 300)
@@ -49,6 +50,7 @@ const controller = new DndController({
     scroll: {
         scrollZoneRatio: 0.3,
         maxSpeed: 30,
+        stopOnDrop: false,
     },
     preview: {
         showDelay: 300,
@@ -278,6 +280,8 @@ interface ScrollConfig {
     scrollZoneRatio?: number;
     /** Maximum scroll speed in px/frame at 60fps. Default: 30 */
     maxSpeed?: number;
+    /** Stop auto-scroll immediately when drop is committed. Default: false — scroll continues during ghost animation for a smoother feel. */
+    stopOnDrop?: boolean;
 }
 
 interface PreviewConfig {

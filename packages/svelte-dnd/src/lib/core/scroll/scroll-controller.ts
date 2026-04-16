@@ -5,6 +5,12 @@ export interface ScrollConfig {
 	scrollZoneRatio?: number
 	/** Maximum scroll speed in pixels per frame (at 60fps). Default: 30 */
 	maxSpeed?: number
+	/**
+	 * Stop auto-scroll immediately when a drop is committed.
+	 * When `false` (default), scroll continues during the ghost flight animation for a smoother feel.
+	 * When `true`, scroll stops the moment the user releases — useful if you prefer a hard stop.
+	 */
+	stopOnDrop?: boolean
 }
 
 export interface ScrollOptions extends ScrollConfig {
@@ -214,6 +220,8 @@ export class ScrollController {
 
 		return containers
 	}
+
+	get stopOnDrop() { return this.options.stopOnDrop ?? false }
 
 	updateConfig(config: ScrollConfig) {
 		this.options = { ...this.options, ...config }

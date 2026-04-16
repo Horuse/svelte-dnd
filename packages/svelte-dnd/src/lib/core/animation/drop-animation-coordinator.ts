@@ -134,7 +134,7 @@ export class DropAnimationCoordinator {
 		)
 
 		this.state.setPerformingDrop(true)
-		this.scrollController.clearAll()
+		if (this.scrollController.stopOnDrop) this.scrollController.clearAll()
 
 		const isCrossContainer = targetContainerId !== originContainerId
 
