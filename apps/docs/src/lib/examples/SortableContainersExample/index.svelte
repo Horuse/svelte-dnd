@@ -128,7 +128,7 @@
 
 
 	<DndProvider {controller}>
-		<DndDroppable id="board" direction="horizontal" accepts="column" class="flex flex-row h-125 overflow-x-auto space-x-4 w-full">
+		<DndDroppable id="board" direction="horizontal" accepts="column" spacing={16} class="flex flex-row h-125 overflow-x-auto w-full">
 			{#each columns as column, colIndex (column.id)}
 				<DndDraggable class="h-full" id={column.id} type="column" position={colIndex}>
 					<div class="flex flex-col h-full shrink-0 w-72 bg-foreground border-2 border-primary rounded-2xl">
@@ -137,7 +137,7 @@
 							{column.title}
 						</h2>
 						<!-- svelte-ignore a11y_no_static_element_interactions -->
-						<DndDroppable id={column.id} direction="vertical" accepts="task" class="space-y-2 p-3 h-full overflow-auto border-t-2 border-primary pt-3">
+						<DndDroppable id={column.id} direction="vertical" accepts="task" spacing={8} class="p-3 h-full overflow-auto border-t-2 border-primary pt-3">
 							{#each column.tasks as task, taskIndex (task.id)}
 								<DndDraggable id={task.id} type="task" data={{ label: task.label, columnId: column.id }} position={taskIndex}>
 									<div class="drag-item px-4 gap-3" style="height: {task.height}px">

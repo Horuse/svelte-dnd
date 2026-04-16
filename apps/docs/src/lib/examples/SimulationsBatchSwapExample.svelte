@@ -71,7 +71,7 @@
 			<div class="flex flex-col gap-2">
 				<span class="text-sm text-neutral-500 font-semibold">Team A</span>
 				<DndDroppable
-					class="flex space-y-3 flex-col w-48 p-3 bg-foreground border-2 border-second rounded-xl"
+					spacing={12} class="flex flex-col w-48 p-3 bg-foreground border-2 border-second rounded-xl"
 					id="team-a"
 					direction="vertical"
 				>
@@ -88,7 +88,7 @@
 			<div class="flex flex-col gap-2">
 				<span class="text-sm font-semibold text-neutral-500">Team B</span>
 				<DndDroppable
-					class="flex space-y-3 flex-col w-48 p-3 bg-foreground border-2 border-second rounded-xl"
+					spacing={12} class="flex flex-col w-48 p-3 bg-foreground border-2 border-second rounded-xl"
 					id="team-b"
 					direction="vertical"
 				>

@@ -18,6 +18,7 @@ Defines a container that accepts draggable items. Automatically registers drop z
 | `direction` | `DndDirection` | `'vertical'` | Layout direction: `'vertical'` \| `'horizontal'` \| `'grid'` |
 | `mode` | `DndMode` | `'sortable'` | `'sortable'` — position-based drop zones with insert previews. `'target'` — single drop zone covering the whole container, no previews |
 | `collision` | `CollisionAlgorithm` | `undefined` | Per-container collision algorithm. Overrides the global algorithm set on `DndController`. `undefined` falls back to the global, or `centerPoint` if none. See [Collision Detection](/docs/collision) |
+| `spacing` | `number` | `undefined` | Gap between items in pixels. Applied as margin between adjacent slots (not after the last one). Useful as a drop-in for `space-y-*` / `space-x-*` |
 | `class` | `string` | — | Additional CSS class names |
 
 ### Snippets

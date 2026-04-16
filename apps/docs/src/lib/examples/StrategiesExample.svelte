@@ -57,7 +57,7 @@
 		<div class="flex h-72 gap-4">
 			<div class="flex flex-col w-56 shrink-0 h-full bg-foreground border-2 border-primary rounded-2xl">
 				<h2 class="text-lg p-4 font-semibold text-neutral-500">Inbox</h2>
-				<DndDroppable id="inbox" class="space-y-2 p-3 h-full overflow-auto border-t-2 border-primary pt-3">
+				<DndDroppable id="inbox" spacing={8} class="p-3 h-full overflow-auto border-t-2 border-primary pt-3">
 					{#each inbox as item, index (item.id)}
 						<DndDraggable id={item.id} position={index}>
 							<div class="drag-item text-sm">{item.label}</div>
@@ -68,7 +68,7 @@
 
 			<div class="flex flex-col w-56 shrink-0 h-full bg-foreground border-2 border-primary rounded-2xl">
 				<h2 class="text-lg p-4 font-semibold text-neutral-500">Triage <span class="text-xs opacity-50">priority mode</span></h2>
-				<DndDroppable id="triage" mode="priority" class="space-y-2 p-3 h-full overflow-auto border-t-2 border-primary pt-3">
+				<DndDroppable id="triage" mode="priority" spacing={8} class="p-3 h-full overflow-auto border-t-2 border-primary pt-3">
 					<div class="zone-hint top">⬆ High</div>
 					{#each triage as item, index (item.id)}
 						<DndDraggable id={item.id} position={index}>

@@ -22,6 +22,7 @@
 		class?: string;
 		collapsible?: boolean;
 		defaultExpanded?: boolean;
+		showPreview?: boolean;
 		[key: string]: unknown;
 	};
 
@@ -35,6 +36,7 @@
 		class: className = '',
 		collapsible = false,
 		defaultExpanded = false,
+		showPreview = true,
 		...restProps
 	}: ComponentProps = $props();
 
@@ -99,16 +101,18 @@
 </script>
 
 	<section class="flex h-full relative flex-col">
-		<div class="flex w-full flex-1 flex-col p-8 border rounded-2xl">
-			{#key previewKey}
-				{@render children?.()}
-			{/key}
-		</div>
+		{#if showPreview}
+			<div class="flex w-full flex-1 flex-col p-8 border rounded-2xl">
+				{#key previewKey}
+					{@render children?.()}
+				{/key}
+			</div>
+		{/if}
 		<div
-			class="mt-4 flex flex-1 flex-col overflow-hidden rounded-2xl border border-primary bg-foreground"
+			class="{showPreview ? 'mt-4' : ''} flex flex-1 flex-col overflow-hidden rounded-2xl border border-primary bg-foreground"
 		>
 			{#if tabs.length}
-				<div class="flex items-center border-b border-border bg-foreground text-sm">
+				<div class="flex items-center bg-foreground text-sm">
 					<div class="flex flex-1 p-2 items-center overflow-x-auto">
 						{#each tabs as tab, index (tab.name)}
 							<button

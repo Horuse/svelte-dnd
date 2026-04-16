@@ -55,7 +55,7 @@
 
 	<DndProvider {controller}>
 		<DndDroppable
-			class="flex space-y-3 flex-col h-72 overflow-y-auto max-w-sm p-3 bg-foreground border-2 border-second rounded-xl"
+			spacing={12} class="flex flex-col h-72 overflow-y-auto max-w-sm p-3 bg-foreground border-2 border-second rounded-xl"
 			id="list"
 			direction="vertical"
 		>

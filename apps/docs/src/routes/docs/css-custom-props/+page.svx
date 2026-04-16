@@ -15,7 +15,7 @@ These properties control the floating ghost element that follows the cursor duri
 |----------|---------|-------------|
 | `--dnd-ghost-z-index` | `9999` | Stacking order of the ghost element |
 | `--dnd-ghost-opacity` | `0.8` | Opacity of the ghost element |
-| `--dnd-ghost-rotation` | `3deg` | Rotation angle applied during drag |
+| `--dnd-ghost-rotation` | `0deg` | Rotation angle applied during drag |
 | `--dnd-ghost-rotation-duration` | `200ms` | Transition speed for the rotation animation |
 | `--dnd-ghost-scale` | `1` | Scale factor of the ghost element |
 

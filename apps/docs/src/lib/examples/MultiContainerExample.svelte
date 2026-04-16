@@ -57,7 +57,7 @@
 		{#each Object.entries(columns) as [columnId, columnItems] (columnId)}
 			<div class="flex flex-col w-72 shrink-0 h-full bg-foreground border-2 border-primary rounded-2xl">
 				<h2 class="text-xl p-6 font-semibold text-neutral-500">{columnMeta[columnId]}</h2>
-				<DndDroppable id={columnId} direction="vertical" class="space-y-3 overflow-y-auto p-3 border-t-2 border-primary pt-4 h-full">
+				<DndDroppable id={columnId} direction="vertical" spacing={12} class="overflow-y-auto p-3 border-t-2 border-primary pt-4 h-full">
 					{#each columnItems as item, index (item.id)}
 						<DndDraggable id={item.id} position={index}>
 							<div class="drag-item">

@@ -47,7 +47,7 @@
 </script>
 
 <div class="w-full rounded-2xl border border-primary p-2 bg-foreground">
-	<div class="flex items-center justify-between border-b border-border">
+	<div class="flex items-center justify-between">
 		<div class="flex items-center">
 			{#each packageManagers as pm (pm)}
 				<button

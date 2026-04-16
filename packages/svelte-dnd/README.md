@@ -5,7 +5,7 @@
 
 A drag-and-drop library for Svelte 5 with animated drop previews, auto-scroll, and multi-container support.
 
-![DND preview](https://github.com/Horuse/svelte-dnd/blob/main/static/preview.gif?raw=true)
+![DND preview](https://github.com/Horuse/svelte-dnd/blob/main/apps/docs/static/preview.gif?raw=true)
 
 ## Features
 

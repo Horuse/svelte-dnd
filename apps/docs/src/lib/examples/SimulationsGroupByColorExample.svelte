@@ -124,7 +124,7 @@
 						<span class="text-sm text-neutral-500 font-semibold">{labelMap[color]}</span>
 					</div>
 					<DndDroppable
-						class="flex flex-col space-y-2 w-48 min-h-40 p-3 bg-foreground border-2 {colorStyles[color].border} rounded-xl"
+						spacing={8} class="flex flex-col w-48 min-h-40 p-3 bg-foreground border-2 {colorStyles[color].border} rounded-xl"
 						id={color}
 						direction="vertical"
 					>
