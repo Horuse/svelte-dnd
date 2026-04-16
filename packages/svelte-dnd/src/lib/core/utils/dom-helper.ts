@@ -7,7 +7,7 @@ export const isBrowser = typeof window !== 'undefined'
 
 // DOM selectors
 const SELECTORS = {
-	container: (id: string) => `[data-dnd-drop-id="${id}"]`,
+	container: (id: string) => `[data-dnd-drop-id="${CSS.escape(id)}"]`,
 	preview: (position: number) => `[data-dnd-preview-position="${position}"]`
 } as const
 
