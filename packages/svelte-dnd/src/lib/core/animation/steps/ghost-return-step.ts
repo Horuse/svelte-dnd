@@ -38,15 +38,15 @@ export class GhostReturnStep implements AnimationStep {
 				return
 			}
 
-			const placeholder = DOMHelper.findPlaceholder(container, this.position)
-			if (placeholder) {
-				this.handleFoundPlaceholder(container, placeholder, resolve)
+			const preview = DOMHelper.findPreview(container, this.position)
+			if (preview) {
+				this.handleFoundPreview(container, preview, resolve)
 			} else {
 				requestAnimationFrame(() => {
 					if (this.cancelled) { resolve(); return }
-					const retry = DOMHelper.findPlaceholder(container!, this.position)
+					const retry = DOMHelper.findPreview(container!, this.position)
 					if (retry) {
-						this.handleFoundPlaceholder(container!, retry, resolve)
+						this.handleFoundPreview(container!, retry, resolve)
 					} else {
 						this.startSimpleReturn(resolve)
 					}
@@ -59,8 +59,8 @@ export class GhostReturnStep implements AnimationStep {
 		this.cancelled = true
 	}
 
-	private handleFoundPlaceholder(container: HTMLElement, placeholder: HTMLElement, resolve: () => void): void {
-		if (DOMHelper.isElementVisibleInContainer(placeholder, container)) {
+	private handleFoundPreview(container: HTMLElement, preview: HTMLElement, resolve: () => void): void {
+		if (DOMHelper.isElementVisibleInContainer(preview, container)) {
 			this.startSimpleReturn(resolve)
 		} else {
 			this.executeScrollSync(container, resolve)
@@ -132,14 +132,14 @@ export class GhostReturnStep implements AnimationStep {
 		const adapter = getDirectionAdapter(direction)
 		const startScroll = adapter.getScroll(container)
 		const startGhostPos = { ...this.state.transform! }
-		const placeholderRect = slotWrapper.getBoundingClientRect()
+		const previewRect = slotWrapper.getBoundingClientRect()
 
 		const expectedSize = direction === 'horizontal'
 			? this.state.dropPreview?.draggedElementWidth || this.state.elementSize?.width || 0
 			: this.state.dropPreview?.draggedElementHeight || this.state.elementSize?.height || 0
 
 		const { targetScroll, scrollDelta } = this.scrollCalc.calculateScrollTarget({
-			placeholder: slotWrapper,
+			preview: slotWrapper,
 			container,
 			expectedSize,
 			direction
@@ -149,7 +149,7 @@ export class GhostReturnStep implements AnimationStep {
 		const duration = this.scrollCalc.calculateAdaptiveDuration(scrollDistance)
 
 		const finalGhostPos = this.scrollCalc.calculateFinalGhostPosition({
-			placeholderRect,
+			previewRect,
 			scrollDelta,
 			direction
 		})
@@ -196,6 +196,6 @@ export class GhostReturnStep implements AnimationStep {
 		// DOM fallback for tail preview or missing entity
 		const container = droppable?.element
 		if (!container) return null
-		return DOMHelper.findPlaceholderSlot(container, this.position)
+		return DOMHelper.findPreviewSlot(container, this.position)
 	}
 }

@@ -8,7 +8,7 @@ export const isBrowser = typeof window !== 'undefined'
 // DOM selectors
 const SELECTORS = {
 	container: (id: string) => `[data-dnd-drop-id="${id}"]`,
-	placeholder: (position: number) => `[data-dnd-preview-position="${position}"]`
+	preview: (position: number) => `[data-dnd-preview-position="${position}"]`
 } as const
 
 export class DOMHelper {
@@ -22,19 +22,19 @@ export class DOMHelper {
 		return container ? container.getBoundingClientRect() : null
 	}
 
-	// Placeholder queries
-	static findPlaceholder(container: HTMLElement, position: number): HTMLElement | null {
-		const all = container.querySelectorAll<HTMLElement>(SELECTORS.placeholder(position))
+	// Preview queries
+	static findPreview(container: HTMLElement, position: number): HTMLElement | null {
+		const all = container.querySelectorAll<HTMLElement>(SELECTORS.preview(position))
 		for (const el of all) {
 			if (el.closest('[data-dnd-drop-id]') === container) return el
 		}
 		return null
 	}
 
-	static findPlaceholderSlot(container: HTMLElement, position: number): HTMLElement | null {
-		const placeholder = DOMHelper.findPlaceholder(container, position)
-		if (!placeholder) return null
-		return placeholder.parentElement ?? placeholder
+	static findPreviewSlot(container: HTMLElement, position: number): HTMLElement | null {
+		const preview = DOMHelper.findPreview(container, position)
+		if (!preview) return null
+		return preview.parentElement ?? preview
 	}
 
 	// Visibility checks

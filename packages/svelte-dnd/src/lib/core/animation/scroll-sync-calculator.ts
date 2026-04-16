@@ -9,7 +9,7 @@ const ANIMATION_DURATION = {
 const SCROLL_SPEED_PX_PER_SEC = 1800
 
 interface ScrollTargetParams {
-	placeholder: HTMLElement
+	preview: HTMLElement
 	container: HTMLElement
 	expectedSize: number
 	direction: 'vertical' | 'horizontal'
@@ -21,17 +21,17 @@ interface ScrollTargetResult {
 }
 
 interface FinalGhostPositionParams {
-	placeholderRect: DOMRect
+	previewRect: DOMRect
 	scrollDelta: number
 	direction: 'vertical' | 'horizontal'
 }
 
 export class ScrollSyncCalculator {
 	calculateScrollTarget(params: ScrollTargetParams): ScrollTargetResult {
-		const { placeholder, container, expectedSize, direction } = params
+		const { preview, container, expectedSize, direction } = params
 		const adapter = getDirectionAdapter(direction)
 
-		const placeholderRect = placeholder.getBoundingClientRect()
+		const previewRect = preview.getBoundingClientRect()
 		const containerRect = container.getBoundingClientRect()
 
 		const startScroll = adapter.getScroll(container)
@@ -39,19 +39,19 @@ export class ScrollSyncCalculator {
 		const containerStart = adapter.getPosition(containerRect)
 		const containerEnd = containerStart + containerSize
 
-		const placeholderSize = adapter.getSize(placeholderRect) || expectedSize
-		const placeholderStart = adapter.getPosition(placeholderRect)
-		const placeholderEnd = adapter.getEndPosition(placeholderRect, placeholderSize)
+		const previewSize = adapter.getSize(previewRect) || expectedSize
+		const previewStart = adapter.getPosition(previewRect)
+		const previewEnd = adapter.getEndPosition(previewRect, previewSize)
 
 		let targetScroll = startScroll
 
-		if (placeholderStart < containerStart) {
-			// Placeholder вище/лівіше видимої області
-			const overflow = containerStart - placeholderStart
+		if (previewStart < containerStart) {
+			// Preview is above/left of the visible viewport
+			const overflow = containerStart - previewStart
 			targetScroll = startScroll - overflow
-		} else if (placeholderEnd > containerEnd) {
-			// Placeholder нижче/правіше видимої області
-			const overflow = placeholderEnd - containerEnd
+		} else if (previewEnd > containerEnd) {
+			// Preview is below/right of the visible viewport
+			const overflow = previewEnd - containerEnd
 			targetScroll = startScroll + overflow
 		}
 
@@ -72,17 +72,17 @@ export class ScrollSyncCalculator {
 	}
 
 	calculateFinalGhostPosition(params: FinalGhostPositionParams): { x: number; y: number } {
-		const { placeholderRect, scrollDelta, direction } = params
+		const { previewRect, scrollDelta, direction } = params
 
 		if (direction === 'horizontal') {
 			return {
-				x: placeholderRect.left - scrollDelta,
-				y: placeholderRect.top
+				x: previewRect.left - scrollDelta,
+				y: previewRect.top
 			}
 		} else {
 			return {
-				x: placeholderRect.left,
-				y: placeholderRect.top - scrollDelta
+				x: previewRect.left,
+				y: previewRect.top - scrollDelta
 			}
 		}
 	}

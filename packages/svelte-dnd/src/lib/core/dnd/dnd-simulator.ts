@@ -135,7 +135,7 @@ export class DndSimulator {
 
 			const step = makeStep()
 
-			// Wait one frame for DndPreview placeholder to render at toContainerId/toPosition
+			// Wait one frame for DndPreview to render at toContainerId/toPosition
 			requestAnimationFrame(() => {
 				AnimationPipeline.chain(step).execute().then(() => {
 					// setPerformingDrop(true) here so PreviewHandler.hide() collapses instantly

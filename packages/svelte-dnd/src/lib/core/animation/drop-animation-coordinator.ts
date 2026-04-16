@@ -140,7 +140,7 @@ export class DropAnimationCoordinator {
 
 		// Start slot collapse immediately, in parallel with the ghost flight.
 		// GhostToTargetStep.calculateTargetPosition() reads live DOM positions each frame,
-		// so the ghost automatically tracks the placeholder as block B moves up/left.
+		// so the ghost automatically tracks the preview as block B moves up/left.
 		const collapsePromise = isCrossContainer && element && sourceDroppable
 			? this.startSlotCollapse(element, sourceDroppable, sourceId, originPosition)
 			: Promise.resolve()
