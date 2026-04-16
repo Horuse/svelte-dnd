@@ -75,36 +75,6 @@ export const defaultAnnouncements: Announcements = {
 
 export type DndMode = 'sortable' | 'target' | (string & {})
 
-export interface DndDragEvent<TData = Record<string, unknown>> {
-	source: {
-		id: string
-		element: HTMLElement
-		data?: TData
-	}
-	target?: {
-		id: string
-		element: HTMLElement
-		data?: Record<string, unknown>
-	} | null
-	transform: {
-		x: number
-		y: number
-	}
-}
-
-export interface DndDropEvent<TData = Record<string, unknown>> {
-	source: {
-		id: string
-		element: HTMLElement
-		data?: TData
-	}
-	target: {
-		id: string
-		element: HTMLElement
-		data?: Record<string, unknown>
-	} | null
-}
-
 export interface DropZone {
 	containerId: string
 	position: number

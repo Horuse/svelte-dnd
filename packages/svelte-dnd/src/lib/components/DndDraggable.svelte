@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { getContext } from 'svelte'
-	import type { DndDragEvent } from '../types.js'
 	import type { DndController } from '../core/dnd/dnd-controller.svelte.js'
 	import type { SensorDescriptor } from '../core/sensors/sensor.js'
 	import type { Snippet } from 'svelte'
@@ -15,9 +14,6 @@
 		data?: Record<string, unknown>
 		disabled?: boolean
 		sensors?: SensorDescriptor[]
-		onDragStart?: (event: DndDragEvent) => void
-		onDrag?: (event: DndDragEvent) => void
-		onDragEnd?: (event: DndDragEvent) => void
 		children: Snippet
 		class?: string
 		position?: number
@@ -30,9 +26,6 @@
 		disabled = false,
 		sensors = undefined,
 		class: className,
-		onDragStart,
-		onDrag,
-		onDragEnd,
 		children,
 		position = undefined
 	}: Props = $props()
@@ -67,7 +60,7 @@
 	})
 
 	const draggable = new Draggable(
-		{ id, type, data, disabled, sensors, onDragStart, onDrag, onDragEnd },
+		{ id, type, data, disabled, sensors },
 		dndController
 	)
 

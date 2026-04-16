@@ -1,4 +1,3 @@
-import type { DndDragEvent } from '../../types.js'
 import type { SensorDescriptor, SensorActivation } from '../sensors/sensor.js'
 import { PointerSensor } from '../sensors/pointer-sensor.js'
 import type { Slot } from './slot.js'
@@ -23,9 +22,6 @@ interface DraggableConfig {
 	type?: string
 	disabled?: boolean
 	sensors?: SensorDescriptor[]
-	onDragStart?: (event: DndDragEvent) => void
-	onDrag?: (event: DndDragEvent) => void
-	onDragEnd?: (event: DndDragEvent) => void
 }
 
 const DEFAULT_SENSORS: SensorDescriptor[] = [new PointerSensor()]
@@ -40,11 +36,6 @@ export class Draggable {
 	type: string | undefined
 	disabled: boolean
 	sensors: SensorDescriptor[] | undefined
-
-	// Per-item callbacks
-	private onDragStartCb: ((event: DndDragEvent) => void) | undefined
-	private onDragCb: ((event: DndDragEvent) => void) | undefined
-	private onDragEndCb: ((event: DndDragEvent) => void) | undefined
 
 	// State — was in DragHandler
 	isDragging = $state(false)
@@ -63,9 +54,6 @@ export class Draggable {
 		this.type = config.type
 		this.disabled = config.disabled ?? false
 		this.sensors = config.sensors
-		this.onDragStartCb = config.onDragStart
-		this.onDragCb = config.onDrag
-		this.onDragEndCb = config.onDragEnd
 		this.controller = controller
 	}
 
@@ -174,12 +162,6 @@ export class Draggable {
 			initialTransform.x + this.dragOffset.x,
 			initialTransform.y + this.dragOffset.y
 		)
-
-		this.onDragStartCb?.({
-			source: { id: this.id, element: this.element, data: this.data },
-			target: null,
-			transform: initialTransform
-		})
 	}
 
 	private handleDragMove(transform: { x: number; y: number }, mouseX: number, mouseY: number) {
@@ -187,12 +169,6 @@ export class Draggable {
 
 		this.controller.updateTransform(transform)
 		this.controller.updateMousePosition?.(mouseX, mouseY)
-
-		this.onDragCb?.({
-			source: { id: this.id, element: this.element, data: this.data },
-			target: null,
-			transform
-		})
 	}
 
 	private handleDragEnd() {
@@ -207,12 +183,6 @@ export class Draggable {
 		} else {
 			this.controller.endDrag(true)
 		}
-
-		this.onDragEndCb?.({
-			source: { id: this.id, element: this.element, data: this.data },
-			target: null,
-			transform: { x: 0, y: 0 }
-		})
 	}
 
 	private handleDragCancel() {
