@@ -134,6 +134,7 @@ export class DropAnimationCoordinator {
 		)
 
 		this.state.setPerformingDrop(true)
+		this.scrollController.clearAll()
 
 		const isCrossContainer = targetContainerId !== originContainerId
 
@@ -152,9 +153,19 @@ export class DropAnimationCoordinator {
 				const sourceInfo: DndContainerInfo = { id: originContainerId!, droppable: sourceDroppable, position: originPosition }
 				const targetInfo: DndContainerInfo = { id: targetContainerId, droppable: targetDroppable, position }
 				const dropEvent: DropEvent = { item: itemInfo, source: sourceInfo, target: targetInfo }
-				this.eventEmitter.notifyDrop(dropEvent)
 				const dragEndEvent: DragEndEvent = { item: itemInfo, source: sourceInfo, target: targetInfo, cancelled: false }
+				// Save scroll positions before DOM reorder — browser scroll anchoring
+				// can shift scrollTop when content height changes after items update.
+				const srcScroll = sourceDroppable.element?.scrollTop
+				const tgtScroll = sourceDroppable !== targetDroppable ? targetDroppable.element?.scrollTop : undefined
+				this.eventEmitter.notifyDrop(dropEvent)
 				this.finalizeDragEnd(dragEndEvent)
+				// Restore after Svelte flushes DOM updates (two microtasks: Svelte schedules
+				// its flush as a microtask, we need to run after it completes)
+				queueMicrotask(() => queueMicrotask(() => {
+					if (srcScroll !== undefined && sourceDroppable.element) sourceDroppable.element.scrollTop = srcScroll
+					if (tgtScroll !== undefined && targetDroppable.element) targetDroppable.element.scrollTop = tgtScroll
+				}))
 			} else {
 				this.finalizeDragEnd(null)
 			}

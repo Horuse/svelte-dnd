@@ -216,7 +216,7 @@ export class DndController<TData = Record<string, unknown>> {
 	}
 
 	updateMousePosition(mouseX: number, mouseY: number) {
-		if (this.state.dragging) {
+		if (this.state.dragging && !this.state.performingDrop) {
 			this.animationCoordinator.updateDropPreview({ x: mouseX, y: mouseY })
 			this.scrollController.handleAutoScroll(mouseX, mouseY)
 		}
