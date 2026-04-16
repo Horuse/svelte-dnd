@@ -313,6 +313,9 @@ export class DropAnimationCoordinator {
 
 	private finalizeDragEnd(dragEndEvent: DragEndEvent | null) {
 		this.lastPreviewKey = null
+		// Ordering matters: set skip=true BEFORE reset() so Preview sees "skip" when session
+		// clears; keep performingDrop=true across reset() so Preview.hide() reads it as true and
+		// collapses instantly (otherwise it uses the delayed path). Clear on next frame.
 		this.state.setSkipDropPreviewAnimation(true)
 		this.scrollController.clearAll()
 		this.state.reset()

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getContext } from 'svelte'
-	import type { DndController } from '../core/dnd/dnd-controller.svelte'
+	import type { DndController } from '../core/dnd/dnd-controller.svelte.js'
 	import { Preview, type PreviewConfig } from '../core/entities/preview.svelte.js'
 	import type { Slot } from '../core/entities/slot.js'
 	import type { Droppable } from '../core/entities/droppable.svelte.js'

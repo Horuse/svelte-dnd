@@ -59,6 +59,11 @@ export class DndState {
 	setSkipDropPreviewAnimation(value: boolean): void { this.shouldSkipDropPreviewAnimation = value }
 	toggleDebugZones(): void { this.showDebugZones = !this.showDebugZones }
 
+	// NOTE: intentionally does NOT reset `isPerformingDrop` or `shouldSkipDropPreviewAnimation`.
+	// Callers (finalizeDragEnd / DndSimulator.cleanup) manage those flags around reset() on their
+	// own schedule — `isPerformingDrop` is cleared next frame so Preview.hide() sees it as `true`
+	// and collapses instantly; `shouldSkipDropPreviewAnimation` is cleared ~100ms later.
+	// New drag sessions overwrite both flags in startSession(), so leftover values never leak.
 	reset(): void {
 		this.session = null
 		this.isAnimating = false

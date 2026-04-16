@@ -295,6 +295,8 @@ export class DndSimulator {
 	}
 
 	private cleanup(): void {
+		// Mirrors finalizeDragEnd ordering — see DropAnimationCoordinator.finalizeDragEnd
+		// for the rationale behind the skip/performingDrop sequencing.
 		this.state.setSkipDropPreviewAnimation(true)
 		this.state.reset()
 		requestAnimationFrame(() => {

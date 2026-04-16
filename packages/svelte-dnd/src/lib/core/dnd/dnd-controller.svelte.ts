@@ -432,5 +432,9 @@ export class DndController<TData = Record<string, unknown>> {
 		this.animationCoordinator.destroy()
 		this.scrollController.destroy()
 		this.eventEmitter.destroy()
+		// Drop any active session so a mid-drag teardown (e.g. route change) doesn't leave
+		// the ghost element, translations, or drop preview lingering in the DOM.
+		this.session = null
+		this.state.reset()
 	}
 }
