@@ -18,12 +18,6 @@ await controller.simulateReturn(...)
 await controller.simulateDrop(...)
 ```
 
-**Directly (advanced):**
-
-```ts
-import { DndSimulator } from '@horuse/svelte-dnd';
-```
-
 The controller's methods are thin delegates to `DndSimulator` internally.
 
 ---

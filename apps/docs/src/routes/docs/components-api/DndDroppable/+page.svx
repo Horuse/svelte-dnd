@@ -94,19 +94,3 @@ export type DndDirection = 'vertical' | 'horizontal' | 'grid'
 ```ts
 export type DndMode = 'sortable' | 'target'
 ```
-#### DndDropEvent
-
-```ts
-export interface DndDropEvent {
-	source: {
-		id: string
-		element: HTMLElement
-		data?: Record<string, unknown>
-	}
-	target: {
-		id: string
-		element: HTMLElement
-		data?: Record<string, unknown>
-	} | null
-}
-```

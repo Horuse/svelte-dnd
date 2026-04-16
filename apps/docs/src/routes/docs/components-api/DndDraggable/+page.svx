@@ -21,14 +21,6 @@ Automatically renders a `DndPreview` placeholder at its position - you do not ne
 | `sensors` | `SensorDescriptor[]` | `undefined` | Override the active sensors for this item. Falls back to the controller-level sensors if omitted. See [Sensors](/docs/sensors) |
 | `class` | `string` | — | Additional CSS class names |
 
-### Events
-
-| Event | Type | Description |
-|-------|------|-------------|
-| `onDragStart` | `(event: DndDragEvent) => void` | Fired when the drag begins |
-| `onDrag` | `(event: DndDragEvent) => void` | Fired on every pointer move during drag |
-| `onDragEnd` | `(event: DndDragEvent) => void` | Fired when the drag ends |
-
 ### CSS Variables
 
 | Variable | Default | Description |
@@ -59,25 +51,4 @@ Add `data-dnd-handle` to restrict dragging to specific elements. When at least o
   <h2 data-dnd-handle>☰ {column.title}</h2>
   <div><!-- clicking here won't drag the column --></div>
 </DndDraggable>
-```
-## Types
-#### DndDragEvent
-
-```ts
-export interface DndDragEvent {
-	source: {
-		id: string
-		element: HTMLElement
-		data?: Record<string, unknown>
-	}
-	target?: {
-		id: string
-		element: HTMLElement
-		data?: Record<string, unknown>
-	} | null
-	transform: {
-		x: number
-		y: number
-	}
-}
 ```

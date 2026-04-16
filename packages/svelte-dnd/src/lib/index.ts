@@ -6,7 +6,6 @@ export { DndController } from './core/dnd/dnd-controller.svelte.js'
 export type { DndControllerConfig, StrategyFactory } from './core/dnd/dnd-controller.svelte.js'
 export type { ScrollConfig } from './core/scroll/scroll-controller.js'
 export type { PreviewConfig } from './core/entities/preview.svelte.js'
-export { DndSimulator } from './core/dnd/dnd-simulator.js'
 export type {
 	DropZone, DropPreview, DndDirection, DndMode,
 	DndItemInfo, DndContainerInfo,
@@ -20,7 +19,6 @@ export type { DragSource } from './core/dnd/drag-session.svelte.js'
 export type { ContainerStrategy } from './core/containers/strategies/container-strategy.js'
 export { SortableContainerStrategy } from './core/containers/strategies/sortable-container-strategy.js'
 export { TargetContainerStrategy } from './core/containers/strategies/target-container-strategy.js'
-export type { DndState } from './core/dnd/dnd-state.svelte.js'
 export type { SensorDescriptor, SensorActivation, SensorCallbacks, ActivationState, ConditionResult, StartCondition, StartConditionInput, NavigationDirection } from './core/sensors/sensor.js'
 export { PointerSensor, type PointerSensorOptions } from './core/sensors/pointer-sensor.js'
 export { KeyboardSensor } from './core/sensors/keyboard-sensor.js'
