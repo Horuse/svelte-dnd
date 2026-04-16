@@ -5,16 +5,15 @@ import type { Droppable } from '../entities/droppable.svelte.js'
 export type DragSource = 'user' | 'programmatic'
 
 export class DragSession {
-	// Source (immutable after creation)
 	source: Draggable
 	sourceContainer: Droppable
 	startRect: DOMRect
 	dragSource: DragSource
 
-	// Current state (reactive)
-	transform = $state({ x: 0, y: 0 })
-	currentTarget = $state<Droppable | null>(null)
-	previewPosition = $state<number | null>(null)
+	ghostTransform = $state({ x: 0, y: 0 })
+	dropPreview = $state<DropPreview | null>(null)
+	ghostSize = $state<{ width: number; height: number }>({ width: 0, height: 0 })
+	slotSize = $state<{ width: number; height: number } | null>(null)
 
 	constructor(
 		source: Draggable,
@@ -26,38 +25,19 @@ export class DragSession {
 		this.source = source
 		this.sourceContainer = sourceContainer
 		this.startRect = startRect
-		this.transform = initialTransform
+		this.ghostTransform = initialTransform
 		this.dragSource = dragSource
+		this.ghostSize = { width: source.element.offsetWidth, height: source.element.offsetHeight }
+		this.slotSize = source.slot ? source.slot.getSize() : null
 	}
 
-	// --- Derived (backward compatibility with old DragSession/DndState API) ---
+	// --- Derived accessors ---
 
 	get itemId() { return this.source.id }
 	get element() { return this.source.element }
 	get itemData() { return this.source.data }
 	get draggedItemType() { return this.source.type ?? null }
 	get originContainerId() { return this.sourceContainer.id }
-	get originPosition() { return this.source.slot.position }
+	get originPosition() { return this.source.slot?.position ?? 0 }
 	get originalPosition() { return { x: this.startRect.left, y: this.startRect.top } }
-	get ghostTransform() { return this.transform }
-	get ghostSize() {
-		return {
-			width: this.source.element.offsetWidth,
-			height: this.source.element.offsetHeight
-		}
-	}
-	get slotSize() { return this.source.slot.getSize() }
-
-	get dropPreview(): DropPreview | null {
-		if (!this.currentTarget || this.previewPosition === null) return null
-		return {
-			containerId: this.currentTarget.id,
-			position: this.previewPosition,
-			visible: true,
-			draggedElementHeight: this.source.element.offsetHeight,
-			draggedElementWidth: this.source.element.offsetWidth
-		}
-	}
-
-	get hasValidTarget(): boolean { return this.currentTarget !== null }
 }

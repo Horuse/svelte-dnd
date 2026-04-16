@@ -16,7 +16,7 @@ export type {
 } from './types.js'
 export { defaultAnnouncements } from './types.js'
 export type { SimulateOptions } from './core/dnd/dnd-simulator.js'
-export type { DragSource } from './core/dnd/drag-session.js'
+export type { DragSource } from './core/dnd/drag-session.svelte.js'
 export type { ContainerStrategy } from './core/containers/strategies/container-strategy.js'
 export { SortableContainerStrategy } from './core/containers/strategies/sortable-container-strategy.js'
 export { TargetContainerStrategy } from './core/containers/strategies/target-container-strategy.js'

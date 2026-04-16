@@ -1,5 +1,5 @@
 import type { DropZone, DropPreview } from '../../types.js'
-import type { DragSession } from './drag-session.js'
+import type { DragSession } from './drag-session.svelte.js'
 
 export class DndState {
 	session = $state<DragSession | null>(null)
@@ -28,7 +28,7 @@ export class DndState {
 	get originContainerId() { return this.session?.originContainerId ?? null }
 	get originPosition() { return this.session?.originPosition ?? 0 }
 	get dragSlotSize() { return this.session?.slotSize ?? null }
-	get dragSource() { return this.session?.source ?? null }
+	get dragSource() { return this.session?.dragSource ?? null }
 	get originalPosition() {
 		const r = this.session?.startRect
 		return r ? { x: r.left, y: r.top } : null

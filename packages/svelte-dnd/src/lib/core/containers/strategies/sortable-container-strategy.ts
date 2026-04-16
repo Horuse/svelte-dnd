@@ -1,6 +1,6 @@
 import type { ContainerStrategy } from './container-strategy.js'
 import type { DropZone, DndMode } from '../../../types.js'
-import type { DragSession } from '../../dnd/drag-session.js'
+import type { DragSession } from '../../dnd/drag-session.svelte.js'
 import type { DndState } from '../../dnd/dnd-state.svelte.js'
 import type { AnimationStep } from '../../animation/steps/animation-step.js'
 import type { Droppable } from '../../entities/droppable.svelte.js'

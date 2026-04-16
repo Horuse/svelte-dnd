@@ -376,33 +376,16 @@ export class DndController<TData = Record<string, unknown>> {
 
 	/**
 	 * Start a drag session from an entity-based Draggable.
-	 * Creates a new DragSession and syncs state with legacy DndState for backward compat.
+	 * The same DragSession instance is shared with DndState.
 	 */
 	startSession(draggable: Draggable, initialTransform: { x: number; y: number }): DragSession {
 		const slot = draggable.slot
 		const sourceContainer = slot.droppable
-		const element = draggable.element
-		const rect = element.getBoundingClientRect()
+		const rect = draggable.element.getBoundingClientRect()
 
 		const newSession = new DragSession(draggable, sourceContainer, rect, initialTransform, 'user')
 		this.session = newSession
-
-		// Sync with legacy DndState so TranslationEngine, DropResolver, DropAnimationCoordinator
-		// continue to work unchanged until DndState is removed in a future phase.
-		this.state.startSession({
-			itemId: draggable.id,
-			itemData: draggable.data,
-			element,
-			originContainerId: sourceContainer.id,
-			originPosition: slot.position,
-			startRect: rect,
-			ghostTransform: initialTransform,
-			dropPreview: null,
-			ghostSize: { width: element.offsetWidth, height: element.offsetHeight },
-			slotSize: slot.getSize(),
-			draggedItemType: draggable.type ?? null,
-			source: 'user'
-		})
+		this.state.startSession(newSession)
 		this.state.setSkipDropPreviewAnimation(true)
 
 		const itemInfo: DndItemInfo = {

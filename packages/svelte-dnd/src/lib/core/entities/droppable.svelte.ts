@@ -5,10 +5,11 @@ import type { CollisionAlgorithm } from '../collision/collision-algorithm.js'
 import type { ContainerStrategy } from '../containers/strategies/container-strategy.js'
 import type { Slot } from './slot.js'
 import type { Preview } from './preview.svelte.js'
+import type { DragSession } from '../dnd/drag-session.svelte.js'
 
 // Minimal controller interface needed by Droppable
 export type DroppableControllerRef = {
-	session: { source: import('./draggable.svelte.js').Draggable } | null
+	session: DragSession | null
 	element: HTMLElement | null
 	cancelSession(): void
 	slots: Map<HTMLElement, Slot>
@@ -72,8 +73,7 @@ export class Droppable {
 	}
 
 	get isOver(): boolean {
-		const session = this.controller.session as { currentTarget?: Droppable } | null
-		return (session as { currentTarget?: unknown } | null)?.currentTarget === this
+		return this.controller.session?.dropPreview?.containerId === this.id
 	}
 
 	// --- Slot management ---
@@ -90,8 +90,7 @@ export class Droppable {
 			this.controller.slots.set(element, slot)
 
 			return () => {
-				const source = (this.controller.session as { source?: { slot?: Slot } } | null)?.source
-				if (source?.slot === slot) {
+				if (this.controller.session?.source.slot === slot) {
 					this.controller.cancelSession()
 				}
 				this.slots.delete(element)

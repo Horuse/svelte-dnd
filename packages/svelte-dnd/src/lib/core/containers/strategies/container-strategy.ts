@@ -1,5 +1,5 @@
 import type { DropZone, DndMode } from '../../../types.js'
-import type { DragSession } from '../../dnd/drag-session.js'
+import type { DragSession } from '../../dnd/drag-session.svelte.js'
 import type { AnimationStep } from '../../animation/steps/animation-step.js'
 import type { Droppable } from '../../entities/droppable.svelte.js'
 

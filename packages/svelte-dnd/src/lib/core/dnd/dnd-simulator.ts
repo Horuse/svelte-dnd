@@ -1,6 +1,6 @@
 import type { DndState } from './dnd-state.svelte.js'
 import type { DndEventEmitter } from './dnd-event-emitter.js'
-import type { DragSession } from './drag-session.js'
+import { DragSession } from './drag-session.svelte.js'
 import type { DropZone, DropEvent, DndItemInfo, DndContainerInfo } from '../../types.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
 import type { Slot } from '../entities/slot.js'
@@ -107,25 +107,20 @@ export class DndSimulator {
 				}
 			}
 
-			const session: DragSession = {
-				itemId,
-				itemData: undefined,
-				element,
-				originContainerId: fromContainerId,
-				originPosition: positionInFrom >= 0 ? positionInFrom : 0,
-				startRect: rect,
-				ghostTransform: { x: rect.left, y: rect.top },
-				dropPreview: {
-					containerId: toContainerId,
-					position: toPosition,
-					visible: true,
-					draggedElementHeight: element.offsetHeight,
-					draggedElementWidth: element.offsetWidth
-				},
-				ghostSize: { width: element.offsetWidth, height: element.offsetHeight },
-				slotSize,
-				draggedItemType: null,
-				source: 'programmatic'
+			const session = new DragSession(
+				fromSlot.draggable,
+				fromDroppable,
+				rect,
+				{ x: rect.left, y: rect.top },
+				'programmatic'
+			)
+			session.slotSize = slotSize
+			session.dropPreview = {
+				containerId: toContainerId,
+				position: toPosition,
+				visible: true,
+				draggedElementHeight: element.offsetHeight,
+				draggedElementWidth: element.offsetWidth
 			}
 
 			this.state.startSession(session)
