@@ -137,93 +137,15 @@ export class DropAnimationCoordinator {
 
 		const isCrossContainer = targetContainerId !== originContainerId
 
+		// Start slot collapse immediately, in parallel with the ghost flight.
+		// GhostToTargetStep.calculateTargetPosition() reads live DOM positions each frame,
+		// so the ghost automatically tracks the placeholder as block B moves up/left.
+		const collapsePromise = isCrossContainer && element && sourceDroppable
+			? this.startSlotCollapse(element, sourceDroppable, sourceId, originPosition)
+			: Promise.resolve()
+
 		const onDropComplete = async () => {
-			// For cross-container drops: animate the source slot collapsing.
-			// Items below are adjusted directly in the DOM (no Svelte state per frame).
-			// Ghost tracks block B's movement so it stays visually aligned.
-			if (isCrossContainer && element && sourceDroppable) {
-				const slotEl = element.parentElement
-				if (slotEl?.hasAttribute('data-dnd-slot')) {
-					const isHorizontal = sourceDroppable.direction === 'horizontal'
-					const slotSize = this.state.dragSlotSize
-					const fullSize = isHorizontal ? (slotSize?.width ?? 0) : (slotSize?.height ?? 0)
-					const startDim = isHorizontal ? slotEl.offsetWidth : slotEl.offsetHeight
-					const computed = getComputedStyle(slotEl)
-					const startMargin = isHorizontal
-						? parseFloat(computed.marginRight) || 0
-						: parseFloat(computed.marginBottom) || 0
-
-					// Elements below the dragged item that need direct transform updates.
-					// We bypass Svelte's reactive binding — performingDrop=true means
-					// transition is already 'none', and state.reset() will set them to 0 anyway.
-					const affectedDraggables = sourceDroppable.getSortedSlots()
-						.filter(s => s.draggable.id !== sourceId && s.position > originPosition)
-						.map(s => s.draggable.element)
-
-					// Ghost should follow block B if it sits below/right of the collapsing slot.
-					const slotRect = slotEl.getBoundingClientRect()
-					const initialGhost = this.state.transform
-					const ghostFollowsCollapse = initialGhost
-						? (isHorizontal ? initialGhost.x > slotRect.left : initialGhost.y > slotRect.top)
-						: false
-
-					slotEl.style.overflow = 'hidden'
-
-					const duration = 150
-					let prevCollapseAmount = 0
-					await new Promise<void>(resolve => {
-						const startTime = performance.now()
-
-						const tick = (now: number) => {
-							const elapsed = now - startTime
-							const t = Math.min(elapsed / duration, 1)
-							const eased = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
-							const remaining = 1 - eased
-							const collapseAmount = (startDim + startMargin) * eased
-							const delta = collapseAmount - prevCollapseAmount
-							prevCollapseAmount = collapseAmount
-
-							// Collapse the slot in layout
-							if (isHorizontal) {
-								slotEl.style.width = startDim * remaining + 'px'
-								slotEl.style.marginRight = startMargin * remaining + 'px'
-							} else {
-								slotEl.style.height = startDim * remaining + 'px'
-								slotEl.style.marginBottom = startMargin * remaining + 'px'
-							}
-
-							// Reduce each item's translate proportionally so it appears still
-							if (fullSize > 0 && affectedDraggables.length > 0) {
-								const adj = -(fullSize - collapseAmount)
-								for (const el of affectedDraggables) {
-									el.style.transform = isHorizontal
-										? `translate3d(${adj}px, 0, 0)`
-										: `translate3d(0, ${adj}px, 0)`
-								}
-							}
-
-							// Move ghost to stay aligned with block B as it shifts
-							if (ghostFollowsCollapse && delta > 0) {
-								const cur = this.state.transform
-								if (cur) {
-									this.state.setTransform(isHorizontal
-										? { x: cur.x - delta, y: cur.y }
-										: { x: cur.x, y: cur.y - delta }
-									)
-								}
-							}
-
-							if (t < 1) {
-								requestAnimationFrame(tick)
-							} else {
-								resolve()
-							}
-						}
-
-						requestAnimationFrame(tick)
-					})
-				}
-			}
+			await collapsePromise
 
 			if (element && sourceDroppable && targetDroppable) {
 				const itemInfo: DndItemInfo = { id: sourceId, data: sourceData, type, element }
@@ -305,6 +227,72 @@ export class DropAnimationCoordinator {
 	}
 
 	// --- Private ---
+
+	private startSlotCollapse(
+		element: HTMLElement,
+		sourceDroppable: Droppable,
+		sourceId: string,
+		originPosition: number
+	): Promise<void> {
+		const slotEl = element.parentElement
+		if (!slotEl?.hasAttribute('data-dnd-slot')) return Promise.resolve()
+
+		const isHorizontal = sourceDroppable.direction === 'horizontal'
+		const slotSize = this.state.dragSlotSize
+		const fullSize = isHorizontal ? (slotSize?.width ?? 0) : (slotSize?.height ?? 0)
+		const startDim = isHorizontal ? slotEl.offsetWidth : slotEl.offsetHeight
+		const computed = getComputedStyle(slotEl)
+		const startMargin = isHorizontal
+			? parseFloat(computed.marginRight) || 0
+			: parseFloat(computed.marginBottom) || 0
+
+		// Items below the dragged item need their transforms adjusted per-frame
+		// so they appear to stay still as the DOM layout shrinks beneath them.
+		const affectedDraggables = sourceDroppable.getSortedSlots()
+			.filter(s => s.draggable.id !== sourceId && s.position > originPosition)
+			.map(s => s.draggable.element)
+
+		slotEl.style.overflow = 'hidden'
+
+		// Duration matches ANIMATION_DURATION in GhostToTargetStep so both finish together.
+		const duration = 250
+		return new Promise<void>(resolve => {
+			const startTime = performance.now()
+
+			const tick = (now: number) => {
+				const elapsed = now - startTime
+				const t = Math.min(elapsed / duration, 1)
+				const eased = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
+				const remaining = 1 - eased
+				const collapseAmount = (startDim + startMargin) * eased
+
+				if (isHorizontal) {
+					slotEl.style.width = startDim * remaining + 'px'
+					slotEl.style.marginRight = startMargin * remaining + 'px'
+				} else {
+					slotEl.style.height = startDim * remaining + 'px'
+					slotEl.style.marginBottom = startMargin * remaining + 'px'
+				}
+
+				if (fullSize > 0 && affectedDraggables.length > 0) {
+					const adj = -(fullSize - collapseAmount)
+					for (const el of affectedDraggables) {
+						el.style.transform = isHorizontal
+							? `translate3d(${adj}px, 0, 0)`
+							: `translate3d(0, ${adj}px, 0)`
+					}
+				}
+
+				if (t < 1) {
+					requestAnimationFrame(tick)
+				} else {
+					resolve()
+				}
+			}
+
+			requestAnimationFrame(tick)
+		})
+	}
 
 	private animate(step: AnimationStep, onComplete: () => void | Promise<void>): void {
 		this.currentAnimation?.cancel()
