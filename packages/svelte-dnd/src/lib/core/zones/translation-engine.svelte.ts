@@ -54,9 +54,8 @@ export class TranslationEngine {
 		const slotSize = session.slotSize
 		const direction = targetDroppable.direction
 		const size = direction === 'horizontal' ? (slotSize?.width ?? 0) : (slotSize?.height ?? 0)
-		const elementSize = direction === 'horizontal'
-			? (preview.draggedElementWidth ?? 0)
-			: (preview.draggedElementHeight ?? 0)
+		const ghostSize = session.ghostSize
+		const elementSize = direction === 'horizontal' ? ghostSize.width : ghostSize.height
 		const effectiveSize = size || elementSize
 		if (effectiveSize === 0) return null
 

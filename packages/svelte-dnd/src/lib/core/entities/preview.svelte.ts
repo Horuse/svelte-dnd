@@ -13,6 +13,7 @@ export interface PreviewConfig {
 // Minimal controller interface needed by Preview
 export type PreviewControllerRef = {
 	dropPreview: DropPreview | null
+	ghostSize: { width: number; height: number } | null
 	skipDropPreviewAnimation: boolean
 	performingDrop: boolean
 	translations: Map<string, { x: number; y: number }>
@@ -80,9 +81,9 @@ export class Preview {
 	}
 
 	show() {
-		const dp = this.controller.dropPreview
-		this.height = dp?.draggedElementHeight ?? 0
-		this.width = dp?.draggedElementWidth ?? 0
+		const ghostSize = this.controller.ghostSize
+		this.height = ghostSize?.height ?? 0
+		this.width = ghostSize?.width ?? 0
 
 		if (this.collapseTimer) { clearTimeout(this.collapseTimer); this.collapseTimer = null }
 

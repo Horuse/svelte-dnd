@@ -66,8 +66,8 @@ export class GhostToTargetStep implements AnimationStep {
 
 		if (droppable?.mode === 'target') {
 			const rect = container.getBoundingClientRect()
-			const width = this.state.size?.width ?? 0
-			const height = this.state.size?.height ?? 0
+			const width = this.state.ghostSize?.width ?? 0
+			const height = this.state.ghostSize?.height ?? 0
 			return {
 				x: rect.left + rect.width / 2 - width / 2,
 				y: rect.top + rect.height / 2 - height / 2
@@ -84,10 +84,10 @@ export class GhostToTargetStep implements AnimationStep {
 			const alignEndY = previewEntity.align === 'end' && !isHorizontal
 			const alignEndX = previewEntity.align === 'end' && isHorizontal
 			const y = alignEndY
-				? wrapperRect.bottom - (this.state.size?.height ?? 0)
+				? wrapperRect.bottom - (this.state.ghostSize?.height ?? 0)
 				: wrapperRect.top
 			const x = alignEndX
-				? wrapperRect.right - (this.state.size?.width ?? 0)
+				? wrapperRect.right - (this.state.ghostSize?.width ?? 0)
 				: wrapperRect.left
 			return { x, y }
 		}
@@ -98,8 +98,8 @@ export class GhostToTargetStep implements AnimationStep {
 
 	private fallbackPosition(): { x: number; y: number } {
 		return {
-			x: this.targetZone.rect.x + (this.targetZone.rect.width - (this.state.size?.width ?? 0)) / 2,
-			y: this.targetZone.rect.y + (this.targetZone.rect.height - (this.state.size?.height ?? 0)) / 2
+			x: this.targetZone.rect.x + (this.targetZone.rect.width - (this.state.ghostSize?.width ?? 0)) / 2,
+			y: this.targetZone.rect.y + (this.targetZone.rect.height - (this.state.ghostSize?.height ?? 0)) / 2
 		}
 	}
 }

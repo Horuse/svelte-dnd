@@ -17,8 +17,7 @@ export class DndState {
 	get draggedItem() { return this.session?.itemId ?? null }
 	get draggedType() { return this.session?.draggedItemType ?? null }
 	get draggedItemData() { return this.session?.itemData }
-	get size() { return this.session?.ghostSize ?? null }
-	get elementSize() { return this.session?.ghostSize ?? null }
+	get ghostSize() { return this.session?.ghostSize ?? null }
 	get animating() { return this.isAnimating }
 	get dropPreview() { return this.session?.dropPreview ?? null }
 	get zones() { return this.dropZones }

@@ -37,9 +37,7 @@ export class DropAnimationCoordinator {
 			const preview: DropPreview = {
 				containerId: targetZone.containerId,
 				position: targetZone.position,
-				visible: true,
-				draggedElementHeight: this.state.size?.height,
-				draggedElementWidth: this.state.size?.width
+				visible: true
 			}
 			this.state.setDropPreview(preview)
 
@@ -205,9 +203,7 @@ export class DropAnimationCoordinator {
 			this.state.setDropPreview({
 				containerId: session.originContainerId,
 				position: session.originPosition,
-				visible: true,
-				draggedElementHeight: session.ghostSize.height,
-				draggedElementWidth: session.ghostSize.width
+				visible: true
 			})
 		}
 

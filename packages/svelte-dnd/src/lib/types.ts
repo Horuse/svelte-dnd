@@ -92,8 +92,6 @@ export interface DropPreview {
 	containerId: string
 	position: number
 	visible: boolean
-	draggedElementHeight?: number
-	draggedElementWidth?: number
 }
 
 export interface GhostSnippetProps {

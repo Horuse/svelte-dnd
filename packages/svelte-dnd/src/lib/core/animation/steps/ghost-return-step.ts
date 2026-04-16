@@ -135,8 +135,8 @@ export class GhostReturnStep implements AnimationStep {
 		const previewRect = slotWrapper.getBoundingClientRect()
 
 		const expectedSize = direction === 'horizontal'
-			? this.state.dropPreview?.draggedElementWidth || this.state.elementSize?.width || 0
-			: this.state.dropPreview?.draggedElementHeight || this.state.elementSize?.height || 0
+			? this.state.ghostSize?.width ?? 0
+			: this.state.ghostSize?.height ?? 0
 
 		const { targetScroll, scrollDelta } = this.scrollCalc.calculateScrollTarget({
 			preview: slotWrapper,

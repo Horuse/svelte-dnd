@@ -115,12 +115,11 @@ export class DndSimulator {
 				'programmatic'
 			)
 			session.slotSize = slotSize
+			session.ghostSize = { width: element.offsetWidth, height: element.offsetHeight }
 			session.dropPreview = {
 				containerId: toContainerId,
 				position: toPosition,
-				visible: true,
-				draggedElementHeight: element.offsetHeight,
-				draggedElementWidth: element.offsetWidth
+				visible: true
 			}
 
 			this.state.startSession(session)

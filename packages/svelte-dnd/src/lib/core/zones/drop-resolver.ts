@@ -57,7 +57,7 @@ export class DropResolver {
 
 	private getGhostRect(): { x: number; y: number; width: number; height: number } {
 		const transform = this.state.transform
-		const size = this.state.size
+		const size = this.state.ghostSize
 		return {
 			x: transform?.x ?? 0,
 			y: transform?.y ?? 0,

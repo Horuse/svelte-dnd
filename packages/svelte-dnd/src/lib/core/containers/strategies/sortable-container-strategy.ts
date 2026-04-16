@@ -73,9 +73,8 @@ export class SortableContainerStrategy implements ContainerStrategy {
 		if (preview.containerId === containerId) {
 			// This is the target container: shift items to make room
 			const pos = preview.position
-			const elementSize = direction === 'horizontal'
-				? (preview.draggedElementWidth ?? 0)
-				: (preview.draggedElementHeight ?? 0)
+			const ghostSize = session.ghostSize
+			const elementSize = direction === 'horizontal' ? ghostSize.width : ghostSize.height
 			const effectiveSize = size || elementSize
 			if (effectiveSize === 0) return map
 

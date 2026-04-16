@@ -139,7 +139,7 @@ export class DndController<TData = Record<string, unknown>> {
 	get draggedItemData() { return this.state.draggedItemData }
 
 	/** Width/height of the dragged element. */
-	get size() { return this.state.size }
+	get ghostSize() { return this.state.ghostSize }
 
 	/** `true` while the ghost is animating back to its origin. */
 	get animatingReturn() { return this.state.animating }
@@ -205,7 +205,7 @@ export class DndController<TData = Record<string, unknown>> {
 		}
 
 		const initialTransform = this.state.session?.ghostTransform ?? rawTransform
-		const ghostSize = this.state.size ?? { width: 0, height: 0 }
+		const ghostSize = this.state.ghostSize ?? { width: 0, height: 0 }
 		const originContainerId = this.state.session?.originContainerId ?? ''
 
 		let transform = rawTransform
@@ -235,7 +235,7 @@ export class DndController<TData = Record<string, unknown>> {
 
 		const containerIds = [...containerZones.keys()]
 		const preview = this.state.dropPreview
-		const ghostSize = this.state.size
+		const ghostSize = this.state.ghostSize
 
 		let targetZone: DropZone | null = null
 		let targetZones: DropZone[] = []
@@ -285,9 +285,7 @@ export class DndController<TData = Record<string, unknown>> {
 		this.state.setDropPreview({
 			containerId: targetZone.containerId,
 			position: targetZone.position,
-			visible: true,
-			draggedElementHeight: ghostSize?.height,
-			draggedElementWidth: ghostSize?.width
+			visible: true
 		})
 	}
 

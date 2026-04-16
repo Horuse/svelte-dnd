@@ -100,7 +100,7 @@
 
 <div aria-live="assertive" aria-atomic="true" class="dnd-sr-only">{announcement}</div>
 
-{#if (dragController.dragging || dragController.animatingReturn) && dragController.element && dragController.transform && dragController.size}
+{#if (dragController.dragging || dragController.animatingReturn) && dragController.element && dragController.transform && dragController.ghostSize}
 	<div
 		class="dnd-ghost"
 		data-dnd-dragged-element
@@ -108,8 +108,8 @@
 		style="
 			left: {dragController.transform.x}px;
 			top: {dragController.transform.y}px;
-			width: {dragController.size.width}px;
-			height: {dragController.size.height}px;
+			width: {dragController.ghostSize.width}px;
+			height: {dragController.ghostSize.height}px;
 			transform: rotate({dragController.animatingReturn ? '0deg' : rotated ? 'var(--dnd-ghost-rotation, 0deg)' : '0deg'});
 		"
 	>
