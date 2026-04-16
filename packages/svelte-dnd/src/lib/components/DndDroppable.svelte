@@ -75,6 +75,8 @@
 	)
 	setContext('dnd-droppable', droppable)
 
+	$effect(() => { droppable.spacing = spacing })
+
 	// Extra margin added during cross-container drag so the container grows in layout flow,
 	// preventing translated items from overflowing into siblings below/right.
 	const crossContainerSpacer = $derived.by(() => {
@@ -111,7 +113,6 @@
 	aria-dropeffect={disabled ? 'none' : 'move'}
 	data-dnd-droppable
 	data-dnd-drop-id={id}
-	style={spacing != null ? (direction === 'horizontal' ? `--dnd-slot-spacing-x: ${spacing}px` : `--dnd-slot-spacing-y: ${spacing}px`) : undefined}
 	{@attach dndController?.attachDroppable(droppable)}
 >
 	{@render children?.()}

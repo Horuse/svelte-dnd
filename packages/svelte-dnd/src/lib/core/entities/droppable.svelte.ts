@@ -40,6 +40,7 @@ export class Droppable {
 	mode: DndMode
 	collision: CollisionAlgorithm | undefined
 	accepts: string | string[] | undefined
+	spacing = $state<number | undefined>(undefined)
 	strategy: ContainerStrategy
 
 	slots = new SvelteMap<HTMLElement, Slot>()
@@ -59,6 +60,7 @@ export class Droppable {
 		this.mode = config.mode ?? 'sortable'
 		this.collision = config.collision
 		this.accepts = config.accepts
+		this.spacing = undefined
 		this.strategy = config.strategy
 		this.controller = controller
 	}

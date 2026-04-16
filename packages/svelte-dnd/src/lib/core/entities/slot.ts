@@ -38,14 +38,13 @@ export class Slot {
 				height: this.draggable.element.offsetHeight + Math.max(0, gapH)
 			}
 		} else {
-			// No slot neighbors — use element size + CSS spacing variable.
+			// No slot neighbors — use element size + droppable spacing.
 			// Cannot rely on DOM margin because suppressSpacing may have zeroed it on the last slot.
-			const slotStyles = getComputedStyle(this.element)
-			const spacingY = parseFloat(slotStyles.getPropertyValue('--dnd-slot-spacing-y')) || 0
-			const spacingX = parseFloat(slotStyles.getPropertyValue('--dnd-slot-spacing-x')) || 0
+			const spacing = this.droppable?.spacing ?? 0
+			const isHorizontal = this.droppable?.direction === 'horizontal'
 			return {
-				width: this.draggable.element.offsetWidth + spacingX,
-				height: this.draggable.element.offsetHeight + spacingY
+				width: this.draggable.element.offsetWidth + (isHorizontal ? spacing : 0),
+				height: this.draggable.element.offsetHeight + (isHorizontal ? 0 : spacing)
 			}
 		}
 	}

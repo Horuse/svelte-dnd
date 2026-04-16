@@ -86,6 +86,11 @@
 		const tailActive = preview?.visible && preview.containerId === droppable.id && preview.position === droppable.slots.size
 		return !tailActive
 	})
+
+	const spacingPx = $derived.by(() => {
+		if (suppressSpacing || !droppable?.spacing) return 0
+		return droppable.spacing
+	})
 	const performingDrop = $derived(dndController?.performingDrop ?? false)
 	const isGhostActive = $derived(
 		draggable.isDragging ||
@@ -108,7 +113,7 @@
 	})
 </script>
 
-<div class="dnd-slot" data-dnd-slot style="position: relative; overflow: visible; {suppressSpacing ? '--dnd-slot-spacing-y: 0; --dnd-slot-spacing-x: 0' : ''}" {@attach droppable?.attachSlot(slot)}>
+<div class="dnd-slot" data-dnd-slot style="position: relative; overflow: visible; {droppable?.direction === 'horizontal' ? `margin-right: ${spacingPx}px` : `margin-bottom: ${spacingPx}px`}" {@attach droppable?.attachSlot(slot)}>
 	{#if position !== undefined}
 		<DndPreview {slot} {position} translateX={translate.x} translateY={translate.y} />
 	{/if}
@@ -134,10 +139,6 @@
 </div>
 
 <style>
-	.dnd-slot {
-        margin-right: var(--dnd-slot-spacing-x, 0);
-        margin-bottom: var(--dnd-slot-spacing-y, 0);
-	}
 	.dnd-draggable {
 		cursor: var(--dnd-draggable-cursor, grab);
 		user-select: none;
