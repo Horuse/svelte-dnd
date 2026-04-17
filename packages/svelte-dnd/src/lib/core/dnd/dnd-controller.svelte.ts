@@ -68,7 +68,10 @@ export class DndController<TData = Record<string, unknown>> {
 	// --- Entity maps ---
 	private droppables = new Map<HTMLElement, Droppable>()
 	private droppablesById = new Map<string, Droppable>()
-	/** Global element→Slot lookup used by sensors and attachSlot. */
+	/**
+	 * Global element→Slot lookup used by sensors and attachSlot.
+	 * @internal
+	 */
 	slots = new Map<HTMLElement, Slot>()
 	/** Current drag session. Read-only — stored in DndState. */
 	get session(): DragSession | null { return this.state.session }
@@ -76,7 +79,10 @@ export class DndController<TData = Record<string, unknown>> {
 	debug = false
 	sensors: SensorDescriptor[] | undefined = undefined
 	announcements: import('../../types.js').Announcements | undefined = undefined
-	/** Reactive preview delays. DndPreview syncs its Preview entity from this. */
+	/**
+	 * Reactive preview delays. DndPreview syncs its Preview entity from this.
+	 * @internal
+	 */
 	previewConfig = $state<{ showDelay: number; collapseDelay: number }>({ showDelay: 300, collapseDelay: 200 })
 
 	constructor({ scroll = {}, preview, debug = false, strategies = [], sensors, collision, modifiers = [], announcements }: DndControllerConfig = {}) {
@@ -117,13 +123,17 @@ export class DndController<TData = Record<string, unknown>> {
 
 	// --- Reactive state (read-only) ---
 
-	/** CSS translate offsets for each draggable item during an active drag. Keyed by item id. */
+	/**
+	 * CSS translate offsets for each draggable item during an active drag. Keyed by item id.
+	 * @internal
+	 */
 	get translations() { return this.translationEngine.translations }
 
 	/**
 	 * Extra margin for the cross-container drop target so it grows in layout flow,
 	 * preventing translated items from visually overflowing into siblings.
 	 * null when not in a cross-container drag.
+	 * @internal
 	 */
 	get dropTargetPadding() { return this.translationEngine.dropTargetPadding }
 
@@ -157,14 +167,19 @@ export class DndController<TData = Record<string, unknown>> {
 	/** All registered drop zones across every `DndDroppable`. */
 	get dropZones() { return this.state.zones }
 
+	/** @internal */
 	get debugZones() { return this.state.debugZones }
 
-	/** Drop zones filtered to only those that accept the currently dragged item type. */
+	/**
+	 * Drop zones filtered to only those that accept the currently dragged item type.
+	 * @internal
+	 */
 	get filteredDropZones() { return this.dropResolver.filteredZones }
 
 	/** `true` while the drop animation is in progress. */
 	get performingDrop() { return this.state.performingDrop }
 
+	/** @internal */
 	get skipDropPreviewAnimation() { return this.state.skipDropPreviewAnimation }
 
 	/** `'user'` during real drag, `'programmatic'` during simulation. */
@@ -201,6 +216,7 @@ export class DndController<TData = Record<string, unknown>> {
 
 	// --- Lifecycle ---
 
+	/** @internal */
 	setSkipDropPreviewAnimation(value: boolean) {
 		this.state.setSkipDropPreviewAnimation(value)
 	}
@@ -229,6 +245,7 @@ export class DndController<TData = Record<string, unknown>> {
 		}
 	}
 
+	/** @internal */
 	navigate(direction: NavigationDirection) {
 		if (!this.state.dragging) return
 
@@ -310,7 +327,10 @@ export class DndController<TData = Record<string, unknown>> {
 		this.animationCoordinator.endDrag(shouldAnimate)
 	}
 
-	/** Recalculate drop zones for a Droppable entity. Called by Droppable.invalidateZones(). */
+	/**
+	 * Recalculate drop zones for a Droppable entity. Called by Droppable.invalidateZones().
+	 * @internal
+	 */
 	refreshDroppableZones(droppable: Droppable) {
 		const newZones = droppable.strategy.calculateDropZones(droppable, this.state.session)
 		const otherZones = this.state.zones.filter((z) => z.containerId !== droppable.id)
@@ -356,14 +376,20 @@ export class DndController<TData = Record<string, unknown>> {
 		return this.simulator.simulateBatchSwap(ids, applyState, duration)
 	}
 
-	/** Returns the ContainerStrategy registered for the given mode (or 'sortable' as fallback). */
+	/**
+	 * Returns the ContainerStrategy registered for the given mode (or 'sortable' as fallback).
+	 * @internal
+	 */
 	getStrategyForMode(mode: DndMode): ContainerStrategy {
 		return this.strategyMap.get(mode) ?? this.strategyMap.get('sortable')!
 	}
 
 	// --- Entity-based API ---
 
-	/** @attach handler for DndDroppable — registers a Droppable in the entity maps. */
+	/**
+	 * @attach handler for DndDroppable — registers a Droppable in the entity maps.
+	 * @internal
+	 */
 	attachDroppable(droppable: Droppable) {
 		return (element: HTMLElement) => {
 			droppable.element = element
@@ -383,6 +409,7 @@ export class DndController<TData = Record<string, unknown>> {
 	/**
 	 * Start a drag session from an entity-based Draggable.
 	 * The same DragSession instance is shared with DndState.
+	 * @internal
 	 */
 	startSession(draggable: Draggable, initialTransform: { x: number; y: number }): DragSession {
 		const slot = draggable.slot
@@ -406,7 +433,10 @@ export class DndController<TData = Record<string, unknown>> {
 		return newSession
 	}
 
-	/** Cancel the current drag session (no drop, no return animation). */
+	/**
+	 * Cancel the current drag session (no drop, no return animation).
+	 * @internal
+	 */
 	cancelSession() {
 		this.animationCoordinator.endDrag(false)
 	}
@@ -414,6 +444,7 @@ export class DndController<TData = Record<string, unknown>> {
 	/**
 	 * Commit the current drag session — perform drop if a valid target exists,
 	 * otherwise animate the ghost back to origin.
+	 * @internal
 	 */
 	commitSession() {
 		const dropPreview = this.state.dropPreview

@@ -96,10 +96,7 @@ All getters are Svelte 5 reactive (`$state` / `$derived` internally).
 | `animatingReturn` | `boolean` | Whether the ghost is animating back to origin |
 | `dropPreview` | `DropPreview \| null` | Current drop preview state |
 | `dropZones` | `DropZone[]` | All registered drop zones |
-| `filteredDropZones` | `DropZone[]` | Drop zones filtered by the dragged item's type |
-| `debugZones` | `boolean` | Whether debug zone visualization is enabled |
 | `performingDrop` | `boolean` | Whether a drop animation is in progress |
-| `skipDropPreviewAnimation` | `boolean` | Whether preview animations are skipped |
 | `dragSource` | `DragSource` | `'user'` during a real drag, `'programmatic'` during a simulation |
 
 ## Event Callbacks
@@ -233,14 +230,6 @@ controller.setPreviewConfig({ showDelay: 150, collapseDelay: 400 });
 ```
 
 > **Note:** `collapseDelay` should match your `--dnd-preview-duration-out` CSS variable so the slot collapses only after the CSS transition finishes.
-
-### setSkipDropPreviewAnimation
-
-```ts
-controller.setSkipDropPreviewAnimation(value: boolean): void
-```
-
-Controls whether `DndPreview` open/close animations are skipped. Useful when you need previews to appear or disappear instantly (e.g. during rapid container switches).
 
 ### toggleDebugZones
 
