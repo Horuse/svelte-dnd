@@ -37,6 +37,8 @@ export class DndState {
 
 	startSession(session: DragSession): void {
 		this.session = session
+		this.isPerformingDrop = false
+		this.shouldSkipDropPreviewAnimation = false
 	}
 
 	endSession(): void {
@@ -63,7 +65,7 @@ export class DndState {
 	// Callers (finalizeDragEnd / DndSimulator.cleanup) manage those flags around reset() on their
 	// own schedule — `isPerformingDrop` is cleared next frame so Preview.hide() sees it as `true`
 	// and collapses instantly; `shouldSkipDropPreviewAnimation` is cleared ~100ms later.
-	// New drag sessions overwrite both flags in startSession(), so leftover values never leak.
+	// startSession() clears both defensively, so leftover values can't leak into a new drag.
 	reset(): void {
 		this.session = null
 		this.isAnimating = false
