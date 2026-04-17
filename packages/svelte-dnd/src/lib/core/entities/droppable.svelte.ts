@@ -34,7 +34,6 @@ interface DroppableConfig {
 export class Droppable {
 	element!: HTMLElement
 
-	// Config
 	id: string
 	data: Record<string, unknown> | undefined
 	disabled: boolean
@@ -42,9 +41,9 @@ export class Droppable {
 	mode: DndMode
 	collision: CollisionAlgorithm | undefined
 	accepts: string | string[] | undefined
-	spacing = $state<number | undefined>(undefined)
 	strategy: ContainerStrategy
 
+	spacing = $state<number | undefined>(undefined)
 	slots = new SvelteMap<HTMLElement, Slot>()
 	tailPreview: Preview | undefined = undefined
 
@@ -63,7 +62,6 @@ export class Droppable {
 		this.mode = config.mode ?? 'sortable'
 		this.collision = config.collision
 		this.accepts = config.accepts
-		this.spacing = undefined
 		this.strategy = config.strategy
 		this.controller = controller
 	}

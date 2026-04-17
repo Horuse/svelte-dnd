@@ -57,18 +57,20 @@
 
 	const slot = new Slot(position ?? 0)
 
-	// Keep slot.position in sync with the reactive position prop.
-	// Slot is a plain class (not Svelte-reactive), so without this effect,
-	// slot.position stays at its initial value after {#each} reorders items,
-	// causing getSortedSlots() to return wrong order on subsequent drags.
-	$effect(() => {
-		slot.position = position ?? 0
-	})
+	// Keep slot.position in sync with the reactive position prop — Slot is a plain class,
+	// so without this {#each} reorders leave slot.position stale and getSortedSlots() returns
+	// wrong order on subsequent drags.
+	$effect(() => { slot.position = position ?? 0 })
 
 	const draggable = new Draggable(
 		{ id, type, data, disabled, sensors },
 		dndController
 	)
+
+	$effect(() => { draggable.type = type })
+	$effect(() => { draggable.data = data })
+	$effect(() => { draggable.disabled = disabled })
+	$effect(() => { draggable.sensors = sensors })
 
 	// Separate ref for click-capture effect (draggable.element is set via @attach, not reactive)
 	let draggableEl = $state<HTMLElement | undefined>(undefined)

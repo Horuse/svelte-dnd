@@ -76,6 +76,15 @@
 	)
 	setContext('dnd-droppable', droppable)
 
+	$effect(() => { droppable.data = data })
+	$effect(() => { droppable.disabled = disabled })
+	$effect(() => { droppable.direction = direction })
+	$effect(() => { droppable.collision = collision })
+	$effect(() => { droppable.accepts = accepts })
+	$effect(() => {
+		droppable.mode = mode
+		droppable.strategy = dndController.getStrategyForMode(mode)
+	})
 	$effect(() => { droppable.spacing = spacing })
 
 	// Extra margin added during cross-container drag so the container grows in layout flow,

@@ -30,18 +30,14 @@ export class Draggable {
 	element!: HTMLElement
 	slot!: Slot
 
-	// Config
 	id: string
 	data: Record<string, unknown> | undefined
 	type: string | undefined
 	disabled: boolean
 	sensors: SensorDescriptor[] | undefined
 
-	// State — was in DragHandler
 	isDragging = $state(false)
 	dragOccurred = $state(false)
-
-	// CSS translate offset for sortable neighbors (not ghost transform)
 	translate = $state({ x: 0, y: 0 })
 
 	private dragOffset = { x: 0, y: 0 }
