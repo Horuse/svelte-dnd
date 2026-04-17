@@ -57,16 +57,8 @@ export class DropAnimationCoordinator {
 					const targetDroppable = this.droppablesById.get(targetZone.containerId)
 
 					if (sourceDroppable && targetDroppable) {
-						const sourceInfo: DndContainerInfo = {
-							id: originContainerId!,
-							droppable: sourceDroppable,
-							position: this.state.originPosition
-						}
-						const currentInfo: DndContainerInfo = {
-							id: targetZone.containerId,
-							droppable: targetDroppable,
-							position: targetZone.position
-						}
+						const sourceInfo: DndContainerInfo = sourceDroppable.toContainerInfo(this.state.originPosition)
+						const currentInfo: DndContainerInfo = targetDroppable.toContainerInfo(targetZone.position)
 
 						let previousInfo: DndContainerInfo | null = null
 						if (prevKey) {
@@ -75,7 +67,7 @@ export class DropAnimationCoordinator {
 							const prevPosition = parseInt(prevKey.slice(sepIdx + 1))
 							const prevDroppable = this.droppablesById.get(prevContainerId)
 							if (prevDroppable) {
-								previousInfo = { id: prevContainerId, droppable: prevDroppable, position: prevPosition }
+								previousInfo = prevDroppable.toContainerInfo(prevPosition)
 							}
 						}
 
@@ -145,8 +137,8 @@ export class DropAnimationCoordinator {
 
 			if (element && sourceDroppable && targetDroppable) {
 				const itemInfo: DndItemInfo = { id: sourceId, data: sourceData, type, element }
-				const sourceInfo: DndContainerInfo = { id: originContainerId!, droppable: sourceDroppable, position: originPosition }
-				const targetInfo: DndContainerInfo = { id: targetContainerId, droppable: targetDroppable, position }
+				const sourceInfo: DndContainerInfo = sourceDroppable.toContainerInfo(originPosition)
+				const targetInfo: DndContainerInfo = targetDroppable.toContainerInfo(position)
 				const dropEvent: DropEvent = { item: itemInfo, source: sourceInfo, target: targetInfo }
 				const dragEndEvent: DragEndEvent = { item: itemInfo, source: sourceInfo, target: targetInfo, cancelled: false }
 				// Save scroll positions before DOM reorder — browser scroll anchoring
@@ -189,7 +181,7 @@ export class DropAnimationCoordinator {
 
 		if (itemId && element && sourceDroppable) {
 			const itemInfo: DndItemInfo = { id: itemId, data: this.state.draggedItemData, type, element }
-			const sourceInfo: DndContainerInfo = { id: originContainerId!, droppable: sourceDroppable, position: originPosition }
+			const sourceInfo: DndContainerInfo = sourceDroppable.toContainerInfo(originPosition)
 			cancelledEvent = { item: itemInfo, source: sourceInfo }
 			dragEndEvent = { item: itemInfo, source: sourceInfo, target: null, cancelled: true }
 		}

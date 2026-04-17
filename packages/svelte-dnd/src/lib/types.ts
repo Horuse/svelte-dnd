@@ -1,5 +1,4 @@
 import type { Snippet } from 'svelte'
-import type { Droppable } from './core/entities/droppable.svelte.js'
 
 export type DndDirection = 'vertical' | 'horizontal' | 'grid'
 
@@ -14,7 +13,11 @@ export interface DndItemInfo<TData = Record<string, unknown>> {
 
 export interface DndContainerInfo {
 	id: string
-	droppable: Droppable
+	data: Record<string, unknown> | undefined
+	direction: DndDirection
+	mode: DndMode
+	disabled: boolean
+	accepts: string | string[] | undefined
 	position: number
 }
 

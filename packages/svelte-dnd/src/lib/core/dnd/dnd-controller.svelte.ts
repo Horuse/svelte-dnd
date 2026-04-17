@@ -399,11 +399,7 @@ export class DndController<TData = Record<string, unknown>> {
 			type: draggable.type,
 			element: draggable.element
 		}
-		const sourceInfo: DndContainerInfo = {
-			id: sourceContainer.id,
-			droppable: sourceContainer,
-			position: slot.position
-		}
+		const sourceInfo: DndContainerInfo = sourceContainer.toContainerInfo(slot.position)
 		const startEvent: DragStartEvent = { item: itemInfo, source: sourceInfo }
 		this.eventEmitter.notifyDragStart(startEvent)
 

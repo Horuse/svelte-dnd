@@ -138,8 +138,8 @@ export class DndSimulator {
 						const toDroppable = this.droppablesById.get(toContainerId)
 						if (toDroppable && this.eventEmitter) {
 							const itemInfo: DndItemInfo = { id: itemId, data: undefined, type: undefined, element }
-							const sourceInfo: DndContainerInfo = { id: fromContainerId, droppable: fromDroppable, position: positionInFrom >= 0 ? positionInFrom : 0 }
-							const targetInfo: DndContainerInfo = { id: toContainerId, droppable: toDroppable, position: toPosition }
+							const sourceInfo: DndContainerInfo = fromDroppable.toContainerInfo(positionInFrom >= 0 ? positionInFrom : 0)
+							const targetInfo: DndContainerInfo = toDroppable.toContainerInfo(toPosition)
 							const dropEvent: DropEvent = { item: itemInfo, source: sourceInfo, target: targetInfo }
 							this.eventEmitter.notifyDrop(dropEvent)
 						}

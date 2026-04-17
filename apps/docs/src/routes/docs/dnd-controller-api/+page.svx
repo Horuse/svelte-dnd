@@ -323,7 +323,11 @@ interface DndItemInfo<TData = Record<string, unknown>> {
 }
 interface DndContainerInfo {
     id: string;
-    droppable: Droppable;
+    data: Record<string, unknown> | undefined;
+    direction: DndDirection;
+    mode: DndMode;
+    disabled: boolean;
+    accepts: string | string[] | undefined;
     position: number;
 }
 interface DragStartEvent     { item: DndItemInfo; source: DndContainerInfo }
