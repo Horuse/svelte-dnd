@@ -12,29 +12,29 @@ export class DndEventEmitter {
 	private dropCancelledCallbacks = new Set<DropCancelledCallback>()
 	private zonesInvalidatedCallbacks = new Set<ZonesInvalidatedCallback>()
 
-	onDragStart(cb: DragStartCallback) {
+	onDragStart(cb: DragStartCallback): () => void {
 		this.dragStartCallbacks.add(cb)
-		return () => this.dragStartCallbacks.delete(cb)
+		return () => { this.dragStartCallbacks.delete(cb) }
 	}
 
-	onDragEnd(cb: DragEndCallback) {
+	onDragEnd(cb: DragEndCallback): () => void {
 		this.dragEndCallbacks.add(cb)
-		return () => this.dragEndCallbacks.delete(cb)
+		return () => { this.dragEndCallbacks.delete(cb) }
 	}
 
-	onDrop(cb: DropCallback) {
+	onDrop(cb: DropCallback): () => void {
 		this.dropCallbacks.add(cb)
-		return () => this.dropCallbacks.delete(cb)
+		return () => { this.dropCallbacks.delete(cb) }
 	}
 
-	onDragOver(cb: DragOverCallback) {
+	onDragOver(cb: DragOverCallback): () => void {
 		this.dragOverCallbacks.add(cb)
-		return () => this.dragOverCallbacks.delete(cb)
+		return () => { this.dragOverCallbacks.delete(cb) }
 	}
 
-	onDropCancelled(cb: DropCancelledCallback) {
+	onDropCancelled(cb: DropCancelledCallback): () => void {
 		this.dropCancelledCallbacks.add(cb)
-		return () => this.dropCancelledCallbacks.delete(cb)
+		return () => { this.dropCancelledCallbacks.delete(cb) }
 	}
 
 	notifyDragStart(event: DragStartEvent) {
@@ -57,9 +57,9 @@ export class DndEventEmitter {
 		this.dropCancelledCallbacks.forEach(cb => cb(event))
 	}
 
-	onZonesInvalidated(cb: ZonesInvalidatedCallback) {
+	onZonesInvalidated(cb: ZonesInvalidatedCallback): () => void {
 		this.zonesInvalidatedCallbacks.add(cb)
-		return () => this.zonesInvalidatedCallbacks.delete(cb)
+		return () => { this.zonesInvalidatedCallbacks.delete(cb) }
 	}
 
 	notifyZonesInvalidated() {
