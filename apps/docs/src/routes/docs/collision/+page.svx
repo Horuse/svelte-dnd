@@ -26,7 +26,7 @@ Set a global algorithm on `DndController`:
 import { DndController, overlap } from '@horuse/svelte-dnd';
 
 const controller = new DndController({
-    collision: overlap({ threshold: '25%' }),
+    collision: overlap('25%'),
 });
 ```
 
@@ -52,10 +52,10 @@ Use the `collision` prop on `DndDroppable` to override the algorithm for a speci
 import { overlap } from '@horuse/svelte-dnd';
 
 // pixels of intersection required (0 = any overlap)
-collision: overlap({ threshold: 0 })
+collision: overlap(0)
 
 // percentage of ghost's smaller dimension
-collision: overlap({ threshold: '25%' })
+collision: overlap('25%')
 ```
 
 ## Custom algorithm

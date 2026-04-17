@@ -8,11 +8,15 @@ function parseThreshold(value: number | string, ghost: { width: number; height: 
 	return typeof value === 'number' ? value : parseFloat(value) || 0
 }
 
-export const overlap = (threshold: number | string | { threshold: number | string }): CollisionAlgorithm => {
-	const value = typeof threshold === 'object' ? threshold.threshold : threshold
+/**
+ * Minimum overlap required on both axes before a zone is considered hit.
+ * Number = pixels. String ending in `%` = fraction of `min(ghost.width, ghost.height)`.
+ * Defaults to 0 (any overlap).
+ */
+export const overlap = (threshold: number | string = 0): CollisionAlgorithm => {
 	return ({ zones, ghost }) => {
 		for (const zone of zones) {
-			const px = parseThreshold(value, ghost)
+			const px = parseThreshold(threshold, ghost)
 
 			const intersectW =
 				Math.min(ghost.x + ghost.width, zone.rect.x + zone.rect.width) -

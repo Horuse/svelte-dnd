@@ -36,7 +36,7 @@ const controller = new DndController({
     },
     debug: true,                             // position validation warnings in console
     sensors: [new PointerSensor(), new KeyboardSensor()], // see /docs/sensors
-    collision: overlap({ threshold: '25%' }), // see /docs/collision
+    collision: overlap('25%'),               // see /docs/collision
     modifiers: [restrictToVerticalAxis],      // see /docs/modifiers
     announcements: {                          // see /docs/accessibility
         ...defaultAnnouncements,
