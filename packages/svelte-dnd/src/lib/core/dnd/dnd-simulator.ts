@@ -1,7 +1,7 @@
 import type { DndState } from './dnd-state.svelte.js'
 import type { DndEventEmitter } from './dnd-event-emitter.js'
 import { DragSession } from './drag-session.svelte.js'
-import type { DropZone, DropEvent, DndItemInfo, DndContainerInfo } from '../../types.js'
+import type { DropZone, DropEvent, DropCancelledEvent, DndItemInfo, DndContainerInfo } from '../../types.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
 import type { Slot } from '../entities/slot.js'
 import { AnimationPipeline } from '../animation/steps/animation-pipeline.js'
@@ -9,8 +9,15 @@ import { GhostToTargetStep } from '../animation/steps/ghost-to-target-step.js'
 import { GhostReturnStep } from '../animation/steps/ghost-return-step.js'
 
 export interface SimulateOptions {
+	/**
+	 * When `true`, fires a real event on completion:
+	 * `simulateDrop` → `onDrop`; `simulateReturn` → `onDropCancelled`.
+	 * Defaults to `false`.
+	 */
 	emitEvents?: boolean
 }
+
+type EmitKind = 'drop' | 'cancel'
 
 export class DndSimulator {
 	constructor(
@@ -24,26 +31,27 @@ export class DndSimulator {
 	 * Animate an item flying from its current DOM position back to a destination.
 	 * Uses GhostReturnStep (scroll-aware) when staying in the same container,
 	 * GhostToTargetStep when crossing containers.
-	 * Does NOT fire any events.
+	 * Fires no events by default; pass `{ emitEvents: true }` to fire `onDropCancelled`.
 	 */
 	simulateReturn(
 		itemId: string,
 		fromContainerId: string,
 		toContainerId: string,
-		toPosition: number
+		toPosition: number,
+		options: SimulateOptions = {}
 	): Promise<void> {
 		const useSameContainerReturn = toContainerId === fromContainerId
 		const step = () => useSameContainerReturn
 			? new GhostReturnStep(this.state, toContainerId, toPosition, this.droppablesById)
 			: new GhostToTargetStep(this.state, this.syntheticZone(toContainerId, toPosition), this.droppablesById)
 
-		return this.run(itemId, fromContainerId, toContainerId, toPosition, step)
+		return this.run(itemId, fromContainerId, toContainerId, toPosition, step, options, 'cancel')
 	}
 
 	/**
 	 * Animate an item flying from its current DOM position to a target container/position.
 	 * Always uses GhostToTargetStep regardless of containers.
-	 * Does NOT fire any events.
+	 * Fires no events by default; pass `{ emitEvents: true }` to fire `onDrop`.
 	 */
 	simulateDrop(
 		itemId: string,
@@ -55,7 +63,7 @@ export class DndSimulator {
 		const step = () =>
 			new GhostToTargetStep(this.state, this.syntheticZone(toContainerId, toPosition), this.droppablesById)
 
-		return this.run(itemId, fromContainerId, toContainerId, toPosition, step, options)
+		return this.run(itemId, fromContainerId, toContainerId, toPosition, step, options, 'drop')
 	}
 
 	// --- Private ---
@@ -66,7 +74,8 @@ export class DndSimulator {
 		toContainerId: string,
 		toPosition: number,
 		makeStep: () => GhostToTargetStep | GhostReturnStep,
-		options: SimulateOptions = {}
+		options: SimulateOptions = {},
+		emitKind: EmitKind = 'drop'
 	): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			if (this.state.dragging) {
@@ -134,20 +143,26 @@ export class DndSimulator {
 				AnimationPipeline.chain(step).execute().then(() => {
 					// setPerformingDrop(true) here so Preview.hide() collapses instantly
 					this.state.setPerformingDrop(true)
-					if (options.emitEvents) {
-						const toDroppable = this.droppablesById.get(toContainerId)
-						if (toDroppable && this.eventEmitter) {
-							const draggable = fromSlot.draggable
-							const itemInfo: DndItemInfo = {
-								id: itemId,
-								data: draggable.data,
-								type: draggable.type,
-								element
+					if (options.emitEvents && this.eventEmitter) {
+						const draggable = fromSlot.draggable
+						const itemInfo: DndItemInfo = {
+							id: itemId,
+							data: draggable.data,
+							type: draggable.type,
+							element
+						}
+						const sourceInfo: DndContainerInfo = fromDroppable.toContainerInfo(positionInFrom >= 0 ? positionInFrom : 0)
+
+						if (emitKind === 'drop') {
+							const toDroppable = this.droppablesById.get(toContainerId)
+							if (toDroppable) {
+								const targetInfo: DndContainerInfo = toDroppable.toContainerInfo(toPosition)
+								const dropEvent: DropEvent = { item: itemInfo, source: sourceInfo, target: targetInfo }
+								this.eventEmitter.notifyDrop(dropEvent)
 							}
-							const sourceInfo: DndContainerInfo = fromDroppable.toContainerInfo(positionInFrom >= 0 ? positionInFrom : 0)
-							const targetInfo: DndContainerInfo = toDroppable.toContainerInfo(toPosition)
-							const dropEvent: DropEvent = { item: itemInfo, source: sourceInfo, target: targetInfo }
-							this.eventEmitter.notifyDrop(dropEvent)
+						} else {
+							const cancelEvent: DropCancelledEvent = { item: itemInfo, source: sourceInfo }
+							this.eventEmitter.notifyDropCancelled(cancelEvent)
 						}
 					}
 					this.cleanup()

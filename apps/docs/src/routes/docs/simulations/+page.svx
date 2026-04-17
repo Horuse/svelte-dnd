@@ -29,7 +29,8 @@ controller.simulateReturn(
     itemId: string,
     fromContainerId: string,
     toContainerId: string,
-    toPosition: number
+    toPosition: number,
+    options?: SimulateOptions
 ): Promise<void>
 ```
 
@@ -38,7 +39,7 @@ Animates an item flying from its current DOM position to a destination. Returns 
 - When `fromContainerId === toContainerId` — uses a scroll-aware return animation (same as a cancelled drag)
 - When containers differ — uses a fly-to-target animation
 
-**Does not fire any drop events.**
+By default **does not fire any events**. Pass `{ emitEvents: true }` to fire `onDropCancelled` after the animation completes.
 
 ### Example — undo a move
 
@@ -64,7 +65,11 @@ controller.simulateDrop(
 ): Promise<void>
 
 interface SimulateOptions {
-    /** When true, fires onDrop after the animation completes. Default: false */
+    /**
+     * When true, fires a real event after the animation completes:
+     * `simulateDrop` → `onDrop`; `simulateReturn` → `onDropCancelled`.
+     * Default: false
+     */
     emitEvents?: boolean;
 }
 ```
@@ -169,7 +174,7 @@ await controller.simulateBatchSwap(
 
 - **Cannot run while a drag is in progress.** Both methods reject with an error if `controller.dragging` is `true`.
 - **Item must exist in the DOM.** The item must be rendered in `fromContainerId` at the time the simulation starts.
-- **No drop events by default.** Neither `onDrop` nor `onDragEnd` callbacks are called unless you pass `{ emitEvents: true }` to `simulateDrop`.
+- **No events by default.** Callbacks are not fired unless you pass `{ emitEvents: true }` — then `simulateDrop` fires `onDrop` and `simulateReturn` fires `onDropCancelled`.
 
 ---
 
@@ -180,7 +185,7 @@ await controller.simulateBatchSwap(
 | Items animated | 1 | 1 | 2 | N |
 | Simultaneous | — | — | ✓ | ✓ |
 | Cross-container | ✓ | ✓ | ✓ | ✓ |
-| Fires drop events | No | Optional | No | No |
+| Fires events | Optional (`onDropCancelled`) | Optional (`onDrop`) | No | No |
 | Updates data | Caller, after | Caller, after | Caller, after | Caller, inside callback |
 | Typical use case | Undo, cancel | Auto-sort (one-by-one) | Swap two items | Batch reorder, team swap |
 
