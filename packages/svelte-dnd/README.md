@@ -44,13 +44,13 @@ A minimal working drag-and-drop setup requires three components: `DndProvider`, 
 
     const controller = new DndController();
 
-    controller.onDrop((sourceId, sourceData, targetContainerId, position) => {
-        const fromIndex = items.findIndex((item) => item.id === sourceId);
+    controller.onDrop(({ item, target }) => {
+        const fromIndex = items.findIndex((i) => i.id === item.id);
         if (fromIndex === -1) return;
 
         const updated = [...items];
         const [moved] = updated.splice(fromIndex, 1);
-        updated.splice(position, 0, moved);
+        updated.splice(target.position, 0, moved);
         items = updated;
     });
 </script>

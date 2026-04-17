@@ -9,13 +9,20 @@
 	import DndPreview from './DndPreview.svelte'
 
 	interface Props {
+		/** Unique item identifier. */
 		id: string
+		/** Item type; matched against the target droppable's `accepts` filter. */
 		type?: string
+		/** Arbitrary data attached to the item, surfaced on drag/drop events. */
 		data?: Record<string, unknown>
+		/** When `true`, dragging is prevented. */
 		disabled?: boolean
+		/** Per-item sensor override; falls back to the controller's sensors. */
 		sensors?: SensorDescriptor[]
 		children: Snippet
+		/** CSS class forwarded to the draggable element. */
 		class?: string
+		/** Zero-based index of this item within its parent container's list. Required for `sortable` mode. */
 		position?: number
 	}
 

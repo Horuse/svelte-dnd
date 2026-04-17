@@ -7,7 +7,9 @@
 
 	interface Props {
 		children: Snippet
+		/** Optional `DndController` instance. If omitted, one is created and destroyed with the provider. */
 		controller?: DndController
+		/** Optional snippet for rendering a custom ghost. Falls back to a DOM clone of the dragged element. */
 		ghost?: GhostSnippet
 	}
 

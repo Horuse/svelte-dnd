@@ -8,9 +8,13 @@
 	import DndPreview from './DndPreview.svelte'
 
 	interface Props {
+		/** Unique container identifier. */
 		id: string
+		/** Arbitrary data attached to the container, surfaced on drop events. */
 		data?: Record<string, unknown>
+		/** When `true`, drops are not allowed. */
 		disabled?: boolean
+		/** Layout direction used for drop-zone calculations. Defaults to `'vertical'`. */
 		direction?: DndDirection
 		/**
 		 * `'sortable'` (default) — position-based drop zones with insert previews.
@@ -38,6 +42,7 @@
 		 */
 		spacing?: number
 		children: Snippet
+		/** CSS class forwarded to the root element. */
 		class?: string
 	}
 
