@@ -109,7 +109,28 @@ const controller = new DndController({
 <DndDraggable id={item.id} position={index}>
 ```
 
-New optional props: `type`.
+Component-level `onDragStart` / `onDrag` / `onDragEnd` props are **removed**. Subscribe on the controller instead:
+
+```svelte
+<!-- before -->
+<DndDraggable
+    id={item.id}
+    onDragStart={(e) => {...}}
+    onDrag={(e) => {...}}
+    onDragEnd={(e) => {...}}
+/>
+
+<!-- after -->
+<script>
+    controller.onDragStart(({ item, source }) => {...})
+    controller.onDragEnd(({ item, source, target, cancelled }) => {...})
+</script>
+<DndDraggable id={item.id} position={index} />
+```
+
+There is no replacement for `onDrag` — use `controller.onDragOver` if you need drop-target changes during the drag.
+
+New optional props: `type`, `sensors`.
 
 ## DndDroppable
 
@@ -127,7 +148,7 @@ Type filtering moved from `data` to dedicated props:
 <DndDroppable id="list" accepts={['task', 'card']}>
 ```
 
-New optional props: `mode`, `overlap`.
+New optional props: `mode`, `collision`, `spacing`.
 
 ```svelte
 <!-- non-sortable drop zone (e.g. trash, board column) -->
@@ -144,53 +165,55 @@ In v0.3.0 you had to manually add `data-dnd-scroll` to every scrollable `DndDrop
 
 `DndPreview` is now internal — **remove all manual placements** from your templates. Do not import or use it directly.
 
-## onDragStart / onDragEnd unsubscribe
+## Controller callbacks now receive rich objects
 
-In v0.3.0 these returned an unsubscribe function you had to call in `onDestroy`. In v1 callbacks are cleaned up automatically when the controller is destroyed — no `onDestroy` needed.
-
-```ts
-// before
-const unsub = controller.onDragStart((id) => { ... });
-onDestroy(() => unsub());
-
-// after — no onDestroy needed
-controller.onDragStart(({ item }) => { ... });
-```
-
-## Event callbacks now receive rich objects
-
-All callbacks changed from positional primitives to a single event object:
+The three v0.3.0 callbacks (`onDragStart`, `onDragEnd`, `onDrop`) changed from positional primitives to a single event object:
 
 ```ts
 // before
-controller.onDrop((sourceId, sourceData, targetContainerId, position) => { ... })
 controller.onDragStart((itemId) => { ... })
 controller.onDragEnd((itemId) => { ... })
-controller.onDropCancelled((itemId) => { ... })
-controller.onDragOver((containerId, position, prevContainerId) => { ... })
+controller.onDrop((sourceId, sourceData, targetContainerId, position) => { ... })
 
 // after
-controller.onDrop(({ item, source, target }) => { ... })
 controller.onDragStart(({ item, source }) => { ... })
 controller.onDragEnd(({ item, source, target, cancelled }) => { ... })
-controller.onDropCancelled(({ item, source }) => { ... })
-controller.onDragOver(({ item, source, current, previous }) => { ... })
+controller.onDrop(({ item, source, target }) => { ... })
 ```
 
 `item.id`, `target.id`, and `target.position` replace the old positional `sourceId`, `targetContainerId`, and `position` respectively. Each event also carries `item.data`, `item.type`, `item.element`, plus full `Droppable` entity references on source/target containers.
 
-## New callback: onDropCancelled
+Unsubscribe is still returned from each `on*` method, but it is no longer required — callbacks are cleaned up automatically when `controller.destroy()` runs.
 
-Already available in v1 with the new signature:
+## New controller callbacks
+
+Two callbacks did not exist in v0.3.0:
 
 ```ts
+controller.onDragOver(({ item, source, current, previous }) => {
+    // fires when the active drop target changes during a drag
+})
+
 controller.onDropCancelled(({ item, source }) => {
-    // drag ended without a drop
+    // drag ended without a drop (Esc, cancelled, invalid target)
 })
 ```
+
+## Removed exports
+
+- `createConditionalSlide` / `createConditionalScale` — replaced by per-container `collision` algorithms (`overlap`, `closestCenter`, `centerPoint`, `cursorOver`).
+- `DndDragEvent` / `DndDropEvent` types — replaced by `DragStartEvent`, `DragEndEvent`, `DropEvent`, `DragOverEvent`, `DropCancelledEvent`.
+- `DropPreview.draggedElementHeight` / `draggedElementWidth` — ghost size now lives on `controller.ghostSize`.
+- `DropPreview.visible` — `DropPreview` is `null` when no preview is active.
+
+## Renamed getters
+
+- `controller.size` → `controller.ghostSize`
 
 ## TypeScript
 
 `DragController` type is removed — use `DndController`.
 
-New exports: `DndControllerConfig`, `ScrollConfig`, `PreviewConfig`, `StrategyFactory`, `DndMode`, `DragSource`, `DndItemInfo`, `DndContainerInfo`, `DragStartEvent`, `DropEvent`, `DragEndEvent`, `DragOverEvent`, `DropCancelledEvent`.
+`data: Record<string, any>` props are now typed `Record<string, unknown>`.
+
+New type exports: `DndControllerConfig`, `ScrollConfig`, `PreviewConfig`, `StrategyFactory`, `StrategyContext`, `DndMode`, `DragSource`, `DragSession`, `DndItemInfo`, `DndContainerInfo`, `DragStartEvent`, `DropEvent`, `DragEndEvent`, `DragOverEvent`, `DropCancelledEvent`, `DragStartCallback`, `DragEndCallback`, `DropCallback`, `DragOverCallback`, `DropCancelledCallback`, `Announcements`, `SimulateOptions`, `SensorDescriptor`, `CollisionAlgorithm`, `Modifier`.
