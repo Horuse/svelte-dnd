@@ -1,6 +1,6 @@
 import { SvelteMap } from 'svelte/reactivity'
 import { isBrowser } from '../utils/dom-helper.js'
-import type { DndContainerInfo, DndDirection, DndMode } from '../../types.js'
+import type { DndContainerInfo, DndDirection, DndMode, DragStartCallback, DragEndCallback } from '../../types.js'
 import type { CollisionAlgorithm } from '../collision/collision-algorithm.js'
 import type { ContainerStrategy } from '../containers/strategies/container-strategy.js'
 import type { Slot } from './slot.js'
@@ -13,9 +13,9 @@ export type DroppableControllerRef = {
 	element: HTMLElement | null
 	cancelSession(): void
 	slots: Map<HTMLElement, Slot>
-	onDragStart(cb: (itemId: string) => void): () => void
+	onDragStart(cb: DragStartCallback): () => void
 	onZonesInvalidated(cb: () => void): () => void
-	onDragEnd(cb: (itemId: string) => void): () => void
+	onDragEnd(cb: DragEndCallback): () => void
 	refreshDroppableZones(droppable: Droppable): void
 	dragging: boolean
 }
@@ -142,7 +142,7 @@ export class Droppable {
 	// --- Lifecycle (set up from attachDroppable in controller) ---
 
 	setupEventListeners() {
-		this.unsubscribeDragStart = this.controller.onDragStart((_itemId) => {
+		this.unsubscribeDragStart = this.controller.onDragStart(() => {
 			this.invalidateZones()
 			this.setupScrollListeners()
 		})
@@ -151,7 +151,7 @@ export class Droppable {
 			this.invalidateZones()
 		})
 
-		this.unsubscribeDragEnd = this.controller.onDragEnd((_itemId) => {
+		this.unsubscribeDragEnd = this.controller.onDragEnd(() => {
 			this.cleanupScrollListeners()
 		})
 	}
