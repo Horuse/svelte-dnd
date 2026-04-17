@@ -51,14 +51,16 @@ export class KeyboardSensor implements SensorDescriptor {
 			}
 		}
 
-		// Defer listener so the current Enter keydown event doesn't immediately trigger onEnd
-		setTimeout(() => window.addEventListener('keydown', onWindowKeyDown), 0)
+		// Defer listener so the current Enter keydown event doesn't immediately trigger onEnd.
+		// Track the timer so cleanup() can cancel it if destroy fires before the listener attaches.
+		const timerId = setTimeout(() => window.addEventListener('keydown', onWindowKeyDown), 0)
 
 		// Start drag immediately on Enter/Space
 		callbacks.onStart(initialTransform)
 		started = true
 
 		function cleanup() {
+			clearTimeout(timerId)
 			window.removeEventListener('keydown', onWindowKeyDown)
 		}
 
