@@ -55,10 +55,11 @@
 	}: Props = $props()
 
 	const dndController = getContext<DndController>('dnd')
+	if (!dndController) {
+		throw new Error('[svelte-dnd] <DndDroppable> must be rendered inside a <DndProvider>.')
+	}
 
-	// Keep for backward compat (DndDraggable debug position registry)
-	setContext('dnd-container-id', () => id)
-	if (dndController?.debug) setContext('dnd-position-registry', new Map<number, string>())
+	if (dndController.debug) setContext('dnd-position-registry', new Map<number, string>())
 
 	const droppable = new Droppable(
 		{
@@ -69,7 +70,7 @@
 			mode,
 			collision,
 			accepts,
-			strategy: dndController?.getStrategyForMode(mode)!
+			strategy: dndController.getStrategyForMode(mode)
 		},
 		dndController
 	)

@@ -32,6 +32,12 @@
 
 	const dndController = getContext<DndController>('dnd')
 	const droppable = getContext<Droppable>('dnd-droppable')
+	if (!dndController) {
+		throw new Error('[svelte-dnd] <DndDraggable> must be rendered inside a <DndProvider>.')
+	}
+	if (!droppable) {
+		throw new Error('[svelte-dnd] <DndDraggable> must be rendered inside a <DndDroppable>.')
+	}
 	const positionRegistry = getContext<Map<number, string> | undefined>('dnd-position-registry')
 
 	$effect(() => {
