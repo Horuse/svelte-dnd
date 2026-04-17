@@ -70,8 +70,8 @@ export class DndController<TData = Record<string, unknown>> {
 	private droppablesById = new Map<string, Droppable>()
 	/** Global element→Slot lookup used by sensors and attachSlot. */
 	slots = new Map<HTMLElement, Slot>()
-	/** Current drag session. Coexists with DndState.session during migration. */
-	session = $state<DragSession | null>(null)
+	/** Current drag session. Read-only — stored in DndState. */
+	get session(): DragSession | null { return this.state.session }
 
 	debug = false
 	sensors: SensorDescriptor[] | undefined = undefined
@@ -301,13 +301,11 @@ export class DndController<TData = Record<string, unknown>> {
 		targetContainerId: string,
 		position: number
 	) {
-		this.session = null
 		this.animationCoordinator.performDrop(sourceId, sourceData, targetContainerId, position)
 	}
 
 	/** Cancel the current drag and animate the ghost back to its origin. */
 	endDrag(shouldAnimate = true) {
-		this.session = null
 		this.animationCoordinator.endDrag(shouldAnimate)
 	}
 
@@ -388,7 +386,6 @@ export class DndController<TData = Record<string, unknown>> {
 		const rect = draggable.element.getBoundingClientRect()
 
 		const newSession = new DragSession(draggable, sourceContainer, rect, initialTransform, 'user')
-		this.session = newSession
 		this.state.startSession(newSession)
 		this.state.setSkipDropPreviewAnimation(true)
 
@@ -411,7 +408,6 @@ export class DndController<TData = Record<string, unknown>> {
 
 	/** Cancel the current drag session (no drop, no return animation). */
 	cancelSession() {
-		this.session = null
 		this.animationCoordinator.endDrag(false)
 	}
 
@@ -421,9 +417,9 @@ export class DndController<TData = Record<string, unknown>> {
 	 */
 	commitSession() {
 		const dropPreview = this.state.dropPreview
-		const srcId = this.session?.source.id ?? this.state.draggedItem
-		const srcData = this.session?.source.data ?? this.state.draggedItemData
-		this.session = null
+		const session = this.state.session
+		const srcId = session?.source.id ?? this.state.draggedItem
+		const srcData = session?.source.data ?? this.state.draggedItemData
 
 		if (dropPreview?.visible && srcId) {
 			this.state.setSkipDropPreviewAnimation(true)
@@ -440,7 +436,6 @@ export class DndController<TData = Record<string, unknown>> {
 		this.eventEmitter.destroy()
 		// Drop any active session so a mid-drag teardown (e.g. route change) doesn't leave
 		// the ghost element, translations, or drop preview lingering in the DOM.
-		this.session = null
 		this.state.reset()
 	}
 }
