@@ -307,8 +307,7 @@ export class DndController {
 		this.updateTransform(ghostTransform)
 		this.state.setDropPreview({
 			containerId: targetZone.containerId,
-			position: targetZone.position,
-			visible: true
+			position: targetZone.position
 		})
 	}
 
@@ -451,7 +450,7 @@ export class DndController {
 		const srcId = session?.source.id ?? this.state.draggedItem
 		const srcData = session?.source.data ?? this.state.draggedItemData
 
-		if (dropPreview?.visible && srcId) {
+		if (dropPreview && srcId) {
 			this.state.setSkipDropPreviewAnimation(true)
 			this.animationCoordinator.performDrop(srcId, srcData, dropPreview.containerId, dropPreview.position)
 		} else {

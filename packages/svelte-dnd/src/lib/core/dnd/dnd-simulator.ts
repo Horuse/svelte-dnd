@@ -127,8 +127,7 @@ export class DndSimulator {
 			session.ghostSize = { width: element.offsetWidth, height: element.offsetHeight }
 			session.dropPreview = {
 				containerId: toContainerId,
-				position: toPosition,
-				visible: true
+				position: toPosition
 			}
 
 			this.state.startSession(session)

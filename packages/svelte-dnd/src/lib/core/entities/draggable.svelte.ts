@@ -173,7 +173,7 @@ export class Draggable {
 		this.activeActivation = null
 
 		const dropPreview = this.controller.dropPreview
-		if (dropPreview?.visible) {
+		if (dropPreview) {
 			this.controller.setSkipDropPreviewAnimation(true)
 			this.controller.performDrop(this.id, this.data, dropPreview.containerId, dropPreview.position)
 		} else {

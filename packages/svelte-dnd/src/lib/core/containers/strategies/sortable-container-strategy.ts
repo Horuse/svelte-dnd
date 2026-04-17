@@ -61,7 +61,7 @@ export class SortableContainerStrategy implements ContainerStrategy {
 		const idByEl = new Map(slots.map((s) => [s.draggable.element, s.draggable.id]))
 		const draggedIdx = allItems.findIndex((el) => idByEl.get(el) === draggedId)
 
-		if (!preview?.visible) {
+		if (!preview) {
 			// No preview: collapse gap only if this is the origin container
 			if (containerId !== session.originContainerId) return map
 			if (draggedIdx === -1) return map
@@ -152,7 +152,7 @@ export class SortableContainerStrategy implements ContainerStrategy {
 			return { x: r.width * direction, y: 0 }
 		}
 
-		if (!preview?.visible) {
+		if (!preview) {
 			if (containerId !== session.originContainerId || draggedIdx === -1) return map
 			for (let i = draggedIdx + 1; i < allItems.length; i++) {
 				const id = getId(allItems[i])

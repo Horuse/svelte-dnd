@@ -42,7 +42,7 @@ export class TranslationEngine {
 
 		const session = this.state.session
 		const preview = session.dropPreview
-		if (!preview?.visible) return null
+		if (!preview) return null
 		if (session.originContainerId === preview.containerId) return null
 
 		let targetDroppable: Droppable | undefined

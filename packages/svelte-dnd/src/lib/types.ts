@@ -100,7 +100,6 @@ export interface DropZone {
 export interface DropPreview {
 	containerId: string
 	position: number
-	visible: boolean
 }
 
 export interface GhostSnippetProps {

@@ -103,7 +103,7 @@
 	// Tail preview: handles position = slots.size (drop after last item in cross-container drags).
 	// Returns -1 (inactive) unless this container is the current drop target.
 	const tailPosition = $derived.by(() => {
-		if (!dndController?.dropPreview?.visible || dndController.dropPreview.containerId !== id) return -1
+		if (!dndController?.dropPreview || dndController.dropPreview.containerId !== id) return -1
 		return droppable.slots.size
 	})
 

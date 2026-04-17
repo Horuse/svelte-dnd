@@ -11,7 +11,6 @@ import { GhostReturnStep } from './steps/ghost-return-step.js'
 
 export class DropAnimationCoordinator {
 	private currentAnimation: AnimationPipeline | null = null
-	private hidePreviewTimeout: ReturnType<typeof setTimeout> | null = null
 	private lastPreviewKey: string | null = null
 
 	constructor(
@@ -33,8 +32,7 @@ export class DropAnimationCoordinator {
 		if (targetZone) {
 			const preview: DropPreview = {
 				containerId: targetZone.containerId,
-				position: targetZone.position,
-				visible: true
+				position: targetZone.position
 			}
 			this.state.setDropPreview(preview)
 
@@ -87,18 +85,11 @@ export class DropAnimationCoordinator {
 					this.state.setSkipDropPreviewAnimation(false)
 				})
 			}
-		} else {
-			const current = this.state.dropPreview
-			if (current?.visible) {
-				this.state.setDropPreview({ ...current, visible: false })
-				if (this.hidePreviewTimeout) clearTimeout(this.hidePreviewTimeout)
-				this.hidePreviewTimeout = setTimeout(() => {
-					this.hidePreviewTimeout = null
-					if (this.state.dropPreview && !this.state.dropPreview.visible) {
-						this.state.setDropPreview(null)
-					}
-				}, 300)
-			}
+		} else if (this.state.dropPreview) {
+			// Pointer left all zones — drop the preview immediately. The Preview entity
+			// plays its own collapse animation via collapseTimer, so visual fade-out keeps working.
+			this.state.setDropPreview(null)
+			this.lastPreviewKey = null
 		}
 	}
 
@@ -191,8 +182,7 @@ export class DropAnimationCoordinator {
 		if (shouldAnimate && session?.originContainerId) {
 			this.state.setDropPreview({
 				containerId: session.originContainerId,
-				position: session.originPosition,
-				visible: true
+				position: session.originPosition
 			})
 		}
 
@@ -214,7 +204,6 @@ export class DropAnimationCoordinator {
 
 	destroy() {
 		this.currentAnimation?.cancel()
-		if (this.hidePreviewTimeout) clearTimeout(this.hidePreviewTimeout)
 	}
 
 	// --- Private ---

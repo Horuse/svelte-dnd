@@ -63,7 +63,7 @@ export class Preview {
 
 	get isVisible(): boolean {
 		const dp = this.controller.dropPreview
-		return !!dp?.visible && dp.containerId === this.containerId && dp.position === this.position
+		return !!dp && dp.containerId === this.containerId && dp.position === this.position
 	}
 
 	/**

@@ -91,7 +91,7 @@
 		const isLast = position === droppable.slots.size - 1
 		if (!isLast) return false
 		const preview = dndController?.dropPreview
-		const tailActive = preview?.visible && preview.containerId === droppable.id && preview.position === droppable.slots.size
+		const tailActive = preview && preview.containerId === droppable.id && preview.position === droppable.slots.size
 		return !tailActive
 	})
 
