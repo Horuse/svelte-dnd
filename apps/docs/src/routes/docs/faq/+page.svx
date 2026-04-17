@@ -77,7 +77,7 @@ Set a `type` on each `DndDraggable` and an `accepts` prop on each `DndDroppable`
 
 ## How do I move items between multiple containers?
 
-Use a single `DndController` shared across all containers. Read `targetContainerId` inside `onDrop` to determine where the item landed:
+Use a single `DndController` shared across all containers. Read `target.id` inside `onDrop` to determine where the item landed:
 
 ```svelte
 <script>
@@ -133,14 +133,10 @@ If you apply `touch-action` somewhere in your layout that affects draggable chil
 
 ## The drop preview doesn't appear
 
-Check two things:
+Previews are rendered automatically — you usually don't need to place `DndPreview` manually. Check that:
 
-1. The `containerId` prop on `DndPreview` exactly matches the `id` prop on the target `DndDroppable`.
-2. The `position` prop is in the range `0 … items.length` (inclusive).
-
-Note: in normal usage you don't place `DndPreview` manually — `DndDraggable` and `DndDroppable` handle this automatically. Only check this if you're using `DndPreview` in a custom layout.
-
----
+1. Every `DndDraggable` receives a valid `position` (unique integer within its container, starting at `0`).
+2. The dragged item's `type` is accepted by the target `DndDroppable` (`accepts` prop allows it, or is omitted).
 
 See the **Sortable Containers** example for a working implementation.
 

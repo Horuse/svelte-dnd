@@ -36,7 +36,7 @@ interface GhostSnippetProps {
 | `--dnd-ghost-z-index` | `9999` | Z-index of the ghost element |
 | `--dnd-ghost-opacity` | `0.8` | Opacity of the ghost element |
 | `--dnd-ghost-scale` | `1` | Scale of the ghost element |
-| `--dnd-ghost-rotation` | `3deg` | Rotation applied to the ghost while dragging |
+| `--dnd-ghost-rotation` | `0deg` | Rotation applied to the ghost while dragging |
 | `--dnd-ghost-rotation-duration` | `200ms` | Duration of the rotation transition |
 
 ```svelte

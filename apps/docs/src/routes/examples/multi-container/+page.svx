@@ -7,7 +7,7 @@ description: Kanban board example demonstrating moving items between multiple Dn
 
 A kanban board with three columns — items can be moved between containers.
 
-Each column is its own `DndDroppable`, and all share one `DndController` via `DndProvider`. The `onDrop` callback receives `targetContainerId` — find the source column, remove the item, and insert it into the target column at `position`.
+Each column is its own `DndDroppable`, and all share one `DndController` via `DndProvider`. The `onDrop` callback receives `{ item, source, target }` — find the source column by `source.id`, remove the item, and insert it into the target column (`target.id`) at `target.position`.
 
 <script lang="ts">
 	import { ComponentPreview } from '$lib/components';

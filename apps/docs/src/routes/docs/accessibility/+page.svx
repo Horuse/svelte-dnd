@@ -26,10 +26,10 @@ Arrow keys navigate both within and across containers. When the end of a contain
 
 | Event | Default message |
 |-------|----------------|
-| Drag start | `"Picked up item."` |
-| Drag over new position | `"Moving to position {n} of {total}."` |
-| Drop | `"Dropped item."` |
-| Cancel | `"Drop cancelled."` |
+| Drag start | `Started dragging item {item.id}.` |
+| Drag over new position | `Item {item.id} is over {current.id} at position {current.position}.` |
+| Drop | `Dropped item {item.id} into {target.id} at position {target.position}.` |
+| Cancel | `Dragging {item.id} was cancelled.` |
 
 ### Custom announcements
 
@@ -72,22 +72,7 @@ The library sets these attributes automatically:
 | Element | Attributes |
 |---------|-----------|
 | `DndDraggable` inner div | `role="button"`, `tabindex="0"`, `aria-grabbed`, `aria-roledescription="draggable item"` |
-| `DndDroppable` | `aria-disabled` when `disabled={true}` |
-
-## use:draggable action
-
-The `draggable` action sets the same ARIA attributes on any element, without requiring `DndDraggable`:
-
-```svelte
-<li
-    use:draggable={{ id: item.id, controller }}
-    style="transform: translate3d({controller.translations.get(item.id)?.x ?? 0}px, {controller.translations.get(item.id)?.y ?? 0}px, 0)"
->
-    {item.label}
-</li>
-```
-
-The `use:draggable` action also adds/removes the CSS class `dnd-dragging` during a drag, so you can style it without Svelte reactivity.
+| `DndDroppable` | `aria-dropeffect="move"` (or `"none"` when `disabled`) |
 
 ---
 

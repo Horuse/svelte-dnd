@@ -145,8 +145,11 @@ Previews are placeholder elements rendered inside containers to show the future 
 
 | Class | Applied when |
 |-------|-------------|
-| `.dnd-preview` | Always — outer wrapper of every preview |
-| `.dnd-preview__inner` | Inner element inside the preview wrapper |
+| `.dnd-preview` | Always — base class on every preview slot |
+| `.dnd-preview--revealed` | Preview is visible (after `showDelay` elapses) |
+| `.dnd-preview--instant` | Preview is shown/hidden without transition (used during programmatic drops) |
+| `.dnd-preview--align-bottom` | Preview anchors to the bottom of its slot (vertical containers) |
+| `.dnd-preview--align-right` | Preview anchors to the right of its slot (horizontal containers) |
 
 ### Debug zones
 

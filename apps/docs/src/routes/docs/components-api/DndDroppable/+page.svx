@@ -63,15 +63,7 @@ On the draggable side, set the `type` prop:
 
 Renders a placeholder at a specific position within a container to indicate where a dragged item will be dropped.
 
-> **Note:** In most cases you do not need to use `DndPreview` directly. `DndDraggable` renders its own preview automatically, and `DndDroppable` renders the tail preview. Use `DndPreview` only when building fully custom container layouts.
-
-### Props
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `containerId` | `string` | **required** | Which container this preview belongs to |
-| `position` | `number` | **required** | Position index within the container |
-| `class` | `string` | `''` | Additional CSS class names |
+> **Note:** `DndPreview` is rendered automatically by `DndDraggable` (per-slot preview) and `DndDroppable` (tail preview). You should not place it manually — it requires internal `Slot`/`Droppable` entity references and is not intended for direct consumer use. Style it via the CSS variables below.
 
 ### CSS Variables
 

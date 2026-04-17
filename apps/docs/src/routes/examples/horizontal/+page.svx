@@ -5,9 +5,7 @@ description: Horizontal sortable list using direction="horizontal" on DndDroppab
 
 # Horizontal List
 
-Set `direction="horizontal"` on both `DndDroppable` and `DndPreview`.
-
-Without `direction="horizontal"` on `DndPreview`, the open/close animation slides vertically instead of horizontally. The reorder logic is the same as the vertical example — only the layout direction changes.
+Set `direction="horizontal"` on `DndDroppable` — previews are rendered automatically with the container's direction. The reorder logic is the same as the vertical example — only the layout direction changes.
 
 <script lang="ts">
 	import { ComponentPreview } from '$lib/components';

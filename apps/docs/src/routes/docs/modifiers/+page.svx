@@ -85,6 +85,8 @@ interface ModifierContext {
     initialTransform: { x: number; y: number };
     /** Width/height of the ghost element */
     ghostSize: { width: number; height: number };
+    /** Id of the container the drag started from */
+    originContainerId: string;
 }
 ```
 

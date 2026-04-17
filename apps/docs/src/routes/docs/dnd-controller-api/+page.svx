@@ -92,7 +92,7 @@ All getters are Svelte 5 reactive (`$state` / `$derived` internally).
 | `draggedItem` | `string \| null` | ID of the item being dragged |
 | `draggedType` | `string \| null` | Type of the dragged item (from the `type` prop on `DndDraggable`) |
 | `draggedItemData` | `Record<string, unknown> \| undefined` | Data attached to the dragged item |
-| `size` | `{ width: number; height: number } \| null` | Size of the dragged element |
+| `ghostSize` | `{ width: number; height: number } \| null` | Size of the dragged element |
 | `animatingReturn` | `boolean` | Whether the ghost is animating back to origin |
 | `dropPreview` | `DropPreview \| null` | Current drop preview state |
 | `dropZones` | `DropZone[]` | All registered drop zones |
@@ -214,6 +214,14 @@ controller.endDrag(shouldAnimate?: boolean): void
 ```
 
 Ends the drag. When `shouldAnimate` is `true` (default), the ghost animates back to its origin.
+
+### setScrollConfig
+
+```ts
+controller.setScrollConfig(config: ScrollConfig): void
+```
+
+Updates auto-scroll config at runtime. Changes take effect on the next scroll tick.
 
 ### setPreviewConfig
 
