@@ -7,7 +7,7 @@ A drag-and-drop library for Svelte 5 with animated drop previews, auto-scroll, p
 - [Getting Started](/docs/getting-started.md): Installation and basic setup of @horuse/svelte-dnd
 - [DndController API](/docs/dnd-controller-api.md): Full API reference for DndController — reactive getters, event callbacks, methods, and types
 - [Sensors](/docs/sensors.md): Pluggable input sensors — configure PointerSensor and KeyboardSensor or write your own. Supports Distance, Delay start conditions
-- [Collision Detection](/docs/collision.md): Pluggable collision algorithms — centerPoint, overlap, closestCenter, or custom
+- [Collision Detection](/docs/collision.md): Pluggable collision algorithms — centerPoint, cursorOver, overlap, closestCenter, or custom
 - [Modifiers](/docs/modifiers.md): Transform modifiers that constrain or snap ghost movement during drag
 - [Accessibility](/docs/accessibility.md): Keyboard navigation, ARIA attributes, and screen-reader announcements
 - [Simulations](/docs/simulations.md): Programmatically trigger drag animations with DndSimulator for undo/redo, onboarding, or demo sequences

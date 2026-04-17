@@ -1,21 +1,22 @@
 ---
 title: Collision Detection
-description: Pluggable collision algorithms — centerPoint, overlap, closestCenter, or custom.
+description: Pluggable collision algorithms — centerPoint, cursorOver, overlap, closestCenter, or custom.
 ---
 
 # Collision Detection
 
-Collision detection determines which drop zone is the active target while an item is being dragged. The library ships with three algorithms and exposes the `CollisionAlgorithm` interface for custom implementations.
+Collision detection determines which drop zone is the active target while an item is being dragged. The library ships with four algorithms and exposes the `CollisionAlgorithm` interface for custom implementations.
 
 ## Built-in algorithms
 
 | Algorithm | Description |
 |-----------|-------------|
 | `centerPoint` | Active zone is the one whose rect contains the ghost's center. **Default.** |
+| `cursorOver` | Active zone is the one whose rect contains the pointer (cursor/touch) position |
 | `overlap` | Active zone is the one with the most overlap with the ghost rect. Accepts a threshold option |
 | `closestCenter` | Active zone is the one whose center is closest to the ghost's center |
 
-All three are exported from `@horuse/svelte-dnd`.
+All four are exported from `@horuse/svelte-dnd`.
 
 ## Global algorithm
 

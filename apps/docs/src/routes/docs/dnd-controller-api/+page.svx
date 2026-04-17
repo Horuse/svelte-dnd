@@ -58,7 +58,7 @@ const controller = new DndController({
     },
     debug: false,
     sensors: [new PointerSensor(), new KeyboardSensor()],
-    collision: centerPoint,  // ghost center must be inside zone rect
+    collision: centerPoint,  // ghost center must be inside zone rect (default)
     modifiers: [],
     announcements: {
         onDragStart: ({ item }) => `Started dragging item ${item.id}.`,

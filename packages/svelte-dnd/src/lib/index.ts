@@ -37,5 +37,6 @@ export { restrictToHorizontalAxis } from './core/modifiers/restrict-to-horizonta
 export { restrictToContainer } from './core/modifiers/restrict-to-container.js'
 export { snapToGrid } from './core/modifiers/snap-to-grid.js'
 export { centerPoint } from './core/collision/center-point.js'
+export { cursorOver } from './core/collision/cursor-over.js'
 export { overlap } from './core/collision/overlap.js'
 export { closestCenter } from './core/collision/closest-center.js'

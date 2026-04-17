@@ -31,11 +31,21 @@ export class DropResolver {
 		const filteredZones = this.filterZonesByType(this.state.zones)
 		const ghost = this.getGhostRect()
 
+		// Group zones by container so each per-container algorithm sees all of its
+		// candidates at once. Calling algorithms with a single-zone array makes
+		// closestCenter/overlap degenerate (they can't compare anything).
+		const groups = new Map<string, DropZone[]>()
 		for (const zone of filteredZones) {
-			const droppable = this.droppablesById.get(zone.containerId)
+			const list = groups.get(zone.containerId)
+			if (list) list.push(zone)
+			else groups.set(zone.containerId, [zone])
+		}
+
+		for (const [containerId, zones] of groups) {
+			const droppable = this.droppablesById.get(containerId)
 			const algorithm = droppable?.collision ?? this.globalAlgorithm ?? centerPoint
 
-			const hit = algorithm({ zones: [zone], pointer: point, ghost })
+			const hit = algorithm({ zones, pointer: point, ghost })
 			if (hit) return hit
 		}
 
