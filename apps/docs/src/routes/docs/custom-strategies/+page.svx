@@ -16,7 +16,7 @@ You can replace or extend the built-in `'sortable'` and `'target'` strategies, o
 
 ## Passing a strategy factory
 
-The built-in strategies receive `DndState` in their constructor. Since `DndState` is created inside `DndController`, pass a **factory function** when your strategy needs it — the controller will call it with the internal state:
+The built-in strategies receive a `StrategyContext` (`{ state, droppablesById }`) in their constructor. Since the context is created inside `DndController`, pass a **factory function** when your strategy needs it — the controller will call it with the internal context:
 
 ```ts
 import {
@@ -24,11 +24,11 @@ import {
     SortableContainerStrategy,
     type ContainerStrategy,
     type StrategyFactory,
-    type DndState,
+    type StrategyContext,
     type DropZone,
     type DndMode,
+    type Droppable,
 } from '@horuse/svelte-dnd';
-import type { Droppable } from '@horuse/svelte-dnd';
 
 class MasonryStrategy extends SortableContainerStrategy {
     override readonly mode: DndMode = 'masonry'
@@ -41,7 +41,7 @@ class MasonryStrategy extends SortableContainerStrategy {
     }
 }
 
-const masonryFactory: StrategyFactory = (state) => new MasonryStrategy(state)
+const masonryFactory: StrategyFactory = (ctx) => new MasonryStrategy(ctx)
 
 const controller = new DndController({
     strategies: [masonryFactory]
@@ -58,7 +58,7 @@ Then use the custom mode on a droppable:
 
 ## Passing a plain instance
 
-If your strategy doesn't need `DndState` (i.e. it implements `ContainerStrategy` directly without extending a built-in class), you can pass a plain instance:
+If your strategy doesn't need the controller's context (i.e. it implements `ContainerStrategy` directly without extending a built-in class), you can pass a plain instance:
 
 ```ts
 const controller = new DndController({
@@ -81,14 +81,14 @@ class MySortableStrategy extends SortableContainerStrategy {
 }
 
 const controller = new DndController({
-    strategies: [(state) => new MySortableStrategy(state)]
+    strategies: [(ctx) => new MySortableStrategy(ctx)]
 })
 ```
 
 ## Types
 
 ```ts
-import type { Droppable } from '@horuse/svelte-dnd';
+import type { Droppable, DndState, DragSession, AnimationStep } from '@horuse/svelte-dnd';
 
 interface ContainerStrategy {
     readonly mode: DndMode;
@@ -98,7 +98,12 @@ interface ContainerStrategy {
     getReturnAnimation(session: DragSession): AnimationStep;
 }
 
-type StrategyFactory = (state: DndState) => ContainerStrategy;
+interface StrategyContext {
+    state: DndState;
+    droppablesById: Map<string, Droppable>;
+}
+
+type StrategyFactory = (ctx: StrategyContext) => ContainerStrategy;
 ```
 
 ---

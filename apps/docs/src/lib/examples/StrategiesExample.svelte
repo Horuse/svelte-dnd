@@ -2,14 +2,15 @@
 	import {
 		DndProvider, DndDroppable, DndDraggable, DndController,
 		SortableContainerStrategy,
-		type DndMode, type DropZone, type DragSession,
+		type DndMode, type DropZone, type DragSession, type Droppable,
 	} from '@horuse/svelte-dnd'
 
 	class PriorityStrategy extends SortableContainerStrategy {
 		override readonly mode: DndMode = 'priority'
 
-		override calculateDropZones(containerId: string, container: HTMLElement, _session: DragSession): DropZone[] {
-			const r = container.getBoundingClientRect()
+		override calculateDropZones(droppable: Droppable, _session: DragSession | null): DropZone[] {
+			const containerId = droppable.id
+			const r = droppable.element.getBoundingClientRect()
 			const mid = r.top + r.height / 2
 			return [
 				{ containerId, position: 0, direction: 'vertical', rect: { x: r.x, y: r.y,  width: r.width, height: r.height / 2 } },
@@ -28,7 +29,7 @@
 	let triage = $state<Item[]>([])
 
 	const controller = new DndController({
-		strategies: [(state) => new PriorityStrategy(state)],
+		strategies: [(ctx) => new PriorityStrategy(ctx)],
 	})
 
 	controller.onDrop(({ item: { id: sourceId }, target: { id: targetContainerId, position } }) => {

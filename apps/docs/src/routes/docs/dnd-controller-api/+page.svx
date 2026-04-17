@@ -307,7 +307,12 @@ interface DndControllerConfig {
     announcements?: Announcements;
 }
 
-type StrategyFactory = (state: DndState) => ContainerStrategy;
+interface StrategyContext {
+    state: DndState;
+    droppablesById: Map<string, Droppable>;
+}
+
+type StrategyFactory = (ctx: StrategyContext) => ContainerStrategy;
 
 // Rich event objects passed to all callbacks:
 interface DndItemInfo<TData = Record<string, unknown>> {

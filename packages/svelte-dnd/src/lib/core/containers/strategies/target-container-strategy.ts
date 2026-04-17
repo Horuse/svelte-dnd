@@ -2,6 +2,7 @@ import type { ContainerStrategy } from './container-strategy.js'
 import type { DropZone, DndMode } from '../../../types.js'
 import type { DragSession } from '../../dnd/drag-session.svelte.js'
 import type { DndState } from '../../dnd/dnd-state.svelte.js'
+import type { StrategyContext } from '../../dnd/dnd-controller.svelte.js'
 import type { AnimationStep } from '../../animation/steps/animation-step.js'
 import type { Droppable } from '../../entities/droppable.svelte.js'
 import { DOMHelper } from '../../utils/dom-helper.js'
@@ -10,8 +11,13 @@ import { GhostReturnStep } from '../../animation/steps/ghost-return-step.js'
 
 export class TargetContainerStrategy implements ContainerStrategy {
 	readonly mode: DndMode = 'target'
+	protected state: DndState
+	protected droppablesById: Map<string, Droppable>
 
-	constructor(private state: DndState, private droppablesById: Map<string, Droppable> = new Map()) {}
+	constructor(ctx: StrategyContext) {
+		this.state = ctx.state
+		this.droppablesById = ctx.droppablesById
+	}
 
 	calculateDropZones(droppable: Droppable, _session: DragSession | null): DropZone[] {
 		const rect = DOMHelper.getRect(droppable.element)

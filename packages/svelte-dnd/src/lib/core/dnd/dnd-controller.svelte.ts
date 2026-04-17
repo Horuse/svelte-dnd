@@ -20,7 +20,12 @@ import type { Draggable } from '../entities/draggable.svelte.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
 import type { Slot } from '../entities/slot.js'
 
-export type StrategyFactory = (state: DndState) => ContainerStrategy
+export interface StrategyContext {
+	state: DndState
+	droppablesById: Map<string, Droppable>
+}
+
+export type StrategyFactory = (ctx: StrategyContext) => ContainerStrategy
 
 export interface DndControllerConfig {
 	scroll?: ScrollConfig
@@ -78,10 +83,11 @@ export class DndController<TData = Record<string, unknown>> {
 		this.announcements = announcements
 		this.modifiers = modifiers
 
-		this.strategyMap.set('sortable', new SortableContainerStrategy(this.state, this.droppablesById))
-		this.strategyMap.set('target', new TargetContainerStrategy(this.state, this.droppablesById))
+		const strategyCtx: StrategyContext = { state: this.state, droppablesById: this.droppablesById }
+		this.strategyMap.set('sortable', new SortableContainerStrategy(strategyCtx))
+		this.strategyMap.set('target', new TargetContainerStrategy(strategyCtx))
 		for (const entry of strategies) {
-			const strategy = typeof entry === 'function' ? entry(this.state) : entry
+			const strategy = typeof entry === 'function' ? entry(strategyCtx) : entry
 			this.strategyMap.set(strategy.mode, strategy)
 		}
 
