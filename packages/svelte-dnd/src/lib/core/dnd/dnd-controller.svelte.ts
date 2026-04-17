@@ -1,6 +1,6 @@
 import { DndState } from './dnd-state.svelte.js'
 import { ScrollController, type ScrollConfig } from '../scroll/scroll-controller.js'
-import { type PreviewConfig } from '../entities/preview.svelte.js'
+import type { PreviewConfig } from '../entities/preview.svelte.js'
 import { DndEventEmitter } from './dnd-event-emitter.js'
 import { TranslationEngine } from '../zones/translation-engine.svelte.js'
 import { SortableContainerStrategy } from '../containers/strategies/sortable-container-strategy.js'
@@ -76,12 +76,16 @@ export class DndController<TData = Record<string, unknown>> {
 	debug = false
 	sensors: SensorDescriptor[] | undefined = undefined
 	announcements: import('../../types.js').Announcements | undefined = undefined
+	/** Reactive preview delays. DndPreview syncs its Preview entity from this. */
+	previewConfig = $state<{ showDelay: number; collapseDelay: number }>({ showDelay: 300, collapseDelay: 200 })
 
-	constructor({ scroll = {}, preview = {}, debug = false, strategies = [], sensors, collision, modifiers = [], announcements }: DndControllerConfig = {}) {
+	constructor({ scroll = {}, preview, debug = false, strategies = [], sensors, collision, modifiers = [], announcements }: DndControllerConfig = {}) {
 		this.debug = debug
 		this.sensors = sensors ?? [new PointerSensor(), new KeyboardSensor()]
 		this.announcements = announcements
 		this.modifiers = modifiers
+		if (preview?.showDelay !== undefined) this.previewConfig.showDelay = preview.showDelay
+		if (preview?.collapseDelay !== undefined) this.previewConfig.collapseDelay = preview.collapseDelay
 
 		const strategyCtx: StrategyContext = { state: this.state, droppablesById: this.droppablesById }
 		this.strategyMap.set('sortable', new SortableContainerStrategy(strategyCtx))
@@ -107,9 +111,6 @@ export class DndController<TData = Record<string, unknown>> {
 			this.dropResolver,
 			this.droppablesById
 		)
-
-		if (preview.showDelay !== undefined) this.animationCoordinator.previewShowDelay = preview.showDelay
-		if (preview.collapseDelay !== undefined) this.animationCoordinator.previewCollapseDelay = preview.collapseDelay
 
 		this.simulator = new DndSimulator(this.state, this.droppablesById, this.slots, this.eventEmitter)
 	}
@@ -321,10 +322,13 @@ export class DndController<TData = Record<string, unknown>> {
 		this.scrollController.updateConfig(config)
 	}
 
-	/** Update preview animation delays at runtime. */
+	/**
+	 * Update preview animation delays at runtime. Changes propagate reactively
+	 * to every live DndPreview.
+	 */
 	setPreviewConfig(config: PreviewConfig) {
-		if (config.showDelay !== undefined) this.animationCoordinator.previewShowDelay = config.showDelay
-		if (config.collapseDelay !== undefined) this.animationCoordinator.previewCollapseDelay = config.collapseDelay
+		if (config.showDelay !== undefined) this.previewConfig.showDelay = config.showDelay
+		if (config.collapseDelay !== undefined) this.previewConfig.collapseDelay = config.collapseDelay
 	}
 
 	/** Toggle visual overlay of drop zones — useful for debugging layout. */

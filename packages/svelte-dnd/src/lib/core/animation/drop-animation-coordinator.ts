@@ -2,7 +2,6 @@ import type { DndState } from '../dnd/dnd-state.svelte.js'
 import type { DndEventEmitter } from '../dnd/dnd-event-emitter.js'
 import type { ScrollController } from '../scroll/scroll-controller.js'
 import type { DropResolver } from '../zones/drop-resolver.js'
-import type { PreviewConfig } from '../entities/preview.svelte.js'
 import type { AnimationStep } from './steps/animation-step.js'
 import type { DropPreview, DndItemInfo, DndContainerInfo, DropEvent, DragEndEvent, DragOverEvent, DropCancelledEvent } from '../../types.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
@@ -14,8 +13,6 @@ export class DropAnimationCoordinator {
 	private currentAnimation: AnimationPipeline | null = null
 	private hidePreviewTimeout: ReturnType<typeof setTimeout> | null = null
 	private lastPreviewKey: string | null = null
-	previewShowDelay = 300
-	previewCollapseDelay = 200
 
 	constructor(
 		private state: DndState,
@@ -217,11 +214,6 @@ export class DropAnimationCoordinator {
 		} else {
 			this.finalizeDragEnd(dragEndEvent)
 		}
-	}
-
-	setPreviewConfig(config: PreviewConfig) {
-		if (config.showDelay !== undefined) this.previewShowDelay = config.showDelay
-		if (config.collapseDelay !== undefined) this.previewCollapseDelay = config.collapseDelay
 	}
 
 	cancelCurrentAnimation() {

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { getContext } from 'svelte'
 	import type { DndController } from '../core/dnd/dnd-controller.svelte.js'
-	import { Preview, type PreviewConfig } from '../core/entities/preview.svelte.js'
+	import { Preview } from '../core/entities/preview.svelte.js'
 	import type { Slot } from '../core/entities/slot.js'
 	import type { Droppable } from '../core/entities/droppable.svelte.js'
 
@@ -13,20 +13,24 @@
 		/** Position within the droppable (required). */
 		position: number
 		class?: string
-		previewConfig?: PreviewConfig
 	}
 
-	let { slot, droppable, position, class: className = '', previewConfig }: Props = $props()
+	let { slot, droppable, position, class: className = '' }: Props = $props()
 
 	const dndController = getContext<DndController>('dnd')
-	const preview = new Preview(dndController, { slot, droppable, position, config: previewConfig })
+	const preview = new Preview(dndController, {
+		slot,
+		droppable,
+		position,
+		config: dndController?.previewConfig
+	})
 
 	$effect(() => {
 		preview.slot = slot
 		preview.droppable = droppable
 		preview.position = position
-		preview.showDelay = previewConfig?.showDelay ?? 300
-		preview.collapseDelay = previewConfig?.collapseDelay ?? 200
+		preview.showDelay = dndController?.previewConfig.showDelay ?? 300
+		preview.collapseDelay = dndController?.previewConfig.collapseDelay ?? 200
 	})
 
 	$effect(() => {

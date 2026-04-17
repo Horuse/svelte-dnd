@@ -226,7 +226,7 @@ Ends the drag. When `shouldAnimate` is `true` (default), the ghost animates back
 controller.setPreviewConfig(config: PreviewConfig): void
 ```
 
-Updates preview animation delays at runtime.
+Updates preview animation delays at runtime. Changes propagate reactively to every live `DndPreview`.
 
 ```ts
 controller.setPreviewConfig({ showDelay: 150, collapseDelay: 400 });
