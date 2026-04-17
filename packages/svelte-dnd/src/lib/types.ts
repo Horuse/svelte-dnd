@@ -18,6 +18,12 @@ export interface DndContainerInfo {
 	mode: DndMode
 	disabled: boolean
 	accepts: string | string[] | undefined
+	/**
+	 * Insertion index within the container.
+	 * `0` = before all items, `items.length` = after all items.
+	 * On `source`, it's the item's original index; on `target`/`current`, it's where the
+	 * item would be inserted. Not an index into your data array — always the slot between items.
+	 */
 	position: number
 }
 

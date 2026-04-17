@@ -156,6 +156,8 @@ controller.onDrop(({ item, source, target }) => {
 });
 ```
 
+> **`position` semantics** — `position` is an **insertion index**, not an index into your data array. `0` means before all items, `items.length` means after all items. For a `target`/`current` position, it's the slot between items where the dragged item would be inserted.
+
 ### onDragOver
 
 Fired each time the drag-over target (container + position) changes. Useful for highlighting the active drop zone in custom UIs.
