@@ -4,9 +4,9 @@ export type DndDirection = 'vertical' | 'horizontal' | 'grid'
 
 // --- Rich event types ---
 
-export interface DndItemInfo<TData = Record<string, unknown>> {
+export interface DndItemInfo {
 	id: string
-	data: TData | undefined
+	data: Record<string, unknown> | undefined
 	type: string | undefined
 	element: HTMLElement
 }
@@ -32,8 +32,8 @@ export interface DragStartEvent {
 	source: DndContainerInfo
 }
 
-export interface DropEvent<TData = Record<string, unknown>> {
-	item: DndItemInfo<TData>
+export interface DropEvent {
+	item: DndItemInfo
 	source: DndContainerInfo
 	target: DndContainerInfo
 }
@@ -61,7 +61,7 @@ export interface DropCancelledEvent {
 
 export type DragStartCallback = (event: DragStartEvent) => void
 export type DragEndCallback = (event: DragEndEvent) => void
-export type DropCallback<TData = Record<string, unknown>> = (event: DropEvent<TData>) => void
+export type DropCallback = (event: DropEvent) => void
 export type DragOverCallback = (event: DragOverEvent) => void
 export type DropCancelledCallback = (event: DropCancelledEvent) => void
 export type ZonesInvalidatedCallback = () => void

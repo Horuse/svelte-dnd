@@ -139,16 +139,12 @@ controller.onDropCancelled(({ item, source }) => {
 
 ### onDrop
 
-The main callback for handling item reordering or moving between containers. `DndController` is generic — the `TData` type parameter narrows `item.data` in `onDrop`.
+The main callback for handling item reordering or moving between containers.
 
 ```ts
-interface TaskData { label: string; priority: number }
-
-const controller = new DndController<TaskData>()
-
 controller.onDrop(({ item, source, target }) => {
     // item.id:          ID of the dragged item
-    // item.data:        TaskData | undefined  ← typed!
+    // item.data:        Record<string, unknown> | undefined — cast to your type as needed
     // source.id:        container the item came from
     // source.position:  original position in source container
     // target.id:        container where item was dropped
@@ -306,9 +302,9 @@ interface StrategyContext {
 type StrategyFactory = (ctx: StrategyContext) => ContainerStrategy;
 
 // Rich event objects passed to all callbacks:
-interface DndItemInfo<TData = Record<string, unknown>> {
+interface DndItemInfo {
     id: string;
-    data: TData | undefined;
+    data: Record<string, unknown> | undefined;
     type: string | undefined;
     element: HTMLElement;
 }
@@ -323,14 +319,14 @@ interface DndContainerInfo {
 }
 interface DragStartEvent     { item: DndItemInfo; source: DndContainerInfo }
 interface DragEndEvent       { item: DndItemInfo; source: DndContainerInfo; target: DndContainerInfo | null; cancelled: boolean }
-interface DropEvent<TData>   { item: DndItemInfo<TData>; source: DndContainerInfo; target: DndContainerInfo }
+interface DropEvent          { item: DndItemInfo; source: DndContainerInfo; target: DndContainerInfo }
 interface DragOverEvent      { item: DndItemInfo; source: DndContainerInfo; current: DndContainerInfo; previous: DndContainerInfo | null }
 interface DropCancelledEvent { item: DndItemInfo; source: DndContainerInfo }
 
 type DragStartCallback    = (event: DragStartEvent) => void;
 type DragEndCallback      = (event: DragEndEvent) => void;
 type DropCancelledCallback = (event: DropCancelledEvent) => void;
-type DropCallback<TData = Record<string, unknown>> = (event: DropEvent<TData>) => void;
+type DropCallback         = (event: DropEvent) => void;
 type DragOverCallback     = (event: DragOverEvent) => void;
 type DndDirection = 'vertical' | 'horizontal' | 'grid';
 type DndMode = 'sortable' | 'target' | (string & {}); // custom modes allowed

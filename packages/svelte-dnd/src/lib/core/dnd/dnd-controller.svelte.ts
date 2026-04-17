@@ -14,7 +14,7 @@ import { DropResolver } from '../zones/drop-resolver.js'
 import { DropAnimationCoordinator } from '../animation/drop-animation-coordinator.js'
 import type { Modifier } from '../modifiers/modifier.js'
 import { DndSimulator } from './dnd-simulator.js'
-import type { DropZone, DndDirection, DndMode, DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback, ZonesInvalidatedCallback, DndItemInfo, DndContainerInfo, DragStartEvent, DropEvent } from '../../types.js'
+import type { DropZone, DndMode, DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback, ZonesInvalidatedCallback, DndItemInfo, DndContainerInfo, DragStartEvent } from '../../types.js'
 import { DragSession } from './drag-session.svelte.js'
 import type { Draggable } from '../entities/draggable.svelte.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
@@ -54,7 +54,7 @@ export type { DragStartCallback, DragEndCallback, DropCallback, DragOverCallback
  * })
  * ```
  */
-export class DndController<TData = Record<string, unknown>> {
+export class DndController {
 	private state = new DndState()
 	private strategyMap = new Map<string, ContainerStrategy>()
 	private eventEmitter = new DndEventEmitter()
@@ -196,13 +196,9 @@ export class DndController<TData = Record<string, unknown>> {
 	/** Fired when a drag is cancelled (ghost returns to origin, no drop occurred). */
 	onDropCancelled(cb: DropCancelledCallback)        { return this.eventEmitter.onDropCancelled(cb) }
 
-	/**
-	 * Fired when an item is successfully dropped into a container.
-	 *
-	 * @param cb `(event: DropEvent<TData>) => void`
-	 */
-	onDrop(cb: DropCallback<TData>) {
-		return this.eventEmitter.onDrop(event => cb(event as unknown as DropEvent<TData>))
+	/** Fired when an item is successfully dropped into a container. */
+	onDrop(cb: DropCallback) {
+		return this.eventEmitter.onDrop(cb)
 	}
 
 	/** Fired each time the drag-over target (container + position) changes. */
