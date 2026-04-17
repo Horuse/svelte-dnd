@@ -143,6 +143,9 @@ export class DndController {
 	/** The DOM element currently being dragged. */
 	get element() { return this.state.element }
 
+	/** @internal Alias of `element` used by `DroppableControllerRef` to disambiguate the dragged element from other DOM elements a consumer might track. */
+	get draggedElement() { return this.state.element }
+
 	/** Current `{ x, y }` transform of the ghost element. */
 	get transform() { return this.state.transform }
 

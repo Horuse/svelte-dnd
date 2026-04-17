@@ -10,7 +10,8 @@ import type { DragSession } from '../dnd/drag-session.svelte.js'
 // Minimal controller interface needed by Droppable
 export type DroppableControllerRef = {
 	session: DragSession | null
-	element: HTMLElement | null
+	/** DOM element of the item currently being dragged (not the ghost). */
+	draggedElement: HTMLElement | null
 	cancelSession(): void
 	slots: Map<HTMLElement, Slot>
 	onDragStart(cb: DragStartCallback): () => void
@@ -135,7 +136,9 @@ export class Droppable {
 
 	invalidateZones() {
 		if (!this.element || this.disabled) return
-		if (this.controller.element?.contains(this.element)) return
+		// Skip if this droppable is nested inside the currently dragged element —
+		// the zone moves with the ghost, so its stored rect is still correct relative to the cursor.
+		if (this.controller.draggedElement?.contains(this.element)) return
 		this.controller.refreshDroppableZones(this)
 	}
 
