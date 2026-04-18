@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { DndProvider, DndDroppable, DndDraggable, DndController } from '@horuse/svelte-dnd'
+	import { DndProvider, DndDroppable, DndDraggable, DndController, sortable } from '@horuse/svelte-dnd'
 
 	let items = $state(
 		['Delta', 'Alpha', 'Gamma', 'Beta', 'Epsilon'].map((label, i) => ({ id: String(i), label }))
@@ -57,7 +57,7 @@
 		<DndDroppable
 			spacing={12} class="flex flex-col h-72 overflow-y-auto max-w-sm p-3 bg-foreground border-2 border-second rounded-xl"
 			id="list"
-			direction="vertical"
+			strategy={sortable()}
 		>
 			{#each items as item, index (item.id)}
 				<DndDraggable id={item.id} position={index}>

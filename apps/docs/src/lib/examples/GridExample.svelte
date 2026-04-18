@@ -2,10 +2,11 @@
 	import { DndProvider, DndDroppable, DndDraggable, DndController, sortable } from '@horuse/svelte-dnd';
 
 	let items = $state(
-		Array.from({ length: 50 }, (_, i) => ({
+		Array.from({ length: 24 }, (_, i) => ({
 			id: String(i + 1),
 			label: `Item ${i + 1}`,
-			height: Math.floor(Math.random() * (100 - 50 + 1)) + 50
+			width: 80 + Math.floor(Math.random() * 80),
+			height: 60 + Math.floor(Math.random() * 80)
 		}))
 	);
 
@@ -23,10 +24,14 @@
 </script>
 
 <DndProvider {controller}>
-	<DndDroppable spacing={16} class="flex flex-col h-[calc(100vh-550px)] min-h-125 overflow-y-auto max-w-xl p-4 bg-foreground border-2 border-second rounded-xl" id="vertical-list" strategy={sortable()}>
+	<DndDroppable
+		id="grid"
+		strategy={sortable({ direction: 'grid' })}
+		class="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-4 p-4 bg-foreground border-2 border-second rounded-xl max-w-2xl"
+	>
 		{#each items as item, index (item.id)}
 			<DndDraggable id={item.id} position={index}>
-				<div class="drag-item" style="height: {item.height}px">
+				<div class="drag-item" style="width: {item.width}px; height: {item.height}px">
 					<span class="text-2xl">{item.id}</span>
 				</div>
 			</DndDraggable>

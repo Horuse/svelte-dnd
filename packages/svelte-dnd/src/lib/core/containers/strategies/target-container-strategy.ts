@@ -1,20 +1,30 @@
-import type { ContainerStrategy } from './container-strategy.js'
+import type { ContainerStrategy, StrategyBindContext } from './container-strategy.js'
 import type { DropZone, DndMode } from '../../../types.js'
 import type { DragSession } from '../../dnd/drag-session.svelte.js'
 import type { DndState } from '../../dnd/dnd-state.svelte.js'
-import type { StrategyContext } from '../../dnd/dnd-controller.svelte.js'
 import type { AnimationStep } from '../../animation/steps/animation-step.js'
 import type { Droppable } from '../../entities/droppable.svelte.js'
 import { DOMHelper } from '../../utils/dom-helper.js'
 import { GhostToTargetStep } from '../../animation/steps/ghost-to-target-step.js'
 import { GhostReturnStep } from '../../animation/steps/ghost-return-step.js'
 
+export interface TargetOptions {
+	// Reserved for future options.
+}
+
+/**
+ * Target container strategy — single drop zone covering the whole container, no insert previews.
+ * Useful for trash zones, boards, or any container that isn't a sorted list.
+ */
 export class TargetContainerStrategy implements ContainerStrategy {
 	readonly mode: DndMode = 'target'
-	protected state: DndState
-	protected droppablesById: Map<string, Droppable>
 
-	constructor(ctx: StrategyContext) {
+	private state!: DndState
+	private droppablesById!: Map<string, Droppable>
+
+	constructor(_options: TargetOptions = {}) {}
+
+	bindContext(ctx: StrategyBindContext): void {
 		this.state = ctx.state
 		this.droppablesById = ctx.droppablesById
 	}
@@ -24,7 +34,7 @@ export class TargetContainerStrategy implements ContainerStrategy {
 		return [{
 			containerId: droppable.id,
 			position: 0,
-			direction: droppable.direction,
+			direction: 'vertical',
 			rect: {
 				x: rect.left,
 				y: rect.top,
@@ -35,7 +45,7 @@ export class TargetContainerStrategy implements ContainerStrategy {
 	}
 
 	// Target containers don't have sortable items — no translations needed.
-	// The origin container's strategy (SortableContainerStrategy) handles gap collapse.
+	// The origin container's strategy handles gap collapse.
 	getTranslations(_droppable: Droppable, _session: DragSession): Map<string, { x: number; y: number }> {
 		return new Map()
 	}
@@ -47,4 +57,16 @@ export class TargetContainerStrategy implements ContainerStrategy {
 	getReturnAnimation(session: DragSession): AnimationStep {
 		return new GhostReturnStep(this.state, session.originContainerId, session.originPosition, this.droppablesById)
 	}
+}
+
+/**
+ * Factory for `TargetContainerStrategy`.
+ *
+ * @example
+ * ```svelte
+ * <DndDroppable strategy={target()} />
+ * ```
+ */
+export function target(options?: TargetOptions): TargetContainerStrategy {
+	return new TargetContainerStrategy(options)
 }

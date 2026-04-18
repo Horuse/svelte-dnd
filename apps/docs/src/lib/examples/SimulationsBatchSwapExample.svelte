@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { DndProvider, DndDroppable, DndDraggable, DndController } from '@horuse/svelte-dnd'
+	import { DndProvider, DndDroppable, DndDraggable, DndController, sortable } from '@horuse/svelte-dnd'
 
 	let teamA = $state(
 		['Alice', 'Bob', 'Carol'].map((label, i) => ({ id: `a-${i}`, label }))
@@ -73,7 +73,7 @@
 				<DndDroppable
 					spacing={12} class="flex flex-col w-48 p-3 bg-foreground border-2 border-second rounded-xl"
 					id="team-a"
-					direction="vertical"
+					strategy={sortable()}
 				>
 					{#each teamA as item, index (item.id)}
 						<DndDraggable id={item.id} position={index}>
@@ -90,7 +90,7 @@
 				<DndDroppable
 					spacing={12} class="flex flex-col w-48 p-3 bg-foreground border-2 border-second rounded-xl"
 					id="team-b"
-					direction="vertical"
+					strategy={sortable()}
 				>
 					{#each teamB as item, index (item.id)}
 						<DndDraggable id={item.id} position={index}>

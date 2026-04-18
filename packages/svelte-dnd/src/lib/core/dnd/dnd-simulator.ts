@@ -130,6 +130,11 @@ export class DndSimulator {
 				position: toPosition
 			}
 
+			// Let each strategy capture whatever transform-free state it needs.
+			for (const droppable of this.droppablesById.values()) {
+				droppable.strategy.onSessionStart?.(droppable, session)
+			}
+
 			this.state.startSession(session)
 			// setAnimating(true) makes the dragged element opacity:0 immediately via
 			// the animatingReturn path, without disabling CSS transitions on siblings.

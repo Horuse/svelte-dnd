@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { DndProvider, DndDroppable, DndDraggable, DndController, overlap } from '@horuse/svelte-dnd'
+	import { DndProvider, DndDroppable, DndDraggable, DndController, sortable, overlap } from '@horuse/svelte-dnd'
 
 	type Item = { id: string; label: string }
 
@@ -41,7 +41,7 @@
 		<div class="flex h-72 gap-4">
 			<div class="flex flex-col w-56 shrink-0 h-full bg-foreground border-2 border-primary rounded-2xl">
 				<h2 class="text-base p-4 font-semibold text-neutral-500">centerPoint <span class="text-xs opacity-60">default</span></h2>
-				<DndDroppable id="left" spacing={8} class="p-3 h-full overflow-auto border-t-2 border-primary pt-3">
+				<DndDroppable id="left" strategy={sortable()} spacing={8} class="p-3 h-full overflow-auto border-t-2 border-primary pt-3">
 					{#each left as item, index (item.id)}
 						<DndDraggable id={item.id} position={index}>
 							<div class="drag-item">{item.label}</div>
@@ -52,7 +52,7 @@
 
 			<div class="flex flex-col w-56 shrink-0 h-full bg-foreground border-2 border-primary rounded-2xl">
 				<h2 class="text-base p-4 font-semibold text-neutral-500">overlap 40%</h2>
-				<DndDroppable id="right" spacing={8} class="p-3 h-full overflow-auto border-t-2 border-primary pt-3" collision={overlap('40%')}>
+				<DndDroppable id="right" strategy={sortable()} spacing={8} class="p-3 h-full overflow-auto border-t-2 border-primary pt-3" collision={overlap('40%')}>
 					{#each right as item, index (item.id)}
 						<DndDraggable id={item.id} position={index}>
 							<div class="drag-item">{item.label}</div>

@@ -3,7 +3,7 @@
 	import { fly } from 'svelte/transition'
 	import { backOut } from 'svelte/easing'
 	import type { DndController } from '@horuse/svelte-dnd';
-	import { DndDroppable } from '@horuse/svelte-dnd';
+	import { DndDroppable, target } from '@horuse/svelte-dnd';
 
 	interface TrashTask {
 		id: string
@@ -141,8 +141,7 @@
 <!-- Drop target -->
 <DndDroppable
 	id="trash-zone"
-	mode="target"
-	overlap={0}
+	strategy={target()}
 	accepts="task"
 	class="absolute bottom-5 w-20 h-20 rounded-full backdrop-blur-sm flex items-center justify-center z-[1000] transition-all duration-300 ease-out right-5 {!isDragging ? 'opacity-0 scale-75 pointer-events-none' : 'opacity-100 scale-100'} {isHovering ? 'bg-red-500/90 scale-110 shadow-[0_0_20px_rgba(239,68,68,0.5)]' : 'bg-neutral-400/70'}"
 >

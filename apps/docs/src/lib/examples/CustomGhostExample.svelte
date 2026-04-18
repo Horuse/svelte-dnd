@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { DndProvider, DndDroppable, DndDraggable, DndController } from '@horuse/svelte-dnd';
+	import { DndProvider, DndDroppable, DndDraggable, DndController, sortable } from '@horuse/svelte-dnd';
 
 	let columns = $state<Record<string, { id: string; label: string; color: string }[]>>({
 		blue: [
@@ -67,7 +67,7 @@
 				class:column-green={columnId === 'green'}
 			>
 				<h2 class="text-xl p-6 font-semibold text-neutral-500">{columnMeta[columnId]}</h2>
-				<DndDroppable id={columnId} direction="vertical" spacing={12} class="p-3 border-t-2 border-primary pt-4 h-full">
+				<DndDroppable id={columnId} strategy={sortable()} spacing={12} class="p-3 border-t-2 border-primary pt-4 h-full">
 					{#each columnItems as item, index (item.id)}
 						<DndDraggable id={item.id} data={{ label: item.label, color: item.color }} position={index}>
 							<div class="drag-item" style="border-left: 4px solid {item.color};">

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {
-		DndProvider, DndDroppable, DndDraggable, DndController,
+		DndProvider, DndDroppable, DndDraggable, DndController, sortable,
 		PointerSensor, KeyboardSensor, Distance, Delay,
 		type StartCondition
 	} from '@horuse/svelte-dnd'
@@ -98,6 +98,7 @@
 		<DndDroppable
 			spacing={12} class="flex flex-col max-w-sm p-3 bg-foreground border-2 border-second rounded-xl"
 			id="list"
+			strategy={sortable()}
 		>
 			{#each items as item, index (item.id)}
 				<DndDraggable id={item.id} position={index}>

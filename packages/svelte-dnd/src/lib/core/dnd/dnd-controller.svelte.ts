@@ -3,9 +3,6 @@ import { ScrollController, type ScrollConfig } from '../scroll/scroll-controller
 import type { PreviewConfig } from '../entities/preview.svelte.js'
 import { DndEventEmitter } from './dnd-event-emitter.js'
 import { TranslationEngine } from '../zones/translation-engine.svelte.js'
-import { SortableContainerStrategy } from '../containers/strategies/sortable-container-strategy.js'
-import { TargetContainerStrategy } from '../containers/strategies/target-container-strategy.js'
-import type { ContainerStrategy } from '../containers/strategies/container-strategy.js'
 import type { SensorDescriptor, NavigationDirection } from '../sensors/sensor.js'
 import { PointerSensor } from '../sensors/pointer-sensor.js'
 import { KeyboardSensor } from '../sensors/keyboard-sensor.js'
@@ -14,24 +11,16 @@ import { DropResolver } from '../zones/drop-resolver.js'
 import { DropAnimationCoordinator } from '../animation/drop-animation-coordinator.js'
 import type { Modifier } from '../modifiers/modifier.js'
 import { DndSimulator } from './dnd-simulator.js'
-import type { DropZone, DndMode, DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback, ZonesInvalidatedCallback, DndItemInfo, DndContainerInfo, DragStartEvent } from '../../types.js'
+import type { DropZone, DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback, ZonesInvalidatedCallback, DndItemInfo, DndContainerInfo, DragStartEvent } from '../../types.js'
 import { DragSession } from './drag-session.svelte.js'
 import type { Draggable } from '../entities/draggable.svelte.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
 import type { Slot } from '../entities/slot.js'
 
-export interface StrategyContext {
-	state: DndState
-	droppablesById: Map<string, Droppable>
-}
-
-export type StrategyFactory = (ctx: StrategyContext) => ContainerStrategy
-
 export interface DndControllerConfig {
 	scroll?: ScrollConfig
 	preview?: PreviewConfig
 	debug?: boolean
-	strategies?: (ContainerStrategy | StrategyFactory)[]
 	sensors?: SensorDescriptor[]
 	collision?: CollisionAlgorithm
 	modifiers?: Modifier[]
@@ -56,7 +45,6 @@ export type { DragStartCallback, DragEndCallback, DropCallback, DragOverCallback
  */
 export class DndController {
 	private state = new DndState()
-	private strategyMap = new Map<string, ContainerStrategy>()
 	private eventEmitter = new DndEventEmitter()
 	private translationEngine: TranslationEngine
 	private dropResolver: DropResolver
@@ -85,21 +73,13 @@ export class DndController {
 	 */
 	previewConfig = $state<{ showDelay: number; collapseDelay: number }>({ showDelay: 300, collapseDelay: 200 })
 
-	constructor({ scroll = {}, preview, debug = false, strategies = [], sensors, collision, modifiers = [], announcements }: DndControllerConfig = {}) {
+	constructor({ scroll = {}, preview, debug = false, sensors, collision, modifiers = [], announcements }: DndControllerConfig = {}) {
 		this.debug = debug
 		this.sensors = sensors ?? [new PointerSensor(), new KeyboardSensor()]
 		this.announcements = announcements
 		this.modifiers = modifiers
 		if (preview?.showDelay !== undefined) this.previewConfig.showDelay = preview.showDelay
 		if (preview?.collapseDelay !== undefined) this.previewConfig.collapseDelay = preview.collapseDelay
-
-		const strategyCtx: StrategyContext = { state: this.state, droppablesById: this.droppablesById }
-		this.strategyMap.set('sortable', new SortableContainerStrategy(strategyCtx))
-		this.strategyMap.set('target', new TargetContainerStrategy(strategyCtx))
-		for (const entry of strategies) {
-			const strategy = typeof entry === 'function' ? entry(strategyCtx) : entry
-			this.strategyMap.set(strategy.mode, strategy)
-		}
 
 		this.translationEngine = new TranslationEngine(this.state, this.droppables)
 		this.dropResolver = new DropResolver(this.state, this.droppablesById, collision)
@@ -374,23 +354,17 @@ export class DndController {
 		return this.simulator.simulateBatchSwap(ids, applyState, duration)
 	}
 
-	/**
-	 * Returns the ContainerStrategy registered for the given mode (or 'sortable' as fallback).
-	 * @internal
-	 */
-	getStrategyForMode(mode: DndMode): ContainerStrategy {
-		return this.strategyMap.get(mode) ?? this.strategyMap.get('sortable')!
-	}
-
 	// --- Entity-based API ---
 
 	/**
-	 * @attach handler for DndDroppable — registers a Droppable in the entity maps.
+	 * @attach handler for DndDroppable — registers a Droppable in the entity maps
+	 * and binds its strategy to controller state on first attach.
 	 * @internal
 	 */
 	attachDroppable(droppable: Droppable) {
 		return (element: HTMLElement) => {
 			droppable.element = element
+			droppable.strategy.bindContext?.({ state: this.state, droppablesById: this.droppablesById })
 			this.droppables.set(element, droppable)
 			this.droppablesById.set(droppable.id, droppable)
 			droppable.setupEventListeners()
@@ -415,6 +389,14 @@ export class DndController {
 		const rect = draggable.element.getBoundingClientRect()
 
 		const newSession = new DragSession(draggable, sourceContainer, rect, initialTransform, 'user')
+
+		// Give every strategy a chance to capture transform-free state before the
+		// reactive cycle runs. Built-in sortable uses this to snapshot layout rects;
+		// custom strategies can hook in the same way.
+		for (const droppable of this.droppablesById.values()) {
+			droppable.strategy.onSessionStart?.(droppable, newSession)
+		}
+
 		this.state.startSession(newSession)
 		this.state.setSkipDropPreviewAnimation(true)
 

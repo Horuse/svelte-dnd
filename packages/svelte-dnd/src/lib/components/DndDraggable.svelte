@@ -49,16 +49,18 @@
 
 	$effect(() => {
 		if (!dndController?.debug) return
-		if (position !== undefined && (!Number.isInteger(position) || position < 0)) {
+		if (position === undefined) return
+		if (!Number.isInteger(position) || position < 0) {
 			console.warn(`[svelte-dnd] DndDraggable "${id}": invalid position ${position}. Must be a non-negative integer.`)
 		}
 		if (positionRegistry) {
-			const existing = positionRegistry.get(position)
+			const pos = position
+			const existing = positionRegistry.get(pos)
 			if (existing !== undefined && existing !== id) {
-				console.warn(`[svelte-dnd] DndDraggable "${id}": duplicate position ${position} — already used by "${existing}". Reordering will be unpredictable.`)
+				console.warn(`[svelte-dnd] DndDraggable "${id}": duplicate position ${pos} — already used by "${existing}". Reordering will be unpredictable.`)
 			}
-			positionRegistry.set(position, id)
-			return () => { if (positionRegistry.get(position) === id) positionRegistry.delete(position) }
+			positionRegistry.set(pos, id)
+			return () => { if (positionRegistry.get(pos) === id) positionRegistry.delete(pos) }
 		}
 	})
 
@@ -121,7 +123,7 @@
 	})
 </script>
 
-<div class="dnd-slot" data-dnd-slot style="position: relative; overflow: visible; {droppable?.direction === 'horizontal' ? `margin-right: ${spacingPx}px` : `margin-bottom: ${spacingPx}px`}" {@attach droppable?.attachSlot(slot)}>
+<div class="dnd-slot" data-dnd-slot style="position: relative; overflow: visible; {droppable?.direction === 'grid' ? '' : droppable?.direction === 'horizontal' ? `margin-right: ${spacingPx}px` : `margin-bottom: ${spacingPx}px`}" {@attach droppable?.attachSlot(slot)}>
 	{#if position !== undefined}
 		<DndPreview {slot} {position} />
 	{/if}

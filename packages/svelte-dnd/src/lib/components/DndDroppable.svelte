@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { getContext, setContext } from 'svelte'
-	import type { DndDirection, DndMode } from '../types.js'
 	import type { DndController } from '../core/dnd/dnd-controller.svelte.js'
+	import type { ContainerStrategy } from '../core/containers/strategies/container-strategy.js'
 	import type { CollisionAlgorithm } from '../core/collision/collision-algorithm.js'
 	import type { Snippet } from 'svelte'
 	import { Droppable } from '../core/entities/droppable.svelte.js'
@@ -10,18 +10,21 @@
 	interface Props {
 		/** Unique container identifier. */
 		id: string
+		/**
+		 * Container strategy — defines mode, direction, and drop-zone geometry.
+		 * Use the `sortable()` or `target()` factory functions.
+		 *
+		 * @example
+		 * ```svelte
+		 * <DndDroppable strategy={sortable({ direction: 'grid', flow: 'row' })} />
+		 * <DndDroppable strategy={target()} />
+		 * ```
+		 */
+		strategy: ContainerStrategy
 		/** Arbitrary data attached to the container, surfaced on drop events. */
 		data?: Record<string, unknown>
 		/** When `true`, drops are not allowed. */
 		disabled?: boolean
-		/** Layout direction used for drop-zone calculations. Defaults to `'vertical'`. */
-		direction?: DndDirection
-		/**
-		 * `'sortable'` (default) — position-based drop zones with insert previews.
-		 * `'target'` — single drop zone covering the whole container, no previews.
-		 *   Use for trash zones, boards, or any droppable that isn't a sorted list.
-		 */
-		mode?: DndMode
 		/**
 		 * Collision detection algorithm for this container.
 		 * Overrides the global `collision` set on `DndController`.
@@ -48,10 +51,9 @@
 
 	let {
 		id,
+		strategy,
 		data = {},
 		disabled = false,
-		direction = 'vertical',
-		mode = 'sortable',
 		collision = undefined,
 		accepts = undefined,
 		spacing = undefined,
@@ -71,11 +73,9 @@
 			id,
 			data,
 			disabled,
-			direction,
-			mode,
 			collision,
 			accepts,
-			strategy: dndController.getStrategyForMode(mode)
+			strategy
 		},
 		dndController
 	)
@@ -83,13 +83,9 @@
 
 	$effect(() => { droppable.data = data })
 	$effect(() => { droppable.disabled = disabled })
-	$effect(() => { droppable.direction = direction })
 	$effect(() => { droppable.collision = collision })
 	$effect(() => { droppable.accepts = accepts })
-	$effect(() => {
-		droppable.mode = mode
-		droppable.strategy = dndController.getStrategyForMode(mode)
-	})
+	$effect(() => { droppable.strategy = strategy })
 	$effect(() => { droppable.spacing = spacing })
 
 	// Extra margin added during cross-container drag so the container grows in layout flow,
@@ -120,6 +116,8 @@
 		const tailActive = tailPosition >= 0 && dndController?.dropPreview?.position === tailPosition
 		return Math.max(0, crossContainerSpacer.y - (tailActive ? (spacing ?? 0) : 0))
 	})
+
+	const isSortable = $derived(strategy.mode === 'sortable')
 </script>
 
 <div
@@ -131,7 +129,7 @@
 	{@attach dndController?.attachDroppable(droppable)}
 >
 	{@render children?.()}
-	{#if mode === 'sortable'}
+	{#if isSortable}
 		<div style="position: relative">
 			<DndPreview {droppable} position={tailPosition >= 0 ? tailPosition : lastValidTailPosition} />
 		</div>

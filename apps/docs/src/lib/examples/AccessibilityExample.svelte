@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { DndProvider, DndDroppable, DndDraggable, DndController, defaultAnnouncements } from '@horuse/svelte-dnd'
+	import { DndProvider, DndDroppable, DndDraggable, DndController, sortable, defaultAnnouncements } from '@horuse/svelte-dnd'
 
 	const columns: Record<string, string> = {
 		todo: 'To Do',
@@ -50,7 +50,7 @@
 			{#each Object.entries(columns) as [id, label]}
 				<div class="flex flex-col w-48 shrink-0 h-full bg-foreground border-2 border-primary rounded-2xl">
 					<h2 class="text-lg p-4 font-semibold text-neutral-500">{label}</h2>
-					<DndDroppable {id} spacing={8} class="p-3 h-full overflow-auto border-t-2 border-primary pt-3">
+					<DndDroppable {id} strategy={sortable()} spacing={8} class="p-3 h-full overflow-auto border-t-2 border-primary pt-3">
 						{#each board[id] as item, index (item.id)}
 							<DndDraggable id={item.id} position={index}>
 								<div class="drag-item text-sm">{item.label}</div>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { DndProvider, DndDroppable, DndDraggable, DndController } from '@horuse/svelte-dnd';
+	import { DndProvider, DndDroppable, DndDraggable, DndController, sortable } from '@horuse/svelte-dnd';
 
 	type Item = { id: string; label: string; height: number };
 	type Container = { id: string; title: string; items: Item[] };
@@ -64,7 +64,7 @@
 <div class="flex flex-col gap-4 w-full max-w-lg mx-auto">
 	<DndProvider {controller}>
 		{#each containers as container, containerIndex (container.id)}
-			<DndDroppable spacing={8} id={container.id} direction="vertical" accepts="task" class="flex flex-col p-3 bg-foreground border-2 border-primary rounded-2xl min-h-20">
+			<DndDroppable spacing={8} id={container.id} strategy={sortable()} accepts="task" class="flex flex-col p-3 bg-foreground border-2 border-primary rounded-2xl min-h-20">
 				<div class="text-lg font-semibold text-neutral-500 pb-2 border-b-2 border-primary mb-1">
 					{container.title}
 					<span class="text-sm font-normal ml-2 opacity-50">({container.items.length})</span>

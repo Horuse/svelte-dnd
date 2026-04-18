@@ -25,8 +25,6 @@ interface DroppableConfig {
 	id: string
 	data?: Record<string, unknown>
 	disabled?: boolean
-	direction?: DndDirection
-	mode?: DndMode
 	collision?: CollisionAlgorithm
 	accepts?: string | string[]
 	strategy: ContainerStrategy
@@ -38,8 +36,6 @@ export class Droppable {
 	id: string
 	data: Record<string, unknown> | undefined
 	disabled: boolean
-	direction: DndDirection
-	mode: DndMode
 	collision: CollisionAlgorithm | undefined
 	accepts: string | string[] | undefined
 	strategy: ContainerStrategy
@@ -59,12 +55,18 @@ export class Droppable {
 		this.id = config.id
 		this.data = config.data
 		this.disabled = config.disabled ?? false
-		this.direction = config.direction ?? 'vertical'
-		this.mode = config.mode ?? 'sortable'
 		this.collision = config.collision
 		this.accepts = config.accepts
 		this.strategy = config.strategy
 		this.controller = controller
+	}
+
+	get mode(): DndMode {
+		return this.strategy.mode
+	}
+
+	get direction(): DndDirection {
+		return this.strategy.direction ?? 'vertical'
 	}
 
 	get isHorizontal(): boolean {

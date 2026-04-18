@@ -3,7 +3,7 @@ export { default as DndDraggable } from './components/DndDraggable.svelte'
 export { default as DndDroppable } from './components/DndDroppable.svelte'
 export { default as DndPreview } from './components/DndPreview.svelte'
 export { DndController } from './core/dnd/dnd-controller.svelte.js'
-export type { DndControllerConfig, StrategyFactory, StrategyContext } from './core/dnd/dnd-controller.svelte.js'
+export type { DndControllerConfig } from './core/dnd/dnd-controller.svelte.js'
 export type { ScrollConfig } from './core/scroll/scroll-controller.js'
 export type { PreviewConfig } from './core/entities/preview.svelte.js'
 export type {
@@ -18,9 +18,18 @@ export type { SimulateOptions } from './core/dnd/dnd-simulator.js'
 export type { DragSource, DragSession } from './core/dnd/drag-session.svelte.js'
 export type { DndState } from './core/dnd/dnd-state.svelte.js'
 export type { Droppable } from './core/entities/droppable.svelte.js'
-export type { ContainerStrategy } from './core/containers/strategies/container-strategy.js'
-export { SortableContainerStrategy } from './core/containers/strategies/sortable-container-strategy.js'
-export { TargetContainerStrategy } from './core/containers/strategies/target-container-strategy.js'
+export type { ContainerStrategy, StrategyBindContext } from './core/containers/strategies/container-strategy.js'
+export {
+	SortableContainerStrategy,
+	sortable,
+	type SortableOptions
+} from './core/containers/strategies/sortable-container-strategy.js'
+export {
+	TargetContainerStrategy,
+	target,
+	type TargetOptions
+} from './core/containers/strategies/target-container-strategy.js'
+export type { GridFlow } from './core/zones/geometries/grid-zone-geometry.js'
 export type { AnimationStep } from './core/animation/steps/animation-step.js'
 export { InstantStep } from './core/animation/steps/animation-step.js'
 export { GhostToTargetStep } from './core/animation/steps/ghost-to-target-step.js'

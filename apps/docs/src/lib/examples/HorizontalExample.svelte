@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { DndProvider, DndDroppable, DndDraggable, DndController } from '@horuse/svelte-dnd';
+	import { DndProvider, DndDroppable, DndDraggable, DndController, sortable } from '@horuse/svelte-dnd';
 
 	let items = $state(
 		Array.from({ length: 50 }, (_, i) => ({
@@ -23,7 +23,7 @@
 </script>
 
 <DndProvider {controller}>
-	<DndDroppable id="horizontal-list" direction="horizontal" spacing={8} class="flex overflow-x-auto p-4 bg-foreground border-2 border-second rounded-xl">
+	<DndDroppable id="horizontal-list" strategy={sortable({ direction: 'horizontal' })} spacing={8} class="flex overflow-x-auto p-4 bg-foreground border-2 border-second rounded-xl">
 		{#each items as item, index (item.id)}
 			<DndDraggable id={item.id} position={index}>
 				<div class="drag-item" style="width: {item.width}px;}">

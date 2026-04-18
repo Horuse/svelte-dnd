@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { DndProvider, DndDroppable, DndDraggable, DndController } from '@horuse/svelte-dnd'
+	import { DndProvider, DndDroppable, DndDraggable, DndController, sortable } from '@horuse/svelte-dnd'
 
 	type Color = 'blue' | 'green' | 'red'
 
@@ -126,7 +126,7 @@
 					<DndDroppable
 						spacing={8} class="flex flex-col w-48 min-h-40 p-3 bg-foreground border-2 {colorStyles[color].border} rounded-xl"
 						id={color}
-						direction="vertical"
+						strategy={sortable()}
 					>
 						{#each containers[color] as task, index (task.id)}
 							<DndDraggable id={task.id} position={index}>
