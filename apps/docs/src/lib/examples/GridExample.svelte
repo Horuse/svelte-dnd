@@ -31,7 +31,7 @@
 	>
 		{#each items as item, index (item.id)}
 			<DndDraggable id={item.id} position={index}>
-				<div class="drag-item" style="width: {item.width}px; height: {item.height}px">
+				<div class="drag-item">
 					<span class="text-2xl">{item.id}</span>
 				</div>
 			</DndDraggable>

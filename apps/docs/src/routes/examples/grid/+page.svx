@@ -1,13 +1,15 @@
 ---
 title: Grid
-description: 2D grid sortable example using direction="grid" with CSS Grid layout.
+description: Grid sortable example using sortable({ direction: 'grid' }) with CSS Grid layout.
 ---
 
 # Grid
 
-A 2D sortable grid — drag tiles to reorder within a responsive CSS Grid layout.
+A sortable grid — drag tiles to reorder within a responsive CSS Grid layout.
 
-Set `direction="grid"` on `DndDroppable` and lay the container out with `display: grid`. Drop zones are computed row-by-row from the actual item rects, so items with different sizes and wrapping rows work out of the box.
+Pass `strategy={sortable({ direction: 'grid' })}` to `DndDroppable` and lay the container out with `display: grid`. Drop zones are computed row-by-row from the actual item rects. Use `flow: 'column'` to make the grid fill top-to-bottom instead of left-to-right.
+
+Grid translation math assumes uniform cell sizes — if you mix items with different widths and heights, prefer `display: grid` with equal tracks (for example `grid-template-columns: repeat(auto-fill, minmax(110px, 1fr))`) rather than per-item dimensions.
 
 <script lang="ts">
 	import { ComponentPreview } from '$lib/components';

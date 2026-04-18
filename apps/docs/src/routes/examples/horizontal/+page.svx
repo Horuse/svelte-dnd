@@ -1,11 +1,11 @@
 ---
 title: Horizontal List
-description: Horizontal sortable list using direction="horizontal" on DndDroppable.
+description: Horizontal sortable list using sortable({ direction: 'horizontal' }) on DndDroppable.
 ---
 
 # Horizontal List
 
-Set `direction="horizontal"` on `DndDroppable` — previews are rendered automatically with the container's direction. The reorder logic is the same as the vertical example — only the layout direction changes.
+Pass `strategy={sortable({ direction: 'horizontal' })}` to `DndDroppable` — previews are rendered automatically with the container's direction. The reorder logic is the same as the vertical example — only the layout direction changes.
 
 <script lang="ts">
 	import { ComponentPreview } from '$lib/components';

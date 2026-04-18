@@ -9,8 +9,8 @@ A horizontal board where both **containers** and **tasks** within them can be dr
 
 Drag a container by its header to reorder columns horizontally. Drag tasks within or between containers to move them. This is achieved with a single `DndController` and nested `DndDroppable` components:
 
-- The **board** droppable uses `direction="horizontal"` and accepts `'column'` type items
-- Each **column** droppable uses `direction="vertical"` and accepts `'task'` type items
+- The **board** droppable uses `strategy={sortable({ direction: 'horizontal' })}` and accepts `'column'` type items
+- Each **column** droppable uses `strategy={sortable()}` (vertical default) and accepts `'task'` type items
 - The column's `DndDraggable` has a `data-dnd-handle` on its header — dragging is only possible from the header, so dragging from the task area moves a task instead of the column
 
 Each slot is tracked via `[data-dnd-slot]` and scoped to its nearest `[data-dnd-drop-id]` parent, so nested droppables work correctly without extra configuration.

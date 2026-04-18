@@ -32,7 +32,8 @@ A minimal working drag-and-drop setup requires three components: `DndProvider`, 
         DndProvider,
         DndDroppable,
         DndDraggable,
-        DndController
+        DndController,
+        sortable
     } from '@horuse/svelte-dnd';
 
     let items = $state([
@@ -55,7 +56,7 @@ A minimal working drag-and-drop setup requires three components: `DndProvider`, 
 </script>
 
 <DndProvider {controller}>
-    <DndDroppable id="list" direction="vertical">
+    <DndDroppable id="list" strategy={sortable()}>
         {#each items as item, index (item.id)}
             <DndDraggable id={item.id} position={index}>
                 {item.label}
@@ -73,7 +74,7 @@ A minimal working drag-and-drop setup requires three components: `DndProvider`, 
 	</Step>
 
 	<Step title="DndDroppable">
-		defines a container where items can be dropped. Set `direction` to `"vertical"`, `"horizontal"`.
+		defines a container where items can be dropped. Pass a `strategy` — `sortable()` for a vertical list (default), pass a `direction` option for `'horizontal'` or `'grid'`, or use `target()` for a single drop zone with no previews.
 	</Step>
 
 	<Step title="DndDraggable">

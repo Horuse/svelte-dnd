@@ -42,7 +42,6 @@ const controller = new DndController({
         ...defaultAnnouncements,
         onDragStart: ({ item }) => `Picked up ${item.id}.`,
     },
-    strategies: [],                          // custom container strategies, see /docs/custom-strategies
 });
 
 // Default values (what you get when omitting each option):
@@ -66,7 +65,6 @@ const controller = new DndController({
         onDrop: ({ item, target }) => `Dropped item ${item.id} into ${target.id} at position ${target.position}.`,
         onCancel: ({ item }) => `Dragging ${item.id} was cancelled.`,
     },
-    strategies: [], // built-in 'sortable' and 'target' are always registered
 });
 ```
 
@@ -289,9 +287,8 @@ interface PreviewConfig {
 interface DndControllerConfig {
     scroll?: ScrollConfig;
     preview?: PreviewConfig;
-    /** Enable dev warnings (unknown strategy mode, etc.). Default: false */
+    /** Enable dev warnings (duplicate positions, etc.). Default: false */
     debug?: boolean;
-    strategies?: (ContainerStrategy | StrategyFactory)[];
     /** Active input sensors. Defaults to [PointerSensor, KeyboardSensor]. See [Sensors](/docs/sensors) */
     sensors?: SensorDescriptor[];
     /** Global collision algorithm. Per-container `collision` prop takes priority. See [Collision Detection](/docs/collision) */
@@ -302,12 +299,8 @@ interface DndControllerConfig {
     announcements?: Announcements;
 }
 
-interface StrategyContext {
-    state: DndState;
-    droppablesById: Map<string, Droppable>;
-}
-
-type StrategyFactory = (ctx: StrategyContext) => ContainerStrategy;
+// Per-container strategies are now passed to `<DndDroppable strategy={...} />`
+// rather than to the controller. See [Custom Strategies](/docs/custom-strategies).
 
 // Rich event objects passed to all callbacks:
 interface DndItemInfo {

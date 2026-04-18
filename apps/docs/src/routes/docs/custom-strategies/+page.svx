@@ -1,109 +1,153 @@
 ---
 title: Custom Strategies
-description: Replace or extend built-in drop zone strategies, or add entirely new container modes.
+description: Write or extend container strategies and pass them directly to DndDroppable.
 ---
 
 # Custom Strategies
 
-You can replace or extend the built-in `'sortable'` and `'target'` strategies, or add entirely new modes by implementing the `ContainerStrategy` interface.
+A `ContainerStrategy` owns everything layout-specific for a droppable — drop-zone calculation, sibling translations during drag, and drop/return animations. You pass an instance straight to `<DndDroppable strategy={...} />`, so strategies compose per-container: different containers in the same app can use different strategies without any global registration.
 
 ## Built-in strategies
 
-| Mode | Strategy class | Description |
-|------|---------------|-------------|
-| `'sortable'` | `SortableContainerStrategy` | Position-based drop zones with insert previews. Supports `vertical`, `horizontal`, and `grid` directions |
-| `'target'` | `TargetContainerStrategy` | Single drop zone covering the whole container, no previews |
-
-## Passing a strategy factory
-
-The built-in strategies receive a `StrategyContext` (`{ state, droppablesById }`) in their constructor. Since the context is created inside `DndController`, pass a **factory function** when your strategy needs it — the controller will call it with the internal context:
-
-```ts
-import {
-    DndController,
-    SortableContainerStrategy,
-    type ContainerStrategy,
-    type StrategyFactory,
-    type StrategyContext,
-    type DropZone,
-    type DndMode,
-    type Droppable,
-} from '@horuse/svelte-dnd';
-
-class MasonryStrategy extends SortableContainerStrategy {
-    override readonly mode: DndMode = 'masonry'
-
-    override calculateDropZones(droppable: Droppable, session): DropZone[] {
-        const slots = droppable.getSortedSlots()
-        const direction = droppable.direction
-        // your masonry-specific zone calculation using droppable.element, slots, direction, etc.
-        return []
-    }
-}
-
-const masonryFactory: StrategyFactory = (ctx) => new MasonryStrategy(ctx)
-
-const controller = new DndController({
-    strategies: [masonryFactory]
-})
-```
-
-Then use the custom mode on a droppable:
+| Factory | Class | Description |
+|---------|-------|-------------|
+| `sortable(options?)` | `SortableContainerStrategy` | Position-based drop zones with insert previews. Options: `direction: 'vertical' \| 'horizontal' \| 'grid'` (default `'vertical'`), `flow: 'row' \| 'column'` for grid (default `'row'`) |
+| `target(options?)` | `TargetContainerStrategy` | Single drop zone covering the whole container, no previews. Good for trash zones, inboxes, unique drop targets |
 
 ```svelte
-<DndDroppable mode="masonry" id="board">
+<script lang="ts">
+    import { DndDroppable, sortable, target } from '@horuse/svelte-dnd';
+</script>
+
+<DndDroppable id="list"  strategy={sortable()} />
+<DndDroppable id="row"   strategy={sortable({ direction: 'horizontal' })} />
+<DndDroppable id="grid"  strategy={sortable({ direction: 'grid' })} />
+<DndDroppable id="trash" strategy={target()} />
+```
+
+## Writing a custom strategy
+
+Implement the `ContainerStrategy` interface and pass an instance to the droppable. If your strategy needs controller-level state (the shared `DndState` and droppable registry), implement `bindContext()` — it is called once, the first time the droppable mounts.
+
+```ts
+import type {
+    ContainerStrategy,
+    StrategyBindContext,
+    DropZone,
+    DndMode,
+    DndDirection,
+    Droppable,
+    DragSession,
+    AnimationStep,
+} from '@horuse/svelte-dnd';
+import {
+    SortableContainerStrategy,
+    GhostToTargetStep,
+    GhostReturnStep,
+} from '@horuse/svelte-dnd';
+
+export class MasonryStrategy implements ContainerStrategy {
+    readonly mode: DndMode = 'masonry'
+    readonly direction: DndDirection = 'grid'
+
+    private state!: StrategyBindContext['state']
+    private droppablesById!: StrategyBindContext['droppablesById']
+
+    bindContext(ctx: StrategyBindContext): void {
+        this.state = ctx.state
+        this.droppablesById = ctx.droppablesById
+    }
+
+    calculateDropZones(droppable: Droppable, session: DragSession | null): DropZone[] {
+        // your masonry-specific zone calculation
+        return []
+    }
+
+    getTranslations(droppable: Droppable, session: DragSession): Map<string, { x: number; y: number }> {
+        return new Map()
+    }
+
+    getDropAnimation(session: DragSession, targetZone: DropZone): AnimationStep {
+        return new GhostToTargetStep(this.state, targetZone, this.droppablesById)
+    }
+
+    getReturnAnimation(session: DragSession): AnimationStep {
+        return new GhostReturnStep(this.state, session.originContainerId, session.originPosition, this.droppablesById)
+    }
+}
+```
+
+Use it on the droppable:
+
+```svelte
+<script lang="ts">
+    import { DndDroppable } from '@horuse/svelte-dnd';
+    import { MasonryStrategy } from './masonry-strategy';
+
+    const masonry = new MasonryStrategy();
+</script>
+
+<DndDroppable id="board" strategy={masonry}>
     ...
 </DndDroppable>
 ```
 
-## Passing a plain instance
+### Extending a built-in strategy
 
-If your strategy doesn't need the controller's context (i.e. it implements `ContainerStrategy` directly without extending a built-in class), you can pass a plain instance:
-
-```ts
-const controller = new DndController({
-    strategies: [new SimpleStrategy()]
-})
-```
-
-## Overriding built-in strategies
-
-Passing a factory with `mode: 'sortable'` or `mode: 'target'` **replaces** the built-in behaviour for that mode globally:
+The simplest path: extend `SortableContainerStrategy` and override just the pieces you need. The base class already implements `bindContext`, drop/return animations, and translations for `vertical` / `horizontal` / `grid`.
 
 ```ts
-class MySortableStrategy extends SortableContainerStrategy {
-    override readonly mode: DndMode = 'sortable'
+import { SortableContainerStrategy, type DropZone, type Droppable, type DragSession } from '@horuse/svelte-dnd';
 
-    override calculateDropZones(droppable: Droppable, session): DropZone[] {
-        // replaces built-in sortable zone calculation
-        return super.calculateDropZones(droppable, session)
+export class StickyFirstSortable extends SortableContainerStrategy {
+    override calculateDropZones(droppable: Droppable, session: DragSession | null): DropZone[] {
+        const zones = super.calculateDropZones(droppable, session)
+        // remove the zone that would insert before position 0 so the first item can't be displaced
+        return zones.filter((z) => z.position !== 0)
     }
 }
-
-const controller = new DndController({
-    strategies: [(ctx) => new MySortableStrategy(ctx)]
-})
 ```
 
-## Types
+Pass an instance to the droppable the same way: `<DndDroppable strategy={new StickyFirstSortable()} />`.
+
+### Reusing a strategy instance
+
+Strategy instances are stateless across drags — the same instance can be shared between multiple droppables. Instantiate once in your setup and reuse:
 
 ```ts
-import type { Droppable, DndState, DragSession, AnimationStep } from '@horuse/svelte-dnd';
+const listStrategy = sortable()
+
+<DndDroppable id="list-a" strategy={listStrategy} />
+<DndDroppable id="list-b" strategy={listStrategy} />
+```
+
+If you keep per-container state inside the strategy, create a fresh instance per droppable instead.
+
+## Interface
+
+```ts
+import type { Droppable, DndState, DragSession, AnimationStep, DropZone, DndMode, DndDirection } from '@horuse/svelte-dnd';
 
 interface ContainerStrategy {
     readonly mode: DndMode;
+    /** Direction hint for directional strategies (sortable). Target-like strategies may omit it. */
+    readonly direction?: DndDirection;
+
     calculateDropZones(droppable: Droppable, session: DragSession | null): DropZone[];
     getTranslations(droppable: Droppable, session: DragSession): Map<string, { x: number; y: number }>;
     getDropAnimation(session: DragSession, targetZone: DropZone): AnimationStep;
     getReturnAnimation(session: DragSession): AnimationStep;
+
+    /** Called once when the owning droppable first attaches — receives controller-level state. */
+    bindContext?(ctx: StrategyBindContext): void;
+    /** Called on every drag start, before any reactive cycle runs. Use it to capture layout snapshots. */
+    onSessionStart?(droppable: Droppable, session: DragSession): void;
 }
 
-interface StrategyContext {
+interface StrategyBindContext {
     state: DndState;
     droppablesById: Map<string, Droppable>;
 }
-
-type StrategyFactory = (ctx: StrategyContext) => ContainerStrategy;
 ```
 
 ---

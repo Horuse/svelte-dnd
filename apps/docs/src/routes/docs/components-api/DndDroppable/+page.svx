@@ -1,25 +1,60 @@
 ---
 title: DndDroppable
-description: API reference for the DndDroppable and DndPreview components — props, direction, mode, and type filtering.
+description: API reference for the DndDroppable and DndPreview components — props, strategy, and type filtering.
 ---
 
 # DndDroppable
 
-Defines a container that accepts draggable items. Automatically registers drop zones and renders a tail preview (drop after the last item) in `sortable` mode.
+Defines a container that accepts draggable items. Automatically registers drop zones and renders a tail preview (drop after the last item) when using the `sortable()` strategy.
 
 ### Props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `id` | `string` | **required** | Unique container identifier |
+| `strategy` | `ContainerStrategy` | **required** | Strategy instance that owns zone calculation, translations, and drop/return animations. Use the built-in factories `sortable()` / `target()` or your own class. See [Strategies](#strategies) |
 | `data` | `Record<string, unknown>` | `{}` | Arbitrary container metadata passed to drop callbacks |
 | `accepts` | `string \| string[]` | `undefined` | Item type(s) this container accepts. If omitted, accepts everything. See [Type filtering](#type-filtering) |
 | `disabled` | `boolean` | `false` | Disables dropping when `true`. Also sets `opacity: 0.5; pointer-events: none` |
-| `direction` | `DndDirection` | `'vertical'` | Layout direction: `'vertical'` \| `'horizontal'` \| `'grid'` |
-| `mode` | `DndMode` | `'sortable'` | `'sortable'` — position-based drop zones with insert previews. `'target'` — single drop zone covering the whole container, no previews |
 | `collision` | `CollisionAlgorithm` | `undefined` | Per-container collision algorithm. Overrides the global algorithm set on `DndController`. `undefined` falls back to the global, or `centerPoint` if none. See [Collision Detection](/docs/collision) |
 | `spacing` | `number` | `undefined` | Gap between items in pixels. Applied as margin between adjacent slots (not after the last one). Useful as a drop-in for `space-y-*` / `space-x-*` |
 | `class` | `string` | — | Additional CSS class names |
+
+### Strategies
+
+The `strategy` prop decides how a container behaves. Two built-in factories cover the common cases:
+
+```svelte
+<script lang="ts">
+    import { DndDroppable, sortable, target } from '@horuse/svelte-dnd';
+</script>
+
+<!-- Vertical list (default) -->
+<DndDroppable id="list" strategy={sortable()} />
+
+<!-- Horizontal row -->
+<DndDroppable id="row" strategy={sortable({ direction: 'horizontal' })} />
+
+<!-- Grid — pair with a CSS `display: grid` layout -->
+<DndDroppable id="grid" strategy={sortable({ direction: 'grid' })} />
+
+<!-- Grid that fills top-to-bottom instead of left-to-right -->
+<DndDroppable id="grid-col" strategy={sortable({ direction: 'grid', flow: 'column' })} />
+
+<!-- Single drop zone, no previews — trash, inbox, drop target -->
+<DndDroppable id="trash" strategy={target()} />
+```
+
+`sortable()` renders position-based drop zones with insert previews between items. `target()` covers the whole container with a single zone and emits no previews — useful for trash zones or anywhere a target isn't a list.
+
+For writing your own strategy see [Custom Strategies](/docs/custom-strategies).
+
+#### sortable options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `direction` | `'vertical' \| 'horizontal' \| 'grid'` | `'vertical'` | Layout direction |
+| `flow` | `'row' \| 'column'` | `'row'` | For `direction: 'grid'`, which axis items fill first. `'row'` = left-to-right wrapping; `'column'` = top-to-bottom wrapping |
 
 ### Snippets
 
