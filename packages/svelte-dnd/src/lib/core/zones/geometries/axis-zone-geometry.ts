@@ -1,4 +1,4 @@
-import type { DropZone, DndDirection } from '../../../types.js'
+import type { DropZone, DndLayout } from '../../../types.js'
 import type { SlotLayoutRect } from '../layout-snapshot.js'
 import type { ZoneGeometry, ZoneGeometryContext } from '../zone-geometry.js'
 
@@ -16,7 +16,7 @@ export class AxisZoneGeometry implements ZoneGeometry {
 		if (visibleRects.length === 0) return [this.buildEmptyZone(ctx)]
 
 		const zones: DropZone[] = []
-		const direction: DndDirection = this.axis
+		const layout: DndLayout = this.axis
 
 		visibleRects.forEach((rect, index) => {
 			const viewport = this.toViewport(rect, ctx)
@@ -28,7 +28,7 @@ export class AxisZoneGeometry implements ZoneGeometry {
 					zones.push({
 						containerId: ctx.containerId,
 						position: 0,
-						direction,
+						layout,
 						rect: {
 							x: ctx.containerRect.left,
 							y: Math.min(ctx.containerRect.top, viewport.y),
@@ -52,7 +52,7 @@ export class AxisZoneGeometry implements ZoneGeometry {
 				zones.push({
 					containerId: ctx.containerId,
 					position: index + 1,
-					direction,
+					layout,
 					rect: { x: ctx.containerRect.left, y: zoneY, width: ctx.containerRect.width, height: zoneHeight }
 				})
 			} else {
@@ -62,7 +62,7 @@ export class AxisZoneGeometry implements ZoneGeometry {
 					zones.push({
 						containerId: ctx.containerId,
 						position: 0,
-						direction,
+						layout,
 						rect: {
 							x: Math.min(ctx.containerRect.left, viewport.x),
 							y: ctx.containerRect.top,
@@ -86,7 +86,7 @@ export class AxisZoneGeometry implements ZoneGeometry {
 				zones.push({
 					containerId: ctx.containerId,
 					position: index + 1,
-					direction,
+					layout,
 					rect: { x: zoneX, y: ctx.containerRect.top, width: zoneWidth, height: ctx.containerRect.height }
 				})
 			}
@@ -99,7 +99,7 @@ export class AxisZoneGeometry implements ZoneGeometry {
 		return {
 			containerId: ctx.containerId,
 			position: 0,
-			direction: this.axis,
+			layout: this.axis,
 			rect: {
 				x: ctx.containerRect.left,
 				y: ctx.containerRect.top,

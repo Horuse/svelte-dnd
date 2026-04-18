@@ -41,7 +41,7 @@ export class Slot {
 			// No slot neighbors — use element size + droppable spacing.
 			// Cannot rely on DOM margin because suppressSpacing may have zeroed it on the last slot.
 			const spacing = this.droppable?.spacing ?? 0
-			const isHorizontal = this.droppable?.direction === 'horizontal'
+			const isHorizontal = this.droppable?.layout === 'horizontal'
 			return {
 				width: this.draggable.element.offsetWidth + (isHorizontal ? spacing : 0),
 				height: this.draggable.element.offsetHeight + (isHorizontal ? 0 : spacing)

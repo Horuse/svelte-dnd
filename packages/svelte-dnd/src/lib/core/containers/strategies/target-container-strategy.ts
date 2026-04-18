@@ -34,7 +34,7 @@ export class TargetContainerStrategy implements ContainerStrategy {
 		return [{
 			containerId: droppable.id,
 			position: 0,
-			direction: 'vertical',
+			layout: 'vertical',
 			rect: {
 				x: rect.left,
 				y: rect.top,

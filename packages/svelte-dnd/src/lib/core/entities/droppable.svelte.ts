@@ -1,6 +1,6 @@
 import { SvelteMap } from 'svelte/reactivity'
 import { isBrowser } from '../utils/dom-helper.js'
-import type { DndContainerInfo, DndDirection, DndMode, DragStartCallback, DragEndCallback } from '../../types.js'
+import type { DndContainerInfo, DndLayout, DndMode, DragStartCallback, DragEndCallback } from '../../types.js'
 import type { CollisionAlgorithm } from '../collision/collision-algorithm.js'
 import type { ContainerStrategy } from '../containers/strategies/container-strategy.js'
 import type { Slot } from './slot.js'
@@ -65,12 +65,12 @@ export class Droppable {
 		return this.strategy.mode
 	}
 
-	get direction(): DndDirection {
-		return this.strategy.direction ?? 'vertical'
+	get layout(): DndLayout {
+		return this.strategy.layout ?? 'vertical'
 	}
 
 	get isHorizontal(): boolean {
-		return this.direction === 'horizontal'
+		return this.layout === 'horizontal'
 	}
 
 	/** Build a public-facing snapshot for event callbacks. */
@@ -78,7 +78,7 @@ export class Droppable {
 		return {
 			id: this.id,
 			data: this.data,
-			direction: this.direction,
+			layout: this.layout,
 			mode: this.mode,
 			disabled: this.disabled,
 			accepts: this.accepts,

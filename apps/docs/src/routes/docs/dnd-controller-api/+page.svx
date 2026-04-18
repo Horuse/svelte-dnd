@@ -263,7 +263,7 @@ All types below are exported from `@horuse/svelte-dnd`.
 interface DropZone {
     containerId: string;
     position: number;
-    direction: DndDirection;
+    layout: DndLayout;
     itemId?: string;
     rect: { x: number; y: number; width: number; height: number };
 }
@@ -312,7 +312,7 @@ interface DndItemInfo {
 interface DndContainerInfo {
     id: string;
     data: Record<string, unknown> | undefined;
-    direction: DndDirection;
+    layout: DndLayout;
     mode: DndMode;
     disabled: boolean;
     accepts: string | string[] | undefined;
@@ -329,7 +329,7 @@ type DragEndCallback      = (event: DragEndEvent) => void;
 type DropCancelledCallback = (event: DropCancelledEvent) => void;
 type DropCallback         = (event: DropEvent) => void;
 type DragOverCallback     = (event: DragOverEvent) => void;
-type DndDirection = 'vertical' | 'horizontal' | 'grid';
+type DndLayout = 'vertical' | 'horizontal' | 'grid';
 type DndMode = 'sortable' | 'target' | (string & {}); // custom modes allowed
 type DragSource = 'user' | 'programmatic';
 ```

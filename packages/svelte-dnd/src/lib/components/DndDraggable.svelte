@@ -123,7 +123,7 @@
 	})
 </script>
 
-<div class="dnd-slot" data-dnd-slot style="position: relative; overflow: visible; {droppable?.direction === 'grid' ? '' : droppable?.direction === 'horizontal' ? `margin-right: ${spacingPx}px` : `margin-bottom: ${spacingPx}px`}" {@attach droppable?.attachSlot(slot)}>
+<div class="dnd-slot" data-dnd-slot style="position: relative; overflow: visible; {droppable?.layout === 'grid' ? '' : droppable?.layout === 'horizontal' ? `margin-right: ${spacingPx}px` : `margin-bottom: ${spacingPx}px`}" {@attach droppable?.attachSlot(slot)}>
 	{#if position !== undefined}
 		<DndPreview {slot} {position} />
 	{/if}

@@ -5,7 +5,7 @@ description: Simple vertical sortable list demonstrating auto-scroll with 50 ite
 
 # Vertical List
 
-The simplest setup — a single `DndDroppable` with `strategy={sortable()}` (vertical is the default direction).
+The simplest setup — a single `DndDroppable` with `strategy={sortable()}` (vertical is the default layout).
 
 This example uses 50 items to demonstrate **auto-scroll** near the container edges.
 

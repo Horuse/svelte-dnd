@@ -6,7 +6,7 @@
 	import type { Droppable } from '../core/entities/droppable.svelte.js'
 
 	interface Props {
-		/** Pass a Slot entity — container and direction are resolved from slot.droppable. */
+		/** Pass a Slot entity — container and layout are resolved from slot.droppable. */
 		slot?: Slot
 		/** Tail preview: pass the Droppable entity directly. */
 		droppable?: Droppable

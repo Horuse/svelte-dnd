@@ -217,7 +217,7 @@ export class DropAnimationCoordinator {
 		const slotEl = element.parentElement
 		if (!slotEl?.hasAttribute('data-dnd-slot')) return Promise.resolve()
 
-		const isHorizontal = sourceDroppable.direction === 'horizontal'
+		const isHorizontal = sourceDroppable.layout === 'horizontal'
 		const slotSize = this.state.dragSlotSize
 		const fullSize = isHorizontal ? (slotSize?.width ?? 0) : (slotSize?.height ?? 0)
 		const startDim = isHorizontal ? slotEl.offsetWidth : slotEl.offsetHeight

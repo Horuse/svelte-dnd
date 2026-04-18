@@ -11,12 +11,12 @@
 		/** Unique container identifier. */
 		id: string
 		/**
-		 * Container strategy — defines mode, direction, and drop-zone geometry.
+		 * Container strategy — defines mode, layout, and drop-zone geometry.
 		 * Use the `sortable()` or `target()` factory functions.
 		 *
 		 * @example
 		 * ```svelte
-		 * <DndDroppable strategy={sortable({ direction: 'grid', flow: 'row' })} />
+		 * <DndDroppable strategy={sortable({ layout: 'grid', flow: 'row' })} />
 		 * <DndDroppable strategy={target()} />
 		 * ```
 		 */

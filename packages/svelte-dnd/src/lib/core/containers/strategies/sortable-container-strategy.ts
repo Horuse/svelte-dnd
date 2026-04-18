@@ -1,5 +1,5 @@
 import type { ContainerStrategy, StrategyBindContext } from './container-strategy.js'
-import type { DropZone, DndMode, DndDirection } from '../../../types.js'
+import type { DropZone, DndMode, DndLayout } from '../../../types.js'
 import type { DragSession } from '../../dnd/drag-session.svelte.js'
 import type { DndState } from '../../dnd/dnd-state.svelte.js'
 import type { AnimationStep } from '../../animation/steps/animation-step.js'
@@ -10,10 +10,10 @@ import { GhostReturnStep } from '../../animation/steps/ghost-return-step.js'
 import { pickGeometry } from '../../zones/geometry-registry.js'
 
 export interface SortableOptions {
-	/** Layout direction for drop-zone geometry. Defaults to `'vertical'`. */
-	direction?: DndDirection
+	/** Container layout for drop-zone geometry. Defaults to `'vertical'`. */
+	layout?: DndLayout
 	/**
-	 * For `direction: 'grid'`, which axis items fill first.
+	 * For `layout: 'grid'`, which axis items fill first.
 	 * `'row'` (default): items fill left-to-right, wrapping to next row.
 	 * `'column'`: items fill top-to-bottom, wrapping to next column.
 	 */
@@ -30,14 +30,14 @@ export interface SortableOptions {
  */
 export class SortableContainerStrategy implements ContainerStrategy {
 	readonly mode: DndMode = 'sortable'
-	readonly direction: DndDirection
+	readonly layout: DndLayout
 	readonly flow: 'row' | 'column'
 
 	private state!: DndState
 	private droppablesById!: Map<string, Droppable>
 
 	constructor(options: SortableOptions = {}) {
-		this.direction = options.direction ?? 'vertical'
+		this.layout = options.layout ?? 'vertical'
 		this.flow = options.flow ?? 'row'
 	}
 
@@ -54,7 +54,7 @@ export class SortableContainerStrategy implements ContainerStrategy {
 		const containerRect = droppable.element.getBoundingClientRect()
 		const scrollLeft = droppable.element.scrollLeft
 		const scrollTop = droppable.element.scrollTop
-		const geometry = pickGeometry(this.direction, this.flow)
+		const geometry = pickGeometry(this.layout, this.flow)
 
 		const ctx = {
 			containerId: droppable.id,
@@ -83,19 +83,19 @@ export class SortableContainerStrategy implements ContainerStrategy {
 		const rects = snapshot.rects
 		const containerId = droppable.id
 		const slotSize = session.slotSize
-		const direction = this.direction
+		const layout = this.layout
 
 		// Grid keeps the adjacency-based shift: each item slides to the next/prev rect's
 		// absolute position. Works when cells have equal size; different-sized grid items
 		// need a different approach that this branch doesn't handle yet.
-		if (direction === 'grid') {
+		if (layout === 'grid') {
 			return this.getGridTranslations(rects, D, preview, containerId, session)
 		}
 
 		// Vertical/horizontal: every displaced item shifts by the dragged slot's own size
 		// (width/height including spacing). That keeps the stack aligned even when
 		// siblings have different sizes — each neighbour just moves up/down one "slot worth".
-		const axis: 'x' | 'y' = direction === 'vertical' ? 'y' : 'x'
+		const axis: 'x' | 'y' = layout === 'vertical' ? 'y' : 'x'
 		const step = !slotSize ? 0 : axis === 'y' ? slotSize.height : slotSize.width
 		if (step === 0) return map
 
@@ -201,12 +201,12 @@ export class SortableContainerStrategy implements ContainerStrategy {
 }
 
 /**
- * Factory for `SortableContainerStrategy`. Pass options to configure direction
+ * Factory for `SortableContainerStrategy`. Pass options to configure layout
  * and (for grid) flow axis.
  *
  * @example
  * ```svelte
- * <DndDroppable strategy={sortable({ direction: 'grid', flow: 'row' })} />
+ * <DndDroppable strategy={sortable({ layout: 'grid', flow: 'row' })} />
  * ```
  */
 export function sortable(options?: SortableOptions): SortableContainerStrategy {

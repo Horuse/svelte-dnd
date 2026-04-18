@@ -72,7 +72,7 @@ export class GridZoneGeometry implements ZoneGeometry {
 		return {
 			containerId: ctx.containerId,
 			position: 0,
-			direction: 'grid',
+			layout: 'grid',
 			rect: {
 				x: ctx.containerRect.left,
 				y: ctx.containerRect.top,
@@ -121,7 +121,7 @@ function axisFor(flow: GridFlow): AxisMapping {
 			toZone: (ctx, position, pStart, pEnd, sStart, sEnd) => ({
 				containerId: ctx.containerId,
 				position,
-				direction: 'grid',
+				layout: 'grid',
 				rect: {
 					x: pStart + ctx.containerRect.left - ctx.scrollLeft,
 					y: sStart + ctx.containerRect.top - ctx.scrollTop,
@@ -144,7 +144,7 @@ function axisFor(flow: GridFlow): AxisMapping {
 		toZone: (ctx, position, pStart, pEnd, sStart, sEnd) => ({
 			containerId: ctx.containerId,
 			position,
-			direction: 'grid',
+			layout: 'grid',
 			rect: {
 				x: sStart + ctx.containerRect.left - ctx.scrollLeft,
 				y: pStart + ctx.containerRect.top - ctx.scrollTop,

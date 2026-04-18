@@ -164,12 +164,12 @@ The old `direction` and `mode` props are replaced by a single required `strategy
 </script>
 
 <DndDroppable id="list"  strategy={sortable()}>
-<DndDroppable id="row"   strategy={sortable({ direction: 'horizontal' })}>
-<DndDroppable id="board" strategy={sortable({ direction: 'grid' })}>
+<DndDroppable id="row"   strategy={sortable({ layout: 'horizontal' })}>
+<DndDroppable id="board" strategy={sortable({ layout: 'grid' })}>
 <DndDroppable id="trash" strategy={target()}>
 ```
 
-`sortable({ direction: 'grid' })` is a new v1 mode — pair it with a CSS `display: grid` layout. Grid flow can be flipped to top-to-bottom with `sortable({ direction: 'grid', flow: 'column' })`. See [Custom Strategies](/docs/custom-strategies) for writing your own.
+`sortable({ layout: 'grid' })` is a new v1 mode — pair it with a CSS `display: grid` layout. Grid flow can be flipped to top-to-bottom with `sortable({ layout: 'grid', flow: 'column' })`. See [Custom Strategies](/docs/custom-strategies) for writing your own.
 
 New optional props: `collision`, `spacing`.
 
@@ -234,4 +234,4 @@ controller.onDropCancelled(({ item, source }) => {
 
 `data: Record<string, any>` props are now typed `Record<string, unknown>`.
 
-New type exports: `DndControllerConfig`, `ScrollConfig`, `PreviewConfig`, `ContainerStrategy`, `StrategyBindContext`, `SortableOptions`, `TargetOptions`, `GridFlow`, `DndMode`, `DndDirection`, `DragSource`, `DragSession`, `DndItemInfo`, `DndContainerInfo`, `DragStartEvent`, `DropEvent`, `DragEndEvent`, `DragOverEvent`, `DropCancelledEvent`, `DragStartCallback`, `DragEndCallback`, `DropCallback`, `DragOverCallback`, `DropCancelledCallback`, `Announcements`, `SimulateOptions`, `SensorDescriptor`, `CollisionAlgorithm`, `Modifier`.
+New type exports: `DndControllerConfig`, `ScrollConfig`, `PreviewConfig`, `ContainerStrategy`, `StrategyBindContext`, `SortableOptions`, `TargetOptions`, `GridFlow`, `DndMode`, `DndLayout`, `DragSource`, `DragSession`, `DndItemInfo`, `DndContainerInfo`, `DragStartEvent`, `DropEvent`, `DragEndEvent`, `DragOverEvent`, `DropCancelledEvent`, `DragStartCallback`, `DragEndCallback`, `DropCallback`, `DragOverCallback`, `DropCancelledCallback`, `Announcements`, `SimulateOptions`, `SensorDescriptor`, `CollisionAlgorithm`, `Modifier`.

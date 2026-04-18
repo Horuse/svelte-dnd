@@ -13,8 +13,8 @@
 			const r = droppable.element.getBoundingClientRect()
 			const mid = r.top + r.height / 2
 			return [
-				{ containerId, position: 0, direction: 'vertical', rect: { x: r.x, y: r.y,  width: r.width, height: r.height / 2 } },
-				{ containerId, position: 1, direction: 'vertical', rect: { x: r.x, y: mid, width: r.width, height: r.height / 2 } },
+				{ containerId, position: 0, layout: 'vertical', rect: { x: r.x, y: r.y,  width: r.width, height: r.height / 2 } },
+				{ containerId, position: 1, layout: 'vertical', rect: { x: r.x, y: mid, width: r.width, height: r.height / 2 } },
 			]
 		}
 	}

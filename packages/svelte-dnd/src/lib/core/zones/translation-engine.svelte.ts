@@ -52,14 +52,14 @@ export class TranslationEngine {
 		if (!targetDroppable) return null
 
 		const slotSize = session.slotSize
-		const direction = targetDroppable.direction
-		const size = direction === 'horizontal' ? (slotSize?.width ?? 0) : (slotSize?.height ?? 0)
+		const layout = targetDroppable.layout
+		const size = layout === 'horizontal' ? (slotSize?.width ?? 0) : (slotSize?.height ?? 0)
 		const ghostSize = session.ghostSize
-		const elementSize = direction === 'horizontal' ? ghostSize.width : ghostSize.height
+		const elementSize = layout === 'horizontal' ? ghostSize.width : ghostSize.height
 		const effectiveSize = size || elementSize
 		if (effectiveSize === 0) return null
 
-		return direction === 'horizontal'
+		return layout === 'horizontal'
 			? { containerId: preview.containerId, x: effectiveSize, y: 0 }
 			: { containerId: preview.containerId, x: 0, y: effectiveSize }
 	})

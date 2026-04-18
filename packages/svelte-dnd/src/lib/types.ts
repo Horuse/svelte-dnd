@@ -1,6 +1,6 @@
 import type { Snippet } from 'svelte'
 
-export type DndDirection = 'vertical' | 'horizontal' | 'grid'
+export type DndLayout = 'vertical' | 'horizontal' | 'grid'
 
 // --- Rich event types ---
 
@@ -14,7 +14,7 @@ export interface DndItemInfo {
 export interface DndContainerInfo {
 	id: string
 	data: Record<string, unknown> | undefined
-	direction: DndDirection
+	layout: DndLayout
 	mode: DndMode
 	disabled: boolean
 	accepts: string | string[] | undefined
@@ -87,7 +87,7 @@ export type DndMode = 'sortable' | 'target' | (string & {})
 export interface DropZone {
 	containerId: string
 	position: number
-	direction: DndDirection
+	layout: DndLayout
 	itemId?: string
 	rect: {
 		x: number

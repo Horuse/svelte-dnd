@@ -33,13 +33,13 @@ The `strategy` prop decides how a container behaves. Two built-in factories cove
 <DndDroppable id="list" strategy={sortable()} />
 
 <!-- Horizontal row -->
-<DndDroppable id="row" strategy={sortable({ direction: 'horizontal' })} />
+<DndDroppable id="row" strategy={sortable({ layout: 'horizontal' })} />
 
 <!-- Grid — pair with a CSS `display: grid` layout -->
-<DndDroppable id="grid" strategy={sortable({ direction: 'grid' })} />
+<DndDroppable id="grid" strategy={sortable({ layout: 'grid' })} />
 
 <!-- Grid that fills top-to-bottom instead of left-to-right -->
-<DndDroppable id="grid-col" strategy={sortable({ direction: 'grid', flow: 'column' })} />
+<DndDroppable id="grid-col" strategy={sortable({ layout: 'grid', flow: 'column' })} />
 
 <!-- Single drop zone, no previews — trash, inbox, drop target -->
 <DndDroppable id="trash" strategy={target()} />
@@ -53,8 +53,8 @@ For writing your own strategy see [Custom Strategies](/docs/custom-strategies).
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `direction` | `'vertical' \| 'horizontal' \| 'grid'` | `'vertical'` | Layout direction |
-| `flow` | `'row' \| 'column'` | `'row'` | For `direction: 'grid'`, which axis items fill first. `'row'` = left-to-right wrapping; `'column'` = top-to-bottom wrapping |
+| `layout` | `'vertical' \| 'horizontal' \| 'grid'` | `'vertical'` | Container layout |
+| `flow` | `'row' \| 'column'` | `'row'` | For `layout: 'grid'`, which axis items fill first. `'row'` = left-to-right wrapping; `'column'` = top-to-bottom wrapping |
 
 ### Snippets
 
@@ -113,9 +113,9 @@ Renders a placeholder at a specific position within a container to indicate wher
 ---
 
 ## Types
-#### DndDirection
+#### DndLayout
 ```ts
-export type DndDirection = 'vertical' | 'horizontal' | 'grid'
+export type DndLayout = 'vertical' | 'horizontal' | 'grid'
 ```
 #### DndMode
 ```ts

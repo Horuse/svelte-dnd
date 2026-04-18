@@ -26,7 +26,7 @@
 <DndProvider {controller}>
 	<DndDroppable
 		id="grid"
-		strategy={sortable({ direction: 'grid' })}
+		strategy={sortable({ layout: 'grid' })}
 		class="grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] gap-4 p-4 bg-foreground border-2 border-second rounded-xl max-w-2xl"
 	>
 		{#each items as item, index (item.id)}

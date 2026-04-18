@@ -130,8 +130,8 @@ export class GhostReturnStep implements AnimationStep {
 		const droppable = this.containerId ? this.droppablesById.get(this.containerId) : null
 		// Grid layouts use vertical scroll sync — the ghost flies to a slot with both x/y,
 		// but the scroll axis is vertical by convention.
-		const rawDirection = droppable?.direction ?? 'vertical'
-		const direction: 'vertical' | 'horizontal' = rawDirection === 'horizontal' ? 'horizontal' : 'vertical'
+		const rawLayout = droppable?.layout ?? 'vertical'
+		const direction: 'vertical' | 'horizontal' = rawLayout === 'horizontal' ? 'horizontal' : 'vertical'
 		const adapter = getDirectionAdapter(direction)
 		const startScroll = adapter.getScroll(container)
 		const startGhostPos = { ...this.state.transform! }

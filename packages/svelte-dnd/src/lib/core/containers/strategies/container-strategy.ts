@@ -1,4 +1,4 @@
-import type { DropZone, DndMode, DndDirection } from '../../../types.js'
+import type { DropZone, DndMode, DndLayout } from '../../../types.js'
 import type { DragSession } from '../../dnd/drag-session.svelte.js'
 import type { DndState } from '../../dnd/dnd-state.svelte.js'
 import type { AnimationStep } from '../../animation/steps/animation-step.js'
@@ -12,10 +12,10 @@ export interface StrategyBindContext {
 export interface ContainerStrategy {
 	readonly mode: DndMode
 	/**
-	 * Direction hint for strategies that have a directional layout concept
-	 * (sortable). Target-like strategies can omit it.
+	 * Layout hint for strategies that have a layout concept (sortable).
+	 * Target-like strategies can omit it.
 	 */
-	readonly direction?: DndDirection
+	readonly layout?: DndLayout
 	calculateDropZones(droppable: Droppable, session: DragSession | null): DropZone[]
 	getTranslations(droppable: Droppable, session: DragSession): Map<string, { x: number; y: number }>
 	getDropAnimation(session: DragSession, targetZone: DropZone): AnimationStep

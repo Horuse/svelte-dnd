@@ -11,7 +11,7 @@ A `ContainerStrategy` owns everything layout-specific for a droppable — drop-z
 
 | Factory | Class | Description |
 |---------|-------|-------------|
-| `sortable(options?)` | `SortableContainerStrategy` | Position-based drop zones with insert previews. Options: `direction: 'vertical' \| 'horizontal' \| 'grid'` (default `'vertical'`), `flow: 'row' \| 'column'` for grid (default `'row'`) |
+| `sortable(options?)` | `SortableContainerStrategy` | Position-based drop zones with insert previews. Options: `layout: 'vertical' \| 'horizontal' \| 'grid'` (default `'vertical'`), `flow: 'row' \| 'column'` for grid (default `'row'`) |
 | `target(options?)` | `TargetContainerStrategy` | Single drop zone covering the whole container, no previews. Good for trash zones, inboxes, unique drop targets |
 
 ```svelte
@@ -20,8 +20,8 @@ A `ContainerStrategy` owns everything layout-specific for a droppable — drop-z
 </script>
 
 <DndDroppable id="list"  strategy={sortable()} />
-<DndDroppable id="row"   strategy={sortable({ direction: 'horizontal' })} />
-<DndDroppable id="grid"  strategy={sortable({ direction: 'grid' })} />
+<DndDroppable id="row"   strategy={sortable({ layout: 'horizontal' })} />
+<DndDroppable id="grid"  strategy={sortable({ layout: 'grid' })} />
 <DndDroppable id="trash" strategy={target()} />
 ```
 
@@ -35,7 +35,7 @@ import type {
     StrategyBindContext,
     DropZone,
     DndMode,
-    DndDirection,
+    DndLayout,
     Droppable,
     DragSession,
     AnimationStep,
@@ -48,7 +48,7 @@ import {
 
 export class MasonryStrategy implements ContainerStrategy {
     readonly mode: DndMode = 'masonry'
-    readonly direction: DndDirection = 'grid'
+    readonly layout: DndLayout = 'grid'
 
     private state!: StrategyBindContext['state']
     private droppablesById!: StrategyBindContext['droppablesById']
@@ -126,12 +126,12 @@ If you keep per-container state inside the strategy, create a fresh instance per
 ## Interface
 
 ```ts
-import type { Droppable, DndState, DragSession, AnimationStep, DropZone, DndMode, DndDirection } from '@horuse/svelte-dnd';
+import type { Droppable, DndState, DragSession, AnimationStep, DropZone, DndMode, DndLayout } from '@horuse/svelte-dnd';
 
 interface ContainerStrategy {
     readonly mode: DndMode;
-    /** Direction hint for directional strategies (sortable). Target-like strategies may omit it. */
-    readonly direction?: DndDirection;
+    /** Layout hint for strategies with a layout concept (sortable). Target-like strategies may omit it. */
+    readonly layout?: DndLayout;
 
     calculateDropZones(droppable: Droppable, session: DragSession | null): DropZone[];
     getTranslations(droppable: Droppable, session: DragSession): Map<string, { x: number; y: number }>;

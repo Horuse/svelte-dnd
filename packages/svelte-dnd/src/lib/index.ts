@@ -7,7 +7,7 @@ export type { DndControllerConfig } from './core/dnd/dnd-controller.svelte.js'
 export type { ScrollConfig } from './core/scroll/scroll-controller.js'
 export type { PreviewConfig } from './core/entities/preview.svelte.js'
 export type {
-	DropZone, DropPreview, DndDirection, DndMode,
+	DropZone, DropPreview, DndLayout, DndMode,
 	DndItemInfo, DndContainerInfo,
 	DragStartEvent, DropEvent, DragEndEvent, DragOverEvent, DropCancelledEvent,
 	DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback,

@@ -14,8 +14,8 @@ description: Installation and basic setup of @horuse/svelte-dnd
 
 ## Installation
 
-<InstallTabs pkg="@horuse/svelte-dnd@1.0.0-beta.1">
-bun add @horuse/svelte-dnd@1.0.0-beta.1
+<InstallTabs pkg="@horuse/svelte-dnd@1.0.0-rc.1">
+bun add @horuse/svelte-dnd@1.0.0-rc.1
 </InstallTabs>
 
 <Warning>
@@ -74,7 +74,7 @@ A minimal working drag-and-drop setup requires three components: `DndProvider`, 
 	</Step>
 
 	<Step title="DndDroppable">
-		defines a container where items can be dropped. Pass a `strategy` — `sortable()` for a vertical list (default), pass a `direction` option for `'horizontal'` or `'grid'`, or use `target()` for a single drop zone with no previews.
+		defines a container where items can be dropped. Pass a `strategy` — `sortable()` for a vertical list (default), pass a `layout` option for `'horizontal'` or `'grid'`, or use `target()` for a single drop zone with no previews.
 	</Step>
 
 	<Step title="DndDraggable">
