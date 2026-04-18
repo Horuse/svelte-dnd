@@ -85,14 +85,73 @@ export class SortableContainerStrategy implements ContainerStrategy {
 		const slotSize = session.slotSize
 		const direction = this.direction
 
+		// Grid keeps the adjacency-based shift: each item slides to the next/prev rect's
+		// absolute position. Works when cells have equal size; different-sized grid items
+		// need a different approach that this branch doesn't handle yet.
+		if (direction === 'grid') {
+			return this.getGridTranslations(rects, D, preview, containerId, session)
+		}
+
+		// Vertical/horizontal: every displaced item shifts by the dragged slot's own size
+		// (width/height including spacing). That keeps the stack aligned even when
+		// siblings have different sizes — each neighbour just moves up/down one "slot worth".
+		const axis: 'x' | 'y' = direction === 'vertical' ? 'y' : 'x'
+		const step = !slotSize ? 0 : axis === 'y' ? slotSize.height : slotSize.width
+		if (step === 0) return map
+
+		const applyShift = (slotId: string, delta: number) => {
+			if (delta === 0) return
+			map.set(slotId, axis === 'y' ? { x: 0, y: delta } : { x: delta, y: 0 })
+		}
+
+		if (!preview) {
+			// No hover target: collapse the gap left by the dragged item in its origin container.
+			if (containerId !== session.originContainerId || D === -1) return map
+			for (let i = D + 1; i < rects.length; i++) applyShift(rects[i].slotId, -step)
+			return map
+		}
+
+		if (preview.containerId === containerId) {
+			const P = preview.position
+
+			if (D === -1) {
+				// Cross-container target: items at position P..end shift forward by one slot.
+				for (let i = P; i < rects.length; i++) applyShift(rects[i].slotId, step)
+			} else {
+				// Same-container reorder. targetIdx is the full-index drop point accounting for the dragged slot.
+				const targetIdx = P <= D ? P : P + 1
+				if (targetIdx < D) {
+					// Drag moves earlier — items in [targetIdx..D-1] make room by shifting forward.
+					for (let i = targetIdx; i < D; i++) applyShift(rects[i].slotId, step)
+				} else if (targetIdx > D) {
+					// Drag moves later — items in [D+1..targetIdx-1] fill the gap by shifting back.
+					for (let i = D + 1; i < targetIdx; i++) applyShift(rects[i].slotId, -step)
+				}
+			}
+		} else if (containerId === session.originContainerId && D !== -1) {
+			// Origin container when the item is hovering over a different container: collapse the gap.
+			for (let i = D + 1; i < rects.length; i++) applyShift(rects[i].slotId, -step)
+		}
+
+		return map
+	}
+
+	private getGridTranslations(
+		rects: SlotLayoutRect[],
+		D: number,
+		preview: { containerId: string; position: number } | null,
+		containerId: string,
+		session: DragSession
+	): Map<string, { x: number; y: number }> {
+		const map = new Map<string, { x: number; y: number }>()
+		const slotSize = session.slotSize
+
 		const extrapolateNext = (rect: SlotLayoutRect): SlotLayoutRect | null => {
 			if (!slotSize) return null
-			const axis = direction === 'vertical' ? 'y' : 'x'
-			const step = axis === 'y' ? slotSize.height : slotSize.width
 			return {
 				...rect,
-				offsetLeft: rect.offsetLeft + (axis === 'x' ? step : 0),
-				offsetTop: rect.offsetTop + (axis === 'y' ? step : 0)
+				offsetLeft: rect.offsetLeft + slotSize.width,
+				offsetTop: rect.offsetTop
 			}
 		}
 
@@ -105,25 +164,19 @@ export class SortableContainerStrategy implements ContainerStrategy {
 		}
 
 		if (!preview) {
-			// No hover target: collapse the gap left by the dragged item in its origin container.
 			if (containerId !== session.originContainerId || D === -1) return map
-			for (let i = D + 1; i < rects.length; i++) {
-				shift(rects[i], rects[i - 1])
-			}
+			for (let i = D + 1; i < rects.length; i++) shift(rects[i], rects[i - 1])
 			return map
 		}
 
 		if (preview.containerId === containerId) {
 			const P = preview.position
-
 			if (D === -1) {
-				// Cross-container target: items at position P..end shift forward by one slot.
 				for (let i = P; i < rects.length; i++) {
 					const target = rects[i + 1] ?? extrapolateNext(rects[i])
 					shift(rects[i], target)
 				}
 			} else {
-				// Same-container reorder. targetIdx is the full-index drop point accounting for the dragged slot.
 				const targetIdx = P <= D ? P : P + 1
 				for (let i = 0; i < rects.length; i++) {
 					if (i === D) continue
@@ -132,10 +185,7 @@ export class SortableContainerStrategy implements ContainerStrategy {
 				}
 			}
 		} else if (containerId === session.originContainerId && D !== -1) {
-			// Origin container when the item is hovering over a different container: collapse the gap.
-			for (let i = D + 1; i < rects.length; i++) {
-				shift(rects[i], rects[i - 1])
-			}
+			for (let i = D + 1; i < rects.length; i++) shift(rects[i], rects[i - 1])
 		}
 
 		return map
