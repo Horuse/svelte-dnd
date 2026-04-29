@@ -98,7 +98,7 @@
 	})
 
 	const spacingPx = $derived.by(() => {
-		if (suppressSpacing || !droppable?.spacing) return 0
+		if (suppressSpacing || droppable?.spacing === undefined) return 0
 		return droppable.spacing
 	})
 	const performingDrop = $derived(dndController?.performingDrop ?? false)

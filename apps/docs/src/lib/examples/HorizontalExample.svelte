@@ -26,7 +26,7 @@
 	<DndDroppable id="horizontal-list" strategy={sortable({ layout: 'horizontal' })} spacing={8} class="flex overflow-x-auto p-4 bg-foreground border-2 border-second rounded-xl">
 		{#each items as item, index (item.id)}
 			<DndDraggable id={item.id} position={index}>
-				<div class="drag-item" style="width: {item.width}px;}">
+				<div class="drag-item" style="width: {item.width}px;">
 					<span class="text-2xl">{item.id}</span>
 				</div>
 			</DndDraggable>
