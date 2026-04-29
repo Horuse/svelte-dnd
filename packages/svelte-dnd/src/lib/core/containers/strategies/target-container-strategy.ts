@@ -8,10 +8,6 @@ import { DOMHelper } from '../../utils/dom-helper.js'
 import { GhostToTargetStep } from '../../animation/steps/ghost-to-target-step.js'
 import { GhostReturnStep } from '../../animation/steps/ghost-return-step.js'
 
-export interface TargetOptions {
-	// Reserved for future options.
-}
-
 /**
  * Target container strategy — single drop zone covering the whole container, no insert previews.
  * Useful for trash zones, boards, or any container that isn't a sorted list.
@@ -21,8 +17,6 @@ export class TargetContainerStrategy implements ContainerStrategy {
 
 	private state!: DndState
 	private droppablesById!: Map<string, Droppable>
-
-	constructor(_options: TargetOptions = {}) {}
 
 	bindContext(ctx: StrategyBindContext): void {
 		this.state = ctx.state
@@ -67,6 +61,6 @@ export class TargetContainerStrategy implements ContainerStrategy {
  * <DndDroppable strategy={target()} />
  * ```
  */
-export function target(options?: TargetOptions): TargetContainerStrategy {
-	return new TargetContainerStrategy(options)
+export function target(): TargetContainerStrategy {
+	return new TargetContainerStrategy()
 }

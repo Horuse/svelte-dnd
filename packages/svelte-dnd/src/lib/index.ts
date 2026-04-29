@@ -26,8 +26,7 @@ export {
 } from './core/containers/strategies/sortable-container-strategy.js'
 export {
 	TargetContainerStrategy,
-	target,
-	type TargetOptions
+	target
 } from './core/containers/strategies/target-container-strategy.js'
 export type { GridFlow } from './core/zones/geometries/grid-zone-geometry.js'
 export type { AnimationStep } from './core/animation/steps/animation-step.js'
