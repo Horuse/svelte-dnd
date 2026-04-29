@@ -67,10 +67,10 @@ Set a `type` on each `DndDraggable` and an `accepts` prop on each `DndDroppable`
 <DndDraggable id={item.id} {position} type="task">Task</DndDraggable>
 
 <!-- Only accepts 'task' items -->
-<DndDroppable id="tasks" accepts="task">...</DndDroppable>
+<DndDroppable id="tasks" strategy={sortable()} accepts="task">...</DndDroppable>
 
 <!-- Accepts multiple types -->
-<DndDroppable id="mixed" accepts={['task', 'card']}>...</DndDroppable>
+<DndDroppable id="mixed" strategy={sortable()} accepts={['task', 'card']}>...</DndDroppable>
 ```
 
 ---
@@ -91,8 +91,8 @@ Use a single `DndController` shared across all containers. Read `target.id` insi
 </script>
 
 <DndProvider {controller}>
-    <DndDroppable id="list-a">...</DndDroppable>
-    <DndDroppable id="list-b">...</DndDroppable>
+    <DndDroppable id="list-a" strategy={sortable()}>...</DndDroppable>
+    <DndDroppable id="list-b" strategy={sortable()}>...</DndDroppable>
 </DndProvider>
 ```
 

@@ -29,6 +29,10 @@ interface GhostSnippetProps {
 }
 ```
 
+### Drag cursor
+
+While a drag is in progress the provider injects a `<style>` tag into `<head>` that forces `cursor: grabbing !important` on every element. This stops the cursor from flickering when the pointer hovers over children with their own cursor styles. The tag is removed automatically when the drag ends.
+
 ### CSS Variables
 
 | Variable | Default | Description |

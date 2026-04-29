@@ -253,7 +253,14 @@ Cleans up all internal state, listeners, and registries. Called automatically wh
 
 ## Programmatic Animations
 
-For running animations without user interaction see the [Simulations](/docs/simulations) page. The controller exposes `simulateReturn()` and `simulateDrop()` as thin delegates to `DndSimulator`.
+For running animations without user interaction see the [Simulations](/docs/simulations) page.
+
+| Method | Purpose |
+|--------|---------|
+| `simulateReturn(itemId, fromContainerId, toContainerId, toPosition, options?)` | Animate one item to a destination via the same path as a cancelled drag. Use for undo flows. |
+| `simulateDrop(itemId, fromContainerId, toContainerId, toPosition, options?)` | Animate one item flying to a target container & position. |
+| `simulateSwap(idA, containerA, idB, containerB, duration?)` | Animate two items swapping positions simultaneously. |
+| `simulateBatchSwap(ids, applyState, duration?)` | Animate multiple items reordering at once using FLIP. |
 
 ## Types
 

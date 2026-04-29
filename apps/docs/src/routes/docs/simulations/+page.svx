@@ -1,24 +1,13 @@
 ---
 title: Simulations
-description: Programmatically trigger drag animations with DndSimulator for undo/redo, onboarding, or demo sequences.
+description: Programmatically trigger drag animations on DndController for undo/redo, onboarding, or demo sequences.
 ---
 
 # Simulations
 
-The `DndSimulator` lets you trigger drag animations programmatically — without any user interaction and without firing drop events. Useful for undo/redo flows, onboarding tutorials, or demo sequences.
+`DndController` exposes methods to trigger drag animations programmatically — without any user interaction. Useful for undo/redo flows, onboarding tutorials, or demo sequences.
 
-## Access
-
-`DndSimulator` is available in two ways:
-
-**Via `DndController` (recommended):**
-
-```ts
-await controller.simulateReturn(...)
-await controller.simulateDrop(...)
-```
-
-The controller's methods are thin delegates to `DndSimulator` internally.
+By default the simulators do **not** fire drop callbacks. Pass `{ emitEvents: true }` to `simulateDrop` / `simulateReturn` to emit `onDrop` / `onDropCancelled` after the animation completes.
 
 ---
 

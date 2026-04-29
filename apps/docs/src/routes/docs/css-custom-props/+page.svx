@@ -97,6 +97,7 @@ These properties control the placeholder that appears at potential drop position
 
 | Class | Applied when |
 |-------|-------------|
+| `.dnd-slot` | Always — wrapper element around each draggable; carries the spacing margin and contains the preview placeholder |
 | `.dnd-draggable` | Always — base class on every draggable item |
 | `.dnd-draggable--dragging` | The item is currently being dragged |
 | `.dnd-draggable--disabled` | The `disabled` prop is `true` |

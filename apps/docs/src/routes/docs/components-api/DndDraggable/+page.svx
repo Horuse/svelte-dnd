@@ -21,6 +21,10 @@ Automatically renders a `DndPreview` placeholder at its position - you do not ne
 | `sensors` | `SensorDescriptor[]` | `undefined` | Override the active sensors for this item. Falls back to the controller-level sensors if omitted. See [Sensors](/docs/sensors) |
 | `class` | `string` | — | Additional CSS class names |
 
+### Accessibility
+
+The component sets `role="button"`, `aria-grabbed`, and `aria-roledescription="draggable item"` automatically. `tabindex` switches between `0` and `-1` based on the `disabled` prop, so disabled items leave the focus order until they are re-enabled.
+
 ### CSS Variables
 
 | Variable | Default | Description |

@@ -9,8 +9,8 @@ A drag-and-drop library for Svelte 5 with animated drop previews, auto-scroll, a
 
 ## Features
 
-- Vertical, horizontal layouts
-- Pointer & touch support — works seamlessly on mobile devices
+- Vertical, horizontal, and grid layouts
+- Pointer, touch, and keyboard sensors built-in (WAI-ARIA accessible)
 - Animated drop previews rendered automatically
 - Auto-scroll when dragging near container edges
 - Move items between multiple containers (kanban-style)
@@ -33,7 +33,8 @@ A minimal working drag-and-drop setup requires three components: `DndProvider`, 
         DndProvider,
         DndDroppable,
         DndDraggable,
-        DndController
+        DndController,
+        sortable
     } from '@horuse/svelte-dnd';
 
     let items = $state([
@@ -56,7 +57,7 @@ A minimal working drag-and-drop setup requires three components: `DndProvider`, 
 </script>
 
 <DndProvider {controller}>
-    <DndDroppable id="list" direction="vertical">
+    <DndDroppable id="list" strategy={sortable()}>
         {#each items as item, index (item.id)}
             <DndDraggable id={item.id} position={index}>
                 {item.label}
@@ -69,7 +70,7 @@ A minimal working drag-and-drop setup requires three components: `DndProvider`, 
 ## How It Works
 
 1. **DndProvider** wraps your app and provides the `DndController` context to all child components.
-2. **DndDroppable** defines a container where items can be dropped. Set `direction` to `"vertical"` or `"horizontal"`.
+2. **DndDroppable** defines a container where items can be dropped. Pass a `strategy` — `sortable()` (default vertical), `sortable({ layout: 'horizontal' })`, `sortable({ layout: 'grid' })`, or `target()` for a single drop zone with no previews.
 3. **DndDraggable** wraps each draggable item. Each must have a unique `id` and a `position` matching its index in the list.
 4. **The dragged item is hidden automatically** — the `.dnd-draggable--dragging` class sets `opacity: 0` so only the ghost follows the cursor. No manual filtering needed.
 5. Use `controller.onDrop()` to handle reordering logic when an item is dropped.
