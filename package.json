@@ -19,6 +19,7 @@
 	"scripts": {
 		"build": "bun --bun turbo run build",
 		"dev": "bun --bun turbo run dev",
+		"test": "bun --bun turbo run test",
 		"format": "prettier --write \"**/*.{ts,tsx,md}\"",
 		"check-types": "bun --filter '*' check-types"
 	}
