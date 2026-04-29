@@ -235,6 +235,30 @@ controller.setPreviewConfig({ showDelay: 150, collapseDelay: 400 });
 
 > **Note:** `collapseDelay` should match your `--dnd-preview-duration-out` CSS variable so the slot collapses only after the CSS transition finishes.
 
+### setDebug
+
+```ts
+controller.setDebug(value: boolean): void
+```
+
+Toggles dev warnings (duplicate positions, etc.) at runtime.
+
+### setSensors
+
+```ts
+controller.setSensors(sensors: SensorDescriptor[] | undefined): void
+```
+
+Replaces the active sensors at runtime. Pass `undefined` to fall back to the default `[PointerSensor, KeyboardSensor]` set.
+
+### setAnnouncements
+
+```ts
+controller.setAnnouncements(announcements: Announcements | undefined): void
+```
+
+Replaces the screen-reader announcement strings at runtime. Pass `undefined` to restore the defaults.
+
 ### toggleDebugZones
 
 ```ts

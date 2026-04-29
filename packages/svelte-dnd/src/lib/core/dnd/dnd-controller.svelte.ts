@@ -11,7 +11,7 @@ import { DropResolver } from '../zones/drop-resolver.js'
 import { DropAnimationCoordinator } from '../animation/drop-animation-coordinator.js'
 import type { Modifier } from '../modifiers/modifier.js'
 import { DndSimulator } from './dnd-simulator.js'
-import type { DropZone, DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback, ZonesInvalidatedCallback, DndItemInfo, DndContainerInfo, DragStartEvent } from '../../types.js'
+import type { DropZone, DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback, ZonesInvalidatedCallback, DndItemInfo, DndContainerInfo, DragStartEvent, Announcements } from '../../types.js'
 import { DragSession } from './drag-session.svelte.js'
 import type { Draggable } from '../entities/draggable.svelte.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
@@ -24,7 +24,7 @@ export interface DndControllerConfig {
 	sensors?: SensorDescriptor[]
 	collision?: CollisionAlgorithm
 	modifiers?: Modifier[]
-	announcements?: import('../../types.js').Announcements
+	announcements?: Announcements
 }
 
 export type { DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback, ZonesInvalidatedCallback } from '../../types.js'
@@ -64,9 +64,9 @@ export class DndController {
 	/** Current drag session. Read-only — stored in DndState. */
 	get session(): DragSession | null { return this.state.session }
 
-	debug = false
-	sensors: SensorDescriptor[] | undefined = undefined
-	announcements: import('../../types.js').Announcements | undefined = undefined
+	debug = $state(false)
+	sensors = $state<SensorDescriptor[] | undefined>(undefined)
+	announcements = $state<Announcements | undefined>(undefined)
 	/**
 	 * Reactive preview delays. DndPreview syncs its Preview entity from this.
 	 * @internal
@@ -327,6 +327,27 @@ export class DndController {
 	setPreviewConfig(config: PreviewConfig) {
 		if (config.showDelay !== undefined) this.previewConfig.showDelay = config.showDelay
 		if (config.collapseDelay !== undefined) this.previewConfig.collapseDelay = config.collapseDelay
+	}
+
+	/** Toggle dev warnings (duplicate positions, etc.) at runtime. */
+	setDebug(value: boolean) {
+		this.debug = value
+	}
+
+	/**
+	 * Replace the active sensors at runtime. Pass `undefined` to fall back to
+	 * the default `[PointerSensor, KeyboardSensor]` set.
+	 */
+	setSensors(sensors: SensorDescriptor[] | undefined) {
+		this.sensors = sensors ?? [new PointerSensor(), new KeyboardSensor()]
+	}
+
+	/**
+	 * Replace the screen-reader announcement strings at runtime. Pass
+	 * `undefined` to restore the defaults.
+	 */
+	setAnnouncements(announcements: Announcements | undefined) {
+		this.announcements = announcements
 	}
 
 	/** Toggle visual overlay of drop zones — useful for debugging layout. */
