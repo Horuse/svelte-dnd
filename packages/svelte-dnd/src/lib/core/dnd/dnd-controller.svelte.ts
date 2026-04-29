@@ -12,6 +12,8 @@ import { DropAnimationCoordinator } from '../animation/drop-animation-coordinato
 import type { Modifier } from '../modifiers/modifier.js'
 import { DndSimulator } from './dnd-simulator.js'
 import type { DropZone, DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback, ZonesInvalidatedCallback, DndItemInfo, DndContainerInfo, DragStartEvent, Announcements } from '../../types.js'
+import type { AnimationConfig } from '../animation/animation-config.js'
+import { resolveAnimationConfig } from '../animation/animation-config.js'
 import { DragSession } from './drag-session.svelte.js'
 import type { Draggable } from '../entities/draggable.svelte.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
@@ -20,6 +22,7 @@ import type { Slot } from '../entities/slot.js'
 export interface DndControllerConfig {
 	scroll?: ScrollConfig
 	preview?: PreviewConfig
+	animation?: AnimationConfig
 	debug?: boolean
 	sensors?: SensorDescriptor[]
 	collision?: CollisionAlgorithm
@@ -73,13 +76,15 @@ export class DndController {
 	 */
 	previewConfig = $state<{ showDelay: number; collapseDelay: number }>({ showDelay: 300, collapseDelay: 200 })
 
-	constructor({ scroll = {}, preview, debug = false, sensors, collision, modifiers = [], announcements }: DndControllerConfig = {}) {
+	constructor({ scroll = {}, preview, animation, debug = false, sensors, collision, modifiers = [], announcements }: DndControllerConfig = {}) {
 		this.debug = debug
 		this.sensors = sensors ?? [new PointerSensor(), new KeyboardSensor()]
 		this.announcements = announcements
 		this.modifiers = modifiers
 		if (preview?.showDelay !== undefined) this.previewConfig.showDelay = preview.showDelay
 		if (preview?.collapseDelay !== undefined) this.previewConfig.collapseDelay = preview.collapseDelay
+
+		const animationConfig = resolveAnimationConfig(animation)
 
 		this.translationEngine = new TranslationEngine(this.state, this.droppables)
 		this.dropResolver = new DropResolver(this.state, this.droppablesById, collision)
@@ -95,10 +100,11 @@ export class DndController {
 			this.eventEmitter,
 			this.scrollController,
 			this.dropResolver,
-			this.droppablesById
+			this.droppablesById,
+			animationConfig
 		)
 
-		this.simulator = new DndSimulator(this.state, this.droppablesById, this.slots, this.eventEmitter)
+		this.simulator = new DndSimulator(this.state, this.droppablesById, this.slots, this.eventEmitter, animationConfig)
 	}
 
 	// --- Reactive state (read-only) ---

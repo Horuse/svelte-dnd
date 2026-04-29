@@ -5,9 +5,11 @@ import type { DropResolver } from '../zones/drop-resolver.js'
 import type { AnimationStep } from './steps/animation-step.js'
 import type { DropPreview, DndItemInfo, DndContainerInfo, DropEvent, DragEndEvent, DragOverEvent, DropCancelledEvent } from '../../types.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
+import type { ResolvedAnimationConfig } from './animation-config.js'
 import { AnimationPipeline } from './steps/animation-pipeline.js'
 import { GhostToTargetStep } from './steps/ghost-to-target-step.js'
 import { GhostReturnStep } from './steps/ghost-return-step.js'
+import { DEFAULT_ANIMATION_CONFIG } from './animation-config.js'
 
 export class DropAnimationCoordinator {
 	private currentAnimation: AnimationPipeline | null = null
@@ -18,7 +20,8 @@ export class DropAnimationCoordinator {
 		private eventEmitter: DndEventEmitter,
 		private scrollController: ScrollController,
 		private dropResolver: DropResolver,
-		private droppablesById: Map<string, Droppable> = new Map()
+		private droppablesById: Map<string, Droppable> = new Map(),
+		private animation: ResolvedAnimationConfig = DEFAULT_ANIMATION_CONFIG
 	) {}
 
 	updateDropPreview(pointer: { x: number; y: number }) {
@@ -150,7 +153,7 @@ export class DropAnimationCoordinator {
 		}
 
 		if (targetZone && this.state.element && this.state.transform) {
-			this.animate(new GhostToTargetStep(this.state, targetZone, this.droppablesById), onDropComplete)
+			this.animate(new GhostToTargetStep(this.state, targetZone, this.droppablesById, this.animation.dropDuration), onDropComplete)
 		} else {
 			onDropComplete()
 		}
@@ -189,7 +192,7 @@ export class DropAnimationCoordinator {
 		if (shouldAnimate && session) {
 			requestAnimationFrame(() => {
 				this.animate(
-					new GhostReturnStep(this.state, this.state.originContainerId, this.state.originPosition, this.droppablesById),
+					new GhostReturnStep(this.state, this.state.originContainerId, this.state.originPosition, this.droppablesById, this.animation.returnDuration),
 					() => this.finalizeDragEnd(dragEndEvent)
 				)
 			})
@@ -234,8 +237,8 @@ export class DropAnimationCoordinator {
 
 		slotEl.style.overflow = 'hidden'
 
-		// Duration matches ANIMATION_DURATION in GhostToTargetStep so both finish together.
-		const duration = 250
+		// Matches the ghost flight duration so both animations finish together.
+		const duration = this.animation.slotCollapseDuration
 		return new Promise<void>(resolve => {
 			const startTime = performance.now()
 

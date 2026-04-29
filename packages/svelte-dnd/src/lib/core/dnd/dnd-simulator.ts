@@ -4,9 +4,11 @@ import { DragSession } from './drag-session.svelte.js'
 import type { DropZone, DropEvent, DropCancelledEvent, DndItemInfo, DndContainerInfo } from '../../types.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
 import type { Slot } from '../entities/slot.js'
+import type { ResolvedAnimationConfig } from '../animation/animation-config.js'
 import { AnimationPipeline } from '../animation/steps/animation-pipeline.js'
 import { GhostToTargetStep } from '../animation/steps/ghost-to-target-step.js'
 import { GhostReturnStep } from '../animation/steps/ghost-return-step.js'
+import { DEFAULT_ANIMATION_CONFIG } from '../animation/animation-config.js'
 
 export interface SimulateOptions {
 	/**
@@ -24,7 +26,8 @@ export class DndSimulator {
 		private state: DndState,
 		private droppablesById: Map<string, Droppable>,
 		private slots: Map<HTMLElement, Slot>,
-		private eventEmitter?: DndEventEmitter
+		private eventEmitter?: DndEventEmitter,
+		private animation: ResolvedAnimationConfig = DEFAULT_ANIMATION_CONFIG
 	) {}
 
 	/**
@@ -42,8 +45,8 @@ export class DndSimulator {
 	): Promise<void> {
 		const useSameContainerReturn = toContainerId === fromContainerId
 		const step = () => useSameContainerReturn
-			? new GhostReturnStep(this.state, toContainerId, toPosition, this.droppablesById)
-			: new GhostToTargetStep(this.state, this.syntheticZone(toContainerId, toPosition), this.droppablesById)
+			? new GhostReturnStep(this.state, toContainerId, toPosition, this.droppablesById, this.animation.returnDuration)
+			: new GhostToTargetStep(this.state, this.syntheticZone(toContainerId, toPosition), this.droppablesById, this.animation.dropDuration)
 
 		return this.run(itemId, fromContainerId, toContainerId, toPosition, step, options, 'cancel')
 	}
@@ -61,7 +64,7 @@ export class DndSimulator {
 		options: SimulateOptions = {}
 	): Promise<void> {
 		const step = () =>
-			new GhostToTargetStep(this.state, this.syntheticZone(toContainerId, toPosition), this.droppablesById)
+			new GhostToTargetStep(this.state, this.syntheticZone(toContainerId, toPosition), this.droppablesById, this.animation.dropDuration)
 
 		return this.run(itemId, fromContainerId, toContainerId, toPosition, step, options, 'drop')
 	}
@@ -193,7 +196,7 @@ export class DndSimulator {
 	simulateSwap(
 		idA: string, containerA: string,
 		idB: string, containerB: string,
-		duration = 300
+		duration: number = this.animation.swapDuration
 	): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			const droppableA = this.droppablesById.get(containerA)
@@ -263,7 +266,7 @@ export class DndSimulator {
 	async simulateBatchSwap(
 		ids: string[],
 		applyState: () => void | Promise<void>,
-		duration = 300
+		duration: number = this.animation.swapDuration
 	): Promise<void> {
 		// First — record current positions
 		const oldRects = new Map<string, DOMRect>()

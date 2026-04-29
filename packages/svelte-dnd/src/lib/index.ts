@@ -6,6 +6,7 @@ export { DndController } from './core/dnd/dnd-controller.svelte.js'
 export type { DndControllerConfig } from './core/dnd/dnd-controller.svelte.js'
 export type { ScrollConfig } from './core/scroll/scroll-controller.js'
 export type { PreviewConfig } from './core/entities/preview.svelte.js'
+export type { AnimationConfig } from './core/animation/animation-config.js'
 export type {
 	DropZone, DropPreview, DndLayout, DndMode,
 	DndItemInfo, DndContainerInfo,

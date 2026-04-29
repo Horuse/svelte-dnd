@@ -2,8 +2,8 @@ import type { AnimationStep } from './animation-step.js'
 import type { DndState } from '../../dnd/dnd-state.svelte.js'
 import type { DropZone } from '../../../types.js'
 import type { Droppable } from '../../entities/droppable.svelte.js'
+import { DEFAULT_ANIMATION_CONFIG } from '../animation-config.js'
 
-const ANIMATION_DURATION = 250
 const easing = { outQuad: (t: number) => 1 - Math.pow(1 - t, 2) }
 
 export class GhostToTargetStep implements AnimationStep {
@@ -12,7 +12,8 @@ export class GhostToTargetStep implements AnimationStep {
 	constructor(
 		private state: DndState,
 		private targetZone: DropZone,
-		private droppablesById: Map<string, Droppable>
+		private droppablesById: Map<string, Droppable>,
+		private duration: number = DEFAULT_ANIMATION_CONFIG.dropDuration
 	) {}
 
 	execute(): Promise<void> {
@@ -34,7 +35,7 @@ export class GhostToTargetStep implements AnimationStep {
 				}
 
 				const elapsed = Date.now() - startTime
-				const progress = Math.min(elapsed / ANIMATION_DURATION, 1)
+				const progress = Math.min(elapsed / this.duration, 1)
 				const easedProgress = easing.outQuad(progress)
 				const targetPos = this.calculateTargetPosition()
 

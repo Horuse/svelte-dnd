@@ -4,8 +4,8 @@ import type { Droppable } from '../../entities/droppable.svelte.js'
 import { DOMHelper } from '../../utils/dom-helper.js'
 import { ScrollSyncCalculator } from '../scroll-sync-calculator.js'
 import { getDirectionAdapter } from '../direction-adapter.js'
+import { DEFAULT_ANIMATION_CONFIG } from '../animation-config.js'
 
-const RETURN_DURATION = 300
 const easing = { outCubic: (t: number) => 1 - Math.pow(1 - t, 3) }
 
 export class GhostReturnStep implements AnimationStep {
@@ -16,7 +16,8 @@ export class GhostReturnStep implements AnimationStep {
 		private state: DndState,
 		private containerId: string | null,
 		private position: number,
-		private droppablesById: Map<string, Droppable>
+		private droppablesById: Map<string, Droppable>,
+		private duration: number = DEFAULT_ANIMATION_CONFIG.returnDuration
 	) {}
 
 	execute(): Promise<void> {
@@ -80,7 +81,7 @@ export class GhostReturnStep implements AnimationStep {
 				return
 			}
 
-			const progress = Math.min((Date.now() - startTime) / RETURN_DURATION, 1)
+			const progress = Math.min((Date.now() - startTime) / this.duration, 1)
 			const eased = easing.outCubic(progress)
 			const target = this.getCurrentSlotPosition(fallbackPos)
 

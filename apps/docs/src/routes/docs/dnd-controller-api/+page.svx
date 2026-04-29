@@ -34,6 +34,12 @@ const controller = new DndController({
         showDelay: 150,     // ms before preview slot appears (default: 300)
         collapseDelay: 400, // ms before slot collapses — match --dnd-preview-duration-out (default: 200)
     },
+    animation: {
+        dropDuration: 200,         // ghost flight to a slot/target (default: 250)
+        returnDuration: 250,       // ghost return on cancelled drag (default: 300)
+        slotCollapseDuration: 200, // source slot collapse on cross-container drop (default: 250)
+        swapDuration: 280,         // simulateSwap / simulateBatchSwap default (default: 300)
+    },
     debug: true,                             // position validation warnings in console
     sensors: [new PointerSensor(), new KeyboardSensor()], // see /docs/sensors
     collision: overlap('25%'),               // see /docs/collision
@@ -54,6 +60,12 @@ const controller = new DndController({
     preview: {
         showDelay: 300,
         collapseDelay: 200,
+    },
+    animation: {
+        dropDuration: 250,
+        returnDuration: 300,
+        slotCollapseDuration: 250,
+        swapDuration: 300,
     },
     debug: false,
     sensors: [new PointerSensor(), new KeyboardSensor()],
@@ -315,9 +327,21 @@ interface PreviewConfig {
     collapseDelay?: number;
 }
 
+interface AnimationConfig {
+    /** Ghost flight to a sortable slot or target zone, in ms. Default: 250 */
+    dropDuration?: number;
+    /** Ghost return animation when a drag is cancelled, in ms. Default: 300 */
+    returnDuration?: number;
+    /** Source slot collapse during a cross-container drop, in ms. Default: 250 */
+    slotCollapseDuration?: number;
+    /** Default duration (ms) for simulateSwap / simulateBatchSwap. Default: 300 */
+    swapDuration?: number;
+}
+
 interface DndControllerConfig {
     scroll?: ScrollConfig;
     preview?: PreviewConfig;
+    animation?: AnimationConfig;
     /** Enable dev warnings (duplicate positions, etc.). Default: false */
     debug?: boolean;
     /** Active input sensors. Defaults to [PointerSensor, KeyboardSensor]. See [Sensors](/docs/sensors) */
