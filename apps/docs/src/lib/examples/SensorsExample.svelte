@@ -1,8 +1,7 @@
 <script lang="ts">
 	import {
 		DndProvider, DndDroppable, DndDraggable, DndController, sortable,
-		PointerSensor, KeyboardSensor, Distance, Delay,
-		type StartCondition
+		PointerSensor, KeyboardSensor, Distance, Delay
 	} from '@horuse/svelte-dnd'
 
 	let distanceValue = $state(5)
@@ -13,32 +12,25 @@
 		Array.from({ length: 6 }, (_, i) => ({ id: String(i), label: `Item ${i + 1}` }))
 	)
 
-	function buildController(startConditions: StartCondition[]) {
-		const ctrl = new DndController()
-		ctrl.sensors = [
-			new PointerSensor({ startConditions }),
-			new KeyboardSensor()
-		]
-		ctrl.onDrop(({ item: { id: sourceId }, target: { position } }) => {
-			const from = items.findIndex((i) => i.id === sourceId)
-			if (from === -1) return
-			const updated = [...items]
-			const [moved] = updated.splice(from, 1)
-			updated.splice(position, 0, moved)
-			items = updated
-		})
-		return ctrl
-	}
-
-	let controller = $state(buildController([
-		new Distance({ value: distanceValue }),
-		new Delay({ value: delayValue, tolerance: delayTolerance })
-	]))
+	const controller = new DndController()
+	controller.onDrop(({ item: { id: sourceId }, target: { position } }) => {
+		const from = items.findIndex((i) => i.id === sourceId)
+		if (from === -1) return
+		const updated = [...items]
+		const [moved] = updated.splice(from, 1)
+		updated.splice(position, 0, moved)
+		items = updated
+	})
 
 	$effect(() => {
-		controller = buildController([
-			new Distance({ value: distanceValue }),
-			new Delay({ value: delayValue, tolerance: delayTolerance })
+		controller.setSensors([
+			new PointerSensor({
+				startConditions: [
+					new Distance({ value: distanceValue }),
+					new Delay({ value: delayValue, tolerance: delayTolerance })
+				]
+			}),
+			new KeyboardSensor()
 		])
 	})
 </script>
@@ -46,22 +38,22 @@
 <div class="flex flex-col gap-4 max-w-sm">
 	<div class="flex flex-col gap-3 p-3 bg-foreground rounded-xl border border-second">
 		<label class="flex flex-col gap-1">
-			<span class="text-sm font-medium">
-				Distance: <span class="text-primary font-bold">{distanceValue}px</span>
+			<span class="text-sm font-medium text-theme">
+				Distance: <span class="text-neutral-500 font-bold">{distanceValue}px</span>
 			</span>
 			<input
 				type="range"
 				min="1"
 				max="50"
 				bind:value={distanceValue}
-				class="w-full accent-primary"
+				class="w-full"
 			/>
 			<span class="text-xs text-neutral-500">Min movement to start drag immediately</span>
 		</label>
 
 		<label class="flex flex-col gap-1">
-			<span class="text-sm font-medium">
-				Delay: <span class="text-primary font-bold">{delayValue}ms</span>
+			<span class="text-sm font-medium text-theme">
+				Delay: <span class="text-neutral-500 font-bold">{delayValue}ms</span>
 			</span>
 			<input
 				type="range"
@@ -69,21 +61,21 @@
 				max="1000"
 				step="50"
 				bind:value={delayValue}
-				class="w-full accent-primary"
+				class="w-full"
 			/>
 			<span class="text-xs text-neutral-500">Hold time before drag starts (touch)</span>
 		</label>
 
 		<label class="flex flex-col gap-1">
-			<span class="text-sm font-medium">
-				Tolerance: <span class="text-primary font-bold">{delayTolerance}px</span>
+			<span class="text-sm font-medium text-theme">
+				Tolerance: <span class="text-neutral-500 font-bold">{delayTolerance}px</span>
 			</span>
 			<input
 				type="range"
 				min="0"
 				max="30"
 				bind:value={delayTolerance}
-				class="w-full accent-primary"
+				class="w-full"
 			/>
 			<span class="text-xs text-neutral-500">Max movement during delay before cancel</span>
 		</label>
@@ -93,7 +85,6 @@
 		Tab to focus, Enter/Space to pick up, arrow keys to move, Enter to drop
 	</p>
 
-	{#key controller}
 	<DndProvider {controller}>
 		<DndDroppable
 			spacing={12} class="flex flex-col max-w-sm p-3 bg-foreground border-2 border-second rounded-xl"
@@ -109,7 +100,6 @@
 			{/each}
 		</DndDroppable>
 	</DndProvider>
-	{/key}
 </div>
 
 <style>

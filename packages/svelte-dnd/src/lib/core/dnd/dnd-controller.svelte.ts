@@ -356,6 +356,14 @@ export class DndController {
 		this.announcements = announcements
 	}
 
+	/**
+	 * Replace the active transform modifier pipeline at runtime. Pass an empty
+	 * array to disable all modifiers.
+	 */
+	setModifiers(modifiers: Modifier[]) {
+		this.modifiers = modifiers
+	}
+
 	/** Toggle visual overlay of drop zones — useful for debugging layout. */
 	toggleDebugZones() {
 		this.state.toggleDebugZones()

@@ -22,23 +22,18 @@
 		Array.from({ length: 6 }, (_, i) => ({ id: String(i), label: `Item ${i + 1}` }))
 	)
 
-	function buildController(modifiers: Modifier[]) {
-		const ctrl = new DndController({ modifiers })
-		ctrl.onDrop(({ item: { id: sourceId }, target: { position } }) => {
-			const from = items.findIndex((i) => i.id === sourceId)
-			if (from === -1) return
-			const updated = [...items]
-			const [moved] = updated.splice(from, 1)
-			updated.splice(position, 0, moved)
-			items = updated
-		})
-		return ctrl
-	}
-
-	let controller = $state(buildController(options[1].value))
+	const controller = new DndController({ modifiers: options[activeIndex].value })
+	controller.onDrop(({ item: { id: sourceId }, target: { position } }) => {
+		const from = items.findIndex((i) => i.id === sourceId)
+		if (from === -1) return
+		const updated = [...items]
+		const [moved] = updated.splice(from, 1)
+		updated.splice(position, 0, moved)
+		items = updated
+	})
 
 	$effect(() => {
-		controller = buildController(options[activeIndex].value)
+		controller.setModifiers(options[activeIndex].value)
 	})
 </script>
 
@@ -55,7 +50,6 @@
 		{/each}
 	</div>
 
-	{#key controller}
 	<DndProvider {controller}>
 		<DndDroppable
 			spacing={12} class="flex flex-col max-w-sm p-3 bg-foreground border-2 border-second rounded-xl"
@@ -71,7 +65,6 @@
 			{/each}
 		</DndDroppable>
 	</DndProvider>
-	{/key}
 </div>
 
 <style>

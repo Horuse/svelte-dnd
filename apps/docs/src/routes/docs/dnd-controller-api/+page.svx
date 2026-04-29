@@ -271,6 +271,14 @@ controller.setAnnouncements(announcements: Announcements | undefined): void
 
 Replaces the screen-reader announcement strings at runtime. Pass `undefined` to restore the defaults.
 
+### setModifiers
+
+```ts
+controller.setModifiers(modifiers: Modifier[]): void
+```
+
+Replaces the active transform modifier pipeline. Pass an empty array to disable all modifiers.
+
 ### toggleDebugZones
 
 ```ts
