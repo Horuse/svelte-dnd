@@ -126,6 +126,7 @@
 	aria-dropeffect={disabled ? 'none' : 'move'}
 	data-dnd-droppable
 	data-dnd-drop-id={id}
+	data-dnd-layout={strategy.mode === 'sortable' ? strategy.layout ?? 'vertical' : undefined}
 	{@attach dndController?.attachDroppable(droppable)}
 >
 	{@render children?.()}
@@ -145,6 +146,19 @@
 <style>
 	.dnd-droppable {
 		min-height: var(--dnd-droppable-min-height, 20px);
+	}
+
+	/* Default flex direction for axis-based sortables. Wrapped in :where() so
+	   any consumer class (e.g. Tailwind .grid or .flex-col) wins without
+	   needing !important. Grid sortables don't get a default — grid templates
+	   are too use-case specific. Target containers carry no data-dnd-layout. */
+	:where(.dnd-droppable[data-dnd-layout="vertical"]) {
+		display: flex;
+		flex-direction: column;
+	}
+	:where(.dnd-droppable[data-dnd-layout="horizontal"]) {
+		display: flex;
+		flex-direction: row;
 	}
 
 	.dnd-droppable--disabled {
