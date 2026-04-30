@@ -50,13 +50,10 @@
 		busy = true
 		const oldA = teamA
 		const oldB = teamB
-		await controller.simulateBatchSwap(
-			[...oldA.map((i) => i.id), ...oldB.map((i) => i.id)],
-			() => {
-				teamA = oldB
-				teamB = oldA
-			}
-		)
+		await controller.animateLayout(() => {
+			teamA = oldB
+			teamB = oldA
+		})
 		busy = false
 	}
 </script>

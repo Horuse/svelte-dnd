@@ -11,6 +11,7 @@ import { DropResolver } from '../zones/drop-resolver.js'
 import { DropAnimationCoordinator } from '../animation/drop-animation-coordinator.js'
 import type { Modifier } from '../modifiers/modifier.js'
 import { DndSimulator } from './dnd-simulator.js'
+import type { AnimateItemOptions, AnimateLayoutOptions } from './dnd-simulator.js'
 import type { DropZone, DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback, ZonesInvalidatedCallback, DndItemInfo, DndContainerInfo, DragStartEvent, Announcements } from '../../types.js'
 import type { AnimationConfig } from '../animation/animation-config.js'
 import { resolveAnimationConfig } from '../animation/animation-config.js'
@@ -369,24 +370,14 @@ export class DndController {
 		this.state.toggleDebugZones()
 	}
 
-	/** Delegates to {@link DndSimulator.simulateReturn}. */
-	simulateReturn(itemId: string, fromContainerId: string, toContainerId: string, toPosition: number): Promise<void> {
-		return this.simulator.simulateReturn(itemId, fromContainerId, toContainerId, toPosition)
+	/** Delegates to {@link DndSimulator.animateItem}. */
+	animateItem(itemId: string, options: AnimateItemOptions): Promise<void> {
+		return this.simulator.animateItem(itemId, options)
 	}
 
-	/** Delegates to {@link DndSimulator.simulateDrop}. */
-	simulateDrop(itemId: string, fromContainerId: string, toContainerId: string, toPosition: number, options?: import('../dnd/dnd-simulator.js').SimulateOptions): Promise<void> {
-		return this.simulator.simulateDrop(itemId, fromContainerId, toContainerId, toPosition, options)
-	}
-
-	/** Delegates to {@link DndSimulator.simulateSwap}. */
-	simulateSwap(idA: string, containerA: string, idB: string, containerB: string, duration?: number): Promise<void> {
-		return this.simulator.simulateSwap(idA, containerA, idB, containerB, duration)
-	}
-
-	/** Delegates to {@link DndSimulator.simulateBatchSwap}. */
-	simulateBatchSwap(ids: string[], applyState: () => void | Promise<void>, duration?: number): Promise<void> {
-		return this.simulator.simulateBatchSwap(ids, applyState, duration)
+	/** Delegates to {@link DndSimulator.animateLayout}. */
+	animateLayout(applyState: () => void | Promise<void>, options?: AnimateLayoutOptions): Promise<void> {
+		return this.simulator.animateLayout(applyState, options)
 	}
 
 	// --- Entity-based API ---

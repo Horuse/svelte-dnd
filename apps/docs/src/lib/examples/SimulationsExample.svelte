@@ -24,10 +24,7 @@
 		if (busy) return
 		busy = true
 		const sorted = [...items].sort((a, b) => a.label.localeCompare(b.label))
-		await controller.simulateBatchSwap(
-			sorted.map((i) => i.id),
-			() => { items = sorted }
-		)
+		await controller.animateLayout(() => { items = sorted })
 		busy = false
 	}
 
@@ -36,7 +33,10 @@
 		busy = true
 		const last = history.pop()!
 		const item = items[last.to]
-		await controller.simulateReturn(item.id, 'list', 'list', last.from)
+		await controller.animateItem(item.id, {
+			to: { containerId: 'list', position: last.from },
+			style: 'return'
+		})
 		const updated = [...items]
 		const [moved] = updated.splice(last.to, 1)
 		updated.splice(last.from, 0, moved)

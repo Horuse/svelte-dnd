@@ -93,7 +93,7 @@
 	function handleRestore(task: { id: string; label: string; columnId: string; position: number }) {
 		const col = columns.find(c => c.id === task.columnId);
 		if (!col) return;
-		col.tasks.splice(task.position, 0, { id: task.id, label: task.label });
+		col.tasks.splice(task.position, 0, { height: 0, id: task.id, label: task.label });
 		columns = [...columns];
 	}
 
@@ -105,7 +105,9 @@
 		const task = backlog.tasks[0];
 		const toPosition = inProgress.tasks.length;
 
-		await controller.simulateDrop(task.id, 'backlog', 'in-progress', toPosition);
+		await controller.animateItem(task.id, {
+			to: { containerId: 'in-progress', position: toPosition }
+		});
 
 		backlog.tasks.splice(0, 1);
 		inProgress.tasks.splice(toPosition, 0, task);

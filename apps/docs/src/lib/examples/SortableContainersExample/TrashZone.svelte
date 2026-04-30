@@ -69,7 +69,10 @@
 		if (idx === -1) return
 
 		try {
-			await controller.simulateReturn(item.task.id, 'trash-zone', item.task.columnId, item.task.position)
+			await controller.animateItem(item.task.id, {
+				to: { containerId: item.task.columnId, position: item.task.position },
+				style: 'return'
+			})
 		} catch {
 			// element not found or drag in progress — restore without animation
 		}

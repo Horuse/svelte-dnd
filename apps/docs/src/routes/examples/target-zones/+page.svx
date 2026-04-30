@@ -5,7 +5,7 @@ description: Mixing sortable() and target() — a horizontal pool plus three sin
 
 # Target Zones
 
-A horizontal `sortable()` pool feeds three `target()` slots that each hold at most one item. Drop a square onto an occupied slot and the previous occupant FLIPs back into the pool — drag handler does the swap, `controller.simulateBatchSwap` animates the displaced neighbours to their new layout positions.
+A horizontal `sortable()` pool feeds three `target()` slots that each hold at most one item. Drop a square onto an occupied slot and the previous occupant FLIPs back into the pool — the drop handler does the swap, `controller.animateLayout` animates every displaced neighbour to its new layout position.
 
 The ghost morphs round → square as it crosses into a slot via a custom `ghost` snippet that toggles a class based on `controller.dropPreview`.
 

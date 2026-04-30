@@ -1,182 +1,158 @@
 ---
 title: Simulations
-description: Programmatically trigger drag animations on DndController for undo/redo, onboarding, or demo sequences.
+description: Programmatically animate items and layout changes through DndController for undo/redo, onboarding, and demo sequences.
 ---
 
 # Simulations
 
-`DndController` exposes methods to trigger drag animations programmatically — without any user interaction. Useful for undo/redo flows, onboarding tutorials, or demo sequences.
+`DndController` exposes two methods for triggering animations programmatically — without any user interaction. Useful for undo/redo flows, onboarding tutorials, or demo sequences.
 
-By default the simulators do **not** fire drop callbacks. Pass `{ emitEvents: true }` to `simulateDrop` / `simulateReturn` to emit `onDrop` / `onDropCancelled` after the animation completes.
+| Method | Use it for | Mechanism |
+|--------|-----------|-----------|
+| `animateItem` | Flying a single item to a destination — drop, return, undo | Ghost system (real session, optionally fires events) |
+| `animateLayout` | State change where many items reflow — sort, swap, group | FLIP (capture rects → apply state → animate the delta) |
 
----
-
-## simulateReturn
-
-```ts
-controller.simulateReturn(
-    itemId: string,
-    fromContainerId: string,
-    toContainerId: string,
-    toPosition: number,
-    options?: SimulateOptions
-): Promise<void>
-```
-
-Animates an item flying from its current DOM position to a destination. Returns a promise that resolves when the animation completes.
-
-- When `fromContainerId === toContainerId` — uses a scroll-aware return animation (same as a cancelled drag)
-- When containers differ — uses a fly-to-target animation
-
-By default **does not fire any events**. Pass `{ emitEvents: true }` to fire `onDropCancelled` after the animation completes.
-
-### Example — undo a move
-
-```ts
-// User moved item '3' from 'list-a' to 'list-b'. Undo it:
-await controller.simulateReturn('3', 'list-b', 'list-a', originalIndex);
-
-// After the animation completes, update your data model:
-moveItem('3', 'list-b', 'list-a', originalIndex);
-```
+By default neither method fires drop callbacks. `animateItem` accepts `emitEvents: true` if you want a real `onDrop` (style `'drop'`) or `onDropCancelled` (style `'return'`) after the animation. `animateLayout` is a pure visual helper — your `applyState` callback is the single source of truth for data changes.
 
 ---
 
-## simulateDrop
+## animateItem
 
 ```ts
-controller.simulateDrop(
-    itemId: string,
-    fromContainerId: string,
-    toContainerId: string,
-    toPosition: number,
-    options?: SimulateOptions
-): Promise<void>
+controller.animateItem(itemId: string, options: AnimateItemOptions): Promise<void>
 
-interface SimulateOptions {
+interface ContainerPosition {
+    containerId: string;
+    /** Default 0 for `target` containers; required for sortable destinations. */
+    position?: number;
+}
+
+interface AnimateItemOptions {
+    /** Where the item should fly to. */
+    to: ContainerPosition;
+    /** Where it starts. Defaults to its current location in the slot map. */
+    from?: ContainerPosition;
     /**
-     * When true, fires a real event after the animation completes:
-     * `simulateDrop` → `onDrop`; `simulateReturn` → `onDropCancelled`.
-     * Default: false
+     * 'drop' (default) — uses ghost-to-target step both same- and cross-container.
+     * 'return' — uses scroll-aware return step when destination is the same container.
      */
+    style?: 'return' | 'drop';
+    /** Fire onDrop ('drop') or onDropCancelled ('return') after the animation. */
     emitEvents?: boolean;
+    /** Override the configured drop/return duration. */
+    duration?: number;
 }
 ```
 
-Animates an item flying from its current DOM position to a target container and position. Always uses a fly-to-target animation regardless of whether containers match.
-
-By default **does not fire any drop events**. Pass `{ emitEvents: true }` to fire `onDrop` after the animation completes.
+Animates a single item flying to a destination through the ghost system. Returns a promise that resolves when the animation completes.
 
 ### Example — auto-sort animation
 
 ```ts
-// Animate item '2' flying to position 0 in the same list:
-await controller.simulateDrop('2', 'list', 'list', 0);
+// Animate item '2' flying to position 0 in the same list.
+await controller.animateItem('2', {
+    to: { containerId: 'list', position: 0 }
+});
 
 // Then update your data:
 moveItemToTop('2');
 ```
 
+### Example — undo a move
+
+```ts
+// User moved item '3' from list-a to list-b. Undo it (scroll-aware return):
+await controller.animateItem('3', {
+    to: { containerId: 'list-a', position: originalIndex },
+    style: 'return'
+});
+moveItem('3', 'list-b', 'list-a', originalIndex);
+```
+
 ### Example — programmatic move with events
 
 ```ts
-// Animate AND fire onDrop (your existing handler updates the data model):
-await controller.simulateDrop('task-3', 'backlog', 'in-progress', 0, { emitEvents: true });
-// onDrop fires automatically — no manual data update needed
+// Animate AND fire onDrop (your existing handler updates the data model).
+await controller.animateItem('task-3', {
+    to: { containerId: 'in-progress', position: 0 },
+    emitEvents: true
+});
+// onDrop fires automatically — no manual data update needed.
 ```
 
 ---
 
-## simulateSwap
+## animateLayout
 
 ```ts
-controller.simulateSwap(
-    idA: string,
-    containerA: string,
-    idB: string,
-    containerB: string,
-    duration?: number  // default: 300ms
-): Promise<void>
-```
-
-Animates two items swapping positions simultaneously using direct CSS transforms. Both elements animate at the same time without going through the ghost system.
-
-**The caller is responsible for updating data state after the promise resolves.**
-
-### Example — swap two items
-
-```ts
-await controller.simulateSwap('item-1', 'list', 'item-5', 'list');
-
-// After animation — update your data:
-const i = items.findIndex(x => x.id === 'item-1');
-const j = items.findIndex(x => x.id === 'item-5');
-[items[i], items[j]] = [items[j], items[i]];
-items = [...items];
-```
-
----
-
-## simulateBatchSwap
-
-```ts
-controller.simulateBatchSwap(
-    ids: string[],
+controller.animateLayout(
     applyState: () => void | Promise<void>,
-    duration?: number  // default: 300ms
+    options?: AnimateLayoutOptions
 ): Promise<void>
+
+interface AnimateLayoutOptions {
+    /**
+     * Items to FLIP. Defaults to every registered draggable except
+     * `state.draggedItem` (whose ghost flight handles its own animation
+     * during a real drag).
+     */
+    items?: string[];
+    /**
+     * When `true`, copies the missing classes from each item's pre-state
+     * classList onto the post-state element so class-driven CSS properties
+     * (border-radius, scale, background, color, …) transition together with
+     * the FLIP transform.
+     */
+    morph?: boolean;
+    /** Override the configured swap duration. */
+    duration?: number;
+}
 ```
 
-Animates multiple items simultaneously to their new positions using FLIP (First, Last, Invert, Play). Works across different containers. All elements animate at the same time.
+Animates a state/layout change. Captures item rects before `applyState`, mutates state inside the callback, then FLIPs each item that changed position.
 
-Pass an `applyState` callback that updates your data model — the library records DOM positions before and after the state change, then animates the delta.
+`applyState` is **the single mutation point** — the library reads rects on either side of it. Place all your state changes inside.
 
 ### Example — sort all items at once
 
 ```ts
 const sorted = [...items].sort((a, b) => a.label.localeCompare(b.label));
 
-await controller.simulateBatchSwap(
-    sorted.map(i => i.id),
-    () => { items = sorted }
-);
+await controller.animateLayout(() => {
+    items = sorted;
+});
+// Every item glides to its new position.
 ```
 
-### Example — swap all items between two containers
+### Example — swap two items between containers
 
 ```ts
 const oldA = [...teamA];
 const oldB = [...teamB];
 
-await controller.simulateBatchSwap(
-    [...oldA.map(i => i.id), ...oldB.map(i => i.id)],
-    () => {
-        teamA = oldB;
-        teamB = oldA;
-    }
-);
+await controller.animateLayout(() => {
+    teamA = oldB;
+    teamB = oldA;
+});
+```
+
+### Example — class-driven shape morph
+
+When the destination container styles items differently (rounded vs square, bigger scale, etc.), pass `morph: true` so the class-list diff transitions with the FLIP transform:
+
+```ts
+await controller.animateLayout(applyMove, { morph: true });
+// Items glide to new positions AND morph border-radius / scale / colour.
 ```
 
 ---
 
 ## Constraints
 
-- **Cannot run while a drag is in progress.** Both methods reject with an error if `controller.dragging` is `true`.
-- **Item must exist in the DOM.** The item must be rendered in `fromContainerId` at the time the simulation starts.
-- **No events by default.** Callbacks are not fired unless you pass `{ emitEvents: true }` — then `simulateDrop` fires `onDrop` and `simulateReturn` fires `onDropCancelled`.
-
----
-
-## Difference between methods
-
-| | `simulateReturn` | `simulateDrop` | `simulateSwap` | `simulateBatchSwap` |
-|---|---|---|---|---|
-| Items animated | 1 | 1 | 2 | N |
-| Simultaneous | — | — | ✓ | ✓ |
-| Cross-container | ✓ | ✓ | ✓ | ✓ |
-| Fires events | Optional (`onDropCancelled`) | Optional (`onDrop`) | No | No |
-| Updates data | Caller, after | Caller, after | Caller, after | Caller, inside callback |
-| Typical use case | Undo, cancel | Auto-sort (one-by-one) | Swap two items | Batch reorder, team swap |
+- **Cannot run while a real drag is in progress.** `animateItem` rejects with an error if `controller.dragging` is `true`. `animateLayout` requires no session and is safe to call any time.
+- **Item must exist in the DOM.** For `animateItem`, the item must be rendered in `from?.containerId` (or its current container if `from` is omitted) when the animation starts.
+- **`animateLayout` only animates items it can match in the slot map.** If `items` is omitted it uses every registered draggable except the dragged one; pass an explicit list to restrict the set.
+- **No events by default.** Only `animateItem` can emit events, and only if you opt in with `emitEvents: true`.
 
 ---
 
@@ -198,7 +174,7 @@ await controller.simulateBatchSwap(
 	<SimulationsExample />
 </ComponentPreview>
 
-### Two containers — batch swap
+### Two containers — swap
 
 <ComponentPreview collapsible sources={[{ name: 'SimulationsBatchSwapExample.svelte', code: SimulationsBatchSwapExampleCode, language: 'svelte' }]}>
 	<SimulationsBatchSwapExample />

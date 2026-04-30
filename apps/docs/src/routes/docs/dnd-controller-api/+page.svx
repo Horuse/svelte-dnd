@@ -38,7 +38,7 @@ const controller = new DndController({
         dropDuration: 200,         // ghost flight to a slot/target (default: 250)
         returnDuration: 250,       // ghost return on cancelled drag (default: 300)
         slotCollapseDuration: 200, // source slot collapse on cross-container drop (default: 250)
-        swapDuration: 280,         // simulateSwap / simulateBatchSwap default (default: 300)
+        swapDuration: 280,         // animateLayout default (default: 300)
     },
     debug: true,                             // position validation warnings in console
     sensors: [new PointerSensor(), new KeyboardSensor()], // see /docs/sensors
@@ -301,10 +301,8 @@ For running animations without user interaction see the [Simulations](/docs/simu
 
 | Method | Purpose |
 |--------|---------|
-| `simulateReturn(itemId, fromContainerId, toContainerId, toPosition, options?)` | Animate one item to a destination via the same path as a cancelled drag. Use for undo flows. |
-| `simulateDrop(itemId, fromContainerId, toContainerId, toPosition, options?)` | Animate one item flying to a target container & position. |
-| `simulateSwap(idA, containerA, idB, containerB, duration?)` | Animate two items swapping positions simultaneously. |
-| `simulateBatchSwap(ids, applyState, duration?)` | Animate multiple items reordering at once using FLIP. |
+| `animateItem(itemId, options)` | Fly one item to a destination through the ghost system. Pass `style: 'return'` for scroll-aware undo, `emitEvents: true` to fire `onDrop`/`onDropCancelled`. |
+| `animateLayout(applyState, options?)` | Mutate state inside `applyState`; the library FLIPs every item whose rect changed. Pass `morph: true` to also transition class-driven properties. |
 
 ## Types
 
@@ -342,7 +340,7 @@ interface AnimationConfig {
     returnDuration?: number;
     /** Source slot collapse during a cross-container drop, in ms. Default: 250 */
     slotCollapseDuration?: number;
-    /** Default duration (ms) for simulateSwap / simulateBatchSwap. Default: 300 */
+    /** Default duration (ms) for animateLayout. Default: 300 */
     swapDuration?: number;
 }
 

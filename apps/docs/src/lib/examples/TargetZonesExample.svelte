@@ -55,15 +55,10 @@
 		};
 
 		if (evictedId) {
-			// FLIP every source neighbour together with the evicted item.
-			// When evicted lands at fromIdx, the items at indices ≥ fromIdx all
-			// shift to make room — they each gain a non-zero rect delta. simulateBatchSwap
-			// only animates the ids you pass in, so we include every source
-			// item (minus the dragged one — its ghost flight already brought
-			// it to the slot) plus the evicted id.
-			const flipIds = zones[source].filter((s) => s.id !== id).map((s) => s.id);
-			flipIds.push(evictedId);
-			await controller.simulateBatchSwap(flipIds, applyMove);
+			// animateLayout auto-collects every registered item except the dragged
+			// one and FLIPs each whose rect actually changed — the source neighbours
+			// shifted by the inserted evicted item, plus the evicted item itself.
+			await controller.animateLayout(applyMove);
 		} else {
 			applyMove();
 		}

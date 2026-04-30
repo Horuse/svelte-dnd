@@ -15,7 +15,7 @@ export type {
 	Announcements
 } from './types.js'
 export { defaultAnnouncements } from './types.js'
-export type { SimulateOptions } from './core/dnd/dnd-simulator.js'
+export type { AnimateItemOptions, AnimateLayoutOptions, ContainerPosition } from './core/dnd/dnd-simulator.js'
 export type { DragSource, DragSession } from './core/dnd/drag-session.svelte.js'
 export type { DndState } from './core/dnd/dnd-state.svelte.js'
 export type { Droppable } from './core/entities/droppable.svelte.js'

@@ -11,13 +11,44 @@ import { GhostToTargetStep } from '../animation/steps/ghost-to-target-step.js'
 import { GhostReturnStep } from '../animation/steps/ghost-return-step.js'
 import { DEFAULT_ANIMATION_CONFIG } from '../animation/animation-config.js'
 
-export interface SimulateOptions {
+export interface ContainerPosition {
+	containerId: string
+	/** Default 0 for `target` containers; required for sortable destinations. */
+	position?: number
+}
+
+export interface AnimateItemOptions {
+	/** Where the item should fly to. */
+	to: ContainerPosition
+	/** Where the item starts. Defaults to its current location in the slot map. */
+	from?: ContainerPosition
 	/**
-	 * When `true`, fires a real event on completion:
-	 * `simulateDrop` → `onDrop`; `simulateReturn` → `onDropCancelled`.
-	 * Defaults to `false`.
+	 * Animation style:
+	 * - `'drop'` (default) — uses `GhostToTargetStep` for both same- and cross-container moves.
+	 * - `'return'` — uses scroll-aware `GhostReturnStep` when the destination is the same container,
+	 *   falls back to `GhostToTargetStep` for cross-container moves.
 	 */
+	style?: 'return' | 'drop'
+	/** Fire `onDrop` (style 'drop') or `onDropCancelled` (style 'return') after the animation. */
 	emitEvents?: boolean
+	/** Override the configured drop/return duration. */
+	duration?: number
+}
+
+export interface AnimateLayoutOptions {
+	/**
+	 * Items to FLIP. Defaults to every registered draggable except `state.draggedItem`
+	 * (whose ghost flight handles its own animation during a real drag).
+	 */
+	items?: string[]
+	/**
+	 * When `true`, copies the missing classes from each item's pre-state classList
+	 * onto the post-state element so class-driven CSS properties (border-radius,
+	 * scale, background, color, …) transition together with the FLIP transform.
+	 */
+	morph?: boolean
+	/** Override the configured swap duration. */
+	duration?: number
 }
 
 type EmitKind = 'drop' | 'cancel'
@@ -32,42 +63,132 @@ export class DndSimulator {
 	) {}
 
 	/**
-	 * Animate an item flying from its current DOM position back to a destination.
-	 * Uses GhostReturnStep (scroll-aware) when staying in the same container,
-	 * GhostToTargetStep when crossing containers.
-	 * Fires no events by default; pass `{ emitEvents: true }` to fire `onDropCancelled`.
+	 * Animate a single item flying to a destination through the ghost system.
+	 *
+	 * @example
+	 * // Animate task `t1` from backlog to position 0 in in-progress.
+	 * await controller.animateItem('t1', {
+	 *     to: { containerId: 'in-progress', position: 0 }
+	 * })
+	 *
+	 * @example
+	 * // Undo a move — fly back to where it came from with scroll-aware return.
+	 * await controller.animateItem('t1', {
+	 *     to: { containerId: 'backlog', position: 4 },
+	 *     style: 'return'
+	 * })
 	 */
-	simulateReturn(
-		itemId: string,
-		fromContainerId: string,
-		toContainerId: string,
-		toPosition: number,
-		options: SimulateOptions = {}
-	): Promise<void> {
-		const useSameContainerReturn = toContainerId === fromContainerId
-		const step = () => useSameContainerReturn
-			? new GhostReturnStep(this.state, toContainerId, toPosition, this.droppablesById, this.animation.returnDuration)
-			: new GhostToTargetStep(this.state, this.syntheticZone(toContainerId, toPosition), this.droppablesById, this.animation.dropDuration)
+	animateItem(itemId: string, options: AnimateItemOptions): Promise<void> {
+		const { to, from, style = 'drop', emitEvents = false, duration } = options
 
-		return this.run(itemId, fromContainerId, toContainerId, toPosition, step, options, 'cancel')
+		const sourceContainerId = from?.containerId ?? this.findItemContainer(itemId)
+		if (!sourceContainerId) {
+			return Promise.reject(new Error(`DndSimulator.animateItem: item "${itemId}" not found in any container`))
+		}
+		const toPosition = to.position ?? 0
+		const useReturnStep = style === 'return' && to.containerId === sourceContainerId
+		const dropDur = duration ?? this.animation.dropDuration
+		const returnDur = duration ?? this.animation.returnDuration
+
+		const makeStep = () => useReturnStep
+			? new GhostReturnStep(this.state, to.containerId, toPosition, this.droppablesById, returnDur)
+			: new GhostToTargetStep(this.state, this.syntheticZone(to.containerId, toPosition), this.droppablesById, dropDur)
+
+		const emitKind: EmitKind = style === 'return' ? 'cancel' : 'drop'
+		return this.run(itemId, sourceContainerId, to.containerId, toPosition, makeStep, emitEvents, emitKind)
 	}
 
 	/**
-	 * Animate an item flying from its current DOM position to a target container/position.
-	 * Always uses GhostToTargetStep regardless of containers.
-	 * Fires no events by default; pass `{ emitEvents: true }` to fire `onDrop`.
+	 * Animate a layout/state change. Captures item rects before `applyState`,
+	 * mutates state via `applyState`, then FLIPs items to their new positions.
+	 *
+	 * @example
+	 * // Sort the list and animate every item to its new spot.
+	 * await controller.animateLayout(() => {
+	 *     items = [...items].sort((a, b) => a.label.localeCompare(b.label))
+	 * })
+	 *
+	 * @example
+	 * // Swap two items by id and morph their class-driven shapes.
+	 * await controller.animateLayout(() => swap(a, b), {
+	 *     items: [a.id, b.id],
+	 *     morph: true
+	 * })
 	 */
-	simulateDrop(
-		itemId: string,
-		fromContainerId: string,
-		toContainerId: string,
-		toPosition: number,
-		options: SimulateOptions = {}
+	async animateLayout(
+		applyState: () => void | Promise<void>,
+		options: AnimateLayoutOptions = {}
 	): Promise<void> {
-		const step = () =>
-			new GhostToTargetStep(this.state, this.syntheticZone(toContainerId, toPosition), this.droppablesById, this.animation.dropDuration)
+		const { items, morph = false, duration = this.animation.swapDuration } = options
+		const ids = items ?? this.collectAllItemIds().filter((id) => id !== this.state.draggedItem)
 
-		return this.run(itemId, fromContainerId, toContainerId, toPosition, step, options, 'drop')
+		// Capture old rects (visual rects — include any active translates) and class lists.
+		const oldRects = new Map<string, DOMRect>()
+		const oldClasses = morph ? new Map<string, string[]>() : null
+		for (const id of ids) {
+			const el = this.findElementById(id)
+			if (!el) continue
+			oldRects.set(id, el.getBoundingClientRect())
+			if (oldClasses) oldClasses.set(id, [...el.classList])
+		}
+
+		// Apply state change (sync or async).
+		const result = applyState()
+		if (result && typeof (result as Promise<unknown>).then === 'function') await result
+
+		// Synchronously flush pending Svelte updates so the new DOM layout is readable
+		// in the same sync block as the inverse transform below. `await tick()` would
+		// leave a microtask gap during which the browser could paint the post-state
+		// layout — visible as a 1-frame jump to the new position.
+		flushSync()
+
+		// Invert — apply inverse transforms (and restore the old class diff when morphing)
+		// so items visually stay at their pre-state-change positions.
+		interface Patched { el: HTMLElement; addedClasses: string[] }
+		const elements: Patched[] = []
+		for (const id of ids) {
+			const el = this.findElementById(id)
+			const oldRect = oldRects.get(id)
+			if (!el || !oldRect) continue
+
+			const newRect = el.getBoundingClientRect()
+			const dx = oldRect.left - newRect.left
+			const dy = oldRect.top - newRect.top
+
+			let addedClasses: string[] = []
+			if (oldClasses) {
+				const old = oldClasses.get(id) ?? []
+				const newSet = new Set(el.classList)
+				addedClasses = old.filter((c) => !newSet.has(c))
+				for (const c of addedClasses) el.classList.add(c)
+			}
+
+			if (dx === 0 && dy === 0 && addedClasses.length === 0) continue
+
+			el.style.transition = 'none'
+			if (dx !== 0 || dy !== 0) el.style.transform = `translate(${dx}px, ${dy}px)`
+			elements.push({ el, addedClasses })
+		}
+
+		if (elements.length === 0) return
+
+		// Double rAF to force reflow before enabling transitions.
+		await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+
+		// Play — animate to final positions/styles. `all` lets class-driven properties
+		// (border-radius, scale, color, …) ride along with the FLIP transform.
+		const transitionProp = morph ? 'all' : 'transform'
+		for (const { el, addedClasses } of elements) {
+			el.style.transition = `${transitionProp} ${duration}ms ease`
+			el.style.transform = ''
+			for (const c of addedClasses) el.classList.remove(c)
+		}
+
+		await new Promise<void>((resolve) => setTimeout(resolve, duration + 50))
+
+		for (const { el } of elements) {
+			el.style.transition = ''
+		}
 	}
 
 	// --- Private ---
@@ -78,12 +199,12 @@ export class DndSimulator {
 		toContainerId: string,
 		toPosition: number,
 		makeStep: () => GhostToTargetStep | GhostReturnStep,
-		options: SimulateOptions = {},
-		emitKind: EmitKind = 'drop'
+		emitEvents: boolean,
+		emitKind: EmitKind
 	): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			if (this.state.dragging) {
-				reject(new Error(`DndSimulator: cannot simulate while a drag is in progress`))
+				reject(new Error('DndSimulator: cannot animate while a drag is in progress'))
 				return
 			}
 
@@ -134,7 +255,7 @@ export class DndSimulator {
 				position: toPosition
 			}
 
-			// Let each strategy capture whatever transform-free state it needs.
+			// Let each strategy capture transform-free state before reactive cycle runs.
 			for (const droppable of this.droppablesById.values()) {
 				droppable.strategy.onSessionStart?.(droppable, session)
 			}
@@ -146,12 +267,12 @@ export class DndSimulator {
 
 			const step = makeStep()
 
-			// Wait one frame for DndPreview to render at toContainerId/toPosition
+			// Wait one frame for DndPreview to render at toContainerId/toPosition.
 			requestAnimationFrame(() => {
 				AnimationPipeline.chain(step).execute().then(() => {
-					// setPerformingDrop(true) here so Preview.hide() collapses instantly
+					// setPerformingDrop(true) so Preview.hide() collapses instantly.
 					this.state.setPerformingDrop(true)
-					if (options.emitEvents && this.eventEmitter) {
+					if (emitEvents && this.eventEmitter) {
 						const draggable = fromSlot.draggable
 						const itemInfo: DndItemInfo = {
 							id: itemId,
@@ -189,137 +310,21 @@ export class DndSimulator {
 		}
 	}
 
-	/**
-	 * Animate two items swapping positions simultaneously using direct CSS transforms.
-	 * Both elements animate at the same time without going through the ghost system.
-	 * The caller is responsible for updating data state after the promise resolves.
-	 */
-	simulateSwap(
-		idA: string, containerA: string,
-		idB: string, containerB: string,
-		duration: number = this.animation.swapDuration
-	): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			const droppableA = this.droppablesById.get(containerA)
-			const droppableB = this.droppablesById.get(containerB)
-			if (!droppableA || !droppableB) {
-				reject(new Error('DndSimulator.simulateSwap: container not found'))
-				return
-			}
-
-			const slotA = droppableA.getSortedSlots().find((s) => s.draggable.id === idA)
-			const slotB = droppableB.getSortedSlots().find((s) => s.draggable.id === idB)
-			const elA = slotA?.draggable.element ?? null
-			const elB = slotB?.draggable.element ?? null
-
-			if (!elA || !elB) {
-				reject(new Error(`DndSimulator.simulateSwap: item not found`))
-				return
-			}
-
-			const rectA = elA.getBoundingClientRect()
-			const rectB = elB.getBoundingClientRect()
-			const dxA = rectB.left - rectA.left
-			const dyA = rectB.top - rectA.top
-			const dxB = rectA.left - rectB.left
-			const dyB = rectA.top - rectB.top
-
-			const transition = `transform ${duration}ms ease`
-			elA.style.transition = transition
-			elB.style.transition = transition
-			elA.style.transform = `translate(${dxA}px, ${dyA}px)`
-			elB.style.transform = `translate(${dxB}px, ${dyB}px)`
-
-			let settled = 0
-			const onDone = () => {
-				settled++
-				if (settled < 2) return
-				elA.style.transition = ''
-				elA.style.transform = ''
-				elB.style.transition = ''
-				elB.style.transform = ''
-				resolve()
-			}
-
-			const endA = () => { elA.removeEventListener('transitionend', endA); onDone() }
-			const endB = () => { elB.removeEventListener('transitionend', endB); onDone() }
-			elA.addEventListener('transitionend', endA)
-			elB.addEventListener('transitionend', endB)
-
-			// Fallback in case transitionend doesn't fire (e.g. same position)
-			setTimeout(() => {
-				elA.removeEventListener('transitionend', endA)
-				elB.removeEventListener('transitionend', endB)
-				elA.style.transition = ''
-				elA.style.transform = ''
-				elB.style.transition = ''
-				elB.style.transform = ''
-				resolve()
-			}, duration + 100)
-		})
+	private collectAllItemIds(): string[] {
+		const ids: string[] = []
+		for (const slot of this.slots.values()) {
+			ids.push(slot.draggable.id)
+		}
+		return ids
 	}
 
-	/**
-	 * Animate multiple items simultaneously to their new positions using FLIP technique.
-	 * Works across different containers.
-	 * The caller is responsible for updating data state inside `applyState`.
-	 */
-	async simulateBatchSwap(
-		ids: string[],
-		applyState: () => void | Promise<void>,
-		duration: number = this.animation.swapDuration
-	): Promise<void> {
-		// First — record current positions (visual rects, including any active translates).
-		const oldRects = new Map<string, DOMRect>()
-		for (const id of ids) {
-			const el = this.findElementById(id)
-			if (el) oldRects.set(id, el.getBoundingClientRect())
+	private findItemContainer(itemId: string): string | null {
+		for (const droppable of this.droppablesById.values()) {
+			if (droppable.getSortedSlots().some((s) => s.draggable.id === itemId)) {
+				return droppable.id
+			}
 		}
-
-		// Apply state change. May be sync or async.
-		const result = applyState()
-		if (result && typeof (result as Promise<unknown>).then === 'function') await result
-
-		// Synchronously flush Svelte's pending updates so the new DOM layout is
-		// readable in the same sync block as the inverse transform below. Using
-		// `await tick()` instead leaves a microtask gap during which the browser
-		// can paint the freshly mounted nodes at their new layout positions —
-		// that's the "1-frame jump to the new spot" before the FLIP starts.
-		flushSync()
-
-		// Invert — apply inverted transforms so elements visually stay at their
-		// pre-state-change positions. This sync block runs before any paint
-		// because there are no awaits between flushSync and the transform write.
-		const elements: HTMLElement[] = []
-		for (const id of ids) {
-			const el = this.findElementById(id)
-			const oldRect = oldRects.get(id)
-			if (!el || !oldRect) continue
-			const newRect = el.getBoundingClientRect()
-			const dx = oldRect.left - newRect.left
-			const dy = oldRect.top - newRect.top
-			if (dx === 0 && dy === 0) continue
-			el.style.transition = 'none'
-			el.style.transform = `translate(${dx}px, ${dy}px)`
-			elements.push(el)
-		}
-
-		if (elements.length === 0) return
-
-		// Double rAF to force reflow before enabling transitions
-		await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
-
-		// Play — animate all to final positions simultaneously
-		for (const el of elements) {
-			el.style.transition = `transform ${duration}ms ease`
-			el.style.transform = ''
-		}
-
-		await new Promise<void>((resolve) => setTimeout(resolve, duration + 50))
-
-		for (const el of elements) {
-			el.style.transition = ''
-		}
+		return null
 	}
 
 	private findElementById(id: string): HTMLElement | null {

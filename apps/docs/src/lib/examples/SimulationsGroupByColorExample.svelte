@@ -74,8 +74,7 @@
 				grouped[task.color].push(task)
 			}
 		}
-		const ids = containerColors.flatMap((c) => containers[c].map((i) => i.id))
-		await controller.simulateBatchSwap(ids, () => {
+		await controller.animateLayout(() => {
 			containers = grouped
 		})
 		busy = false
@@ -85,8 +84,7 @@
 		if (busy) return
 		busy = true
 		const shuffled = makeShuffled()
-		const ids = containerColors.flatMap((c) => containers[c].map((i) => i.id))
-		await controller.simulateBatchSwap(ids, () => {
+		await controller.animateLayout(() => {
 			containers = shuffled
 		})
 		busy = false
