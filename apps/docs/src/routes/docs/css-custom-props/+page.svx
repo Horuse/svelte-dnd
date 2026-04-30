@@ -18,6 +18,7 @@ These properties control the floating ghost element that follows the cursor duri
 | `--dnd-ghost-rotation` | `0deg` | Rotation angle applied during drag |
 | `--dnd-ghost-rotation-duration` | `200ms` | Transition speed for the rotation animation |
 | `--dnd-ghost-scale` | `1` | Scale factor of the ghost element |
+| `--dnd-ghost-resize-duration` | `150ms` | Transition speed when the ghost resizes to match a target's item size (see [`dropPreviewSize`](/docs/dnd-controller-api#reactive-getters)) |
 
 ## Draggable Element
 

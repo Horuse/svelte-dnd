@@ -154,6 +154,46 @@ export class DndController {
 	/** Current drop preview (target container + insertion position). */
 	get dropPreview() { return this.state.dropPreview }
 
+	/**
+	 * Reactive size for sizing ghost/preview to match the destination layout.
+	 * Returns `null` when no drop preview is active, the target is empty, no
+	 * first slot is mounted yet, or the target uses `target()` strategy (which
+	 * doesn't constrain item size at all).
+	 *
+	 * Mixes target-sibling and dragged-item dimensions based on the target's
+	 * layout — only the cross-axis is borrowed, because that's where target-side
+	 * layout shrinkage shows up (e.g. a scrollbar narrowing items):
+	 *
+	 * - `vertical` sortable: width from target sibling, height from dragged.
+	 * - `horizontal` sortable: height from target sibling, width from dragged.
+	 * - `grid` sortable: both from target sibling (cells constrain both axes).
+	 *
+	 * For dimensions taken from the dragged item, falls back to the target
+	 * sibling when `ghostSize` is missing (defensive — should always be set
+	 * during an active preview).
+	 */
+	dropPreviewSize = $derived.by((): { width: number; height: number } | null => {
+		const preview = this.state.dropPreview
+		if (!preview) return null
+		const droppable = this.droppablesById.get(preview.containerId)
+		if (!droppable || droppable.mode !== 'sortable') return null
+
+		const draggedId = this.state.draggedItem
+		const firstSlot = droppable.getSortedSlots().find((s) => s.draggable?.id !== draggedId)
+		if (!firstSlot?.draggable?.element) return null
+
+		const rect = firstSlot.draggable.element.getBoundingClientRect()
+		const ghost = this.state.ghostSize
+		const ghostW = ghost?.width ?? rect.width
+		const ghostH = ghost?.height ?? rect.height
+
+		const layout = droppable.layout
+		if (layout === 'horizontal') return { width: ghostW, height: rect.height }
+		if (layout === 'grid') return { width: rect.width, height: rect.height }
+		// vertical (default)
+		return { width: rect.width, height: ghostH }
+	})
+
 	/** All registered drop zones across every `DndDroppable`. */
 	get dropZones() { return this.state.zones }
 

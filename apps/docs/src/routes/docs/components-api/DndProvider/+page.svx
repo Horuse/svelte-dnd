@@ -42,6 +42,7 @@ While a drag is in progress the provider injects a `<style>` tag into `<head>` t
 | `--dnd-ghost-scale` | `1` | Scale of the ghost element |
 | `--dnd-ghost-rotation` | `0deg` | Rotation applied to the ghost while dragging |
 | `--dnd-ghost-rotation-duration` | `200ms` | Duration of the rotation transition |
+| `--dnd-ghost-resize-duration` | `150ms` | Duration of the ghost width/height transition when adapting to the target's item size |
 
 ```svelte
 <DndProvider {controller}>

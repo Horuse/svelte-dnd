@@ -105,6 +105,7 @@ All getters are Svelte 5 reactive (`$state` / `$derived` internally).
 | `ghostSize` | `{ width: number; height: number } \| null` | Size of the dragged element |
 | `animatingReturn` | `boolean` | Whether the ghost is animating back to origin |
 | `dropPreview` | `DropPreview \| null` | Current drop preview state |
+| `dropPreviewSize` | `{ width, height } \| null` | Reactive size for matching the drop target's layout. Cross-axis is taken from the target's first non-dragged item (where layout shrinkage shows up — e.g. a scrollbar narrowing items); main-axis stays from the dragged item. Vertical sortable → target width / dragged height; horizontal sortable → dragged width / target height; grid sortable → both from target; target() containers → `null`. The built-in ghost and preview already use it. |
 | `dropZones` | `DropZone[]` | All registered drop zones |
 | `performingDrop` | `boolean` | Whether a drop animation is in progress |
 | `dragSource` | `DragSource` | `'user'` during a real drag, `'programmatic'` during a simulation |

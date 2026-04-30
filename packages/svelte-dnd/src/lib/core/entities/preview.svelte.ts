@@ -13,6 +13,7 @@ export interface PreviewConfig {
 // Minimal controller interface needed by Preview
 export type PreviewControllerRef = {
 	dropPreview: DropPreview | null
+	dropPreviewSize: { width: number; height: number } | null
 	ghostSize: { width: number; height: number } | null
 	skipDropPreviewAnimation: boolean
 	performingDrop: boolean
@@ -81,9 +82,14 @@ export class Preview {
 	}
 
 	show() {
+		// Prefer the target's own item size so the preview matches what the
+		// dropped item will actually be rendered as (covers cases where the
+		// target shrinks items, e.g. a scrollbar appearing in the source/target).
+		// Falls back to the dragged element's size when the target is empty.
+		const previewSize = this.controller.dropPreviewSize
 		const ghostSize = this.controller.ghostSize
-		this.height = ghostSize?.height ?? 0
-		this.width = ghostSize?.width ?? 0
+		this.height = previewSize?.height ?? ghostSize?.height ?? 0
+		this.width = previewSize?.width ?? ghostSize?.width ?? 0
 
 		if (this.collapseTimer) { clearTimeout(this.collapseTimer); this.collapseTimer = null }
 

@@ -103,6 +103,9 @@
 <div aria-live="assertive" aria-atomic="true" class="dnd-sr-only">{announcement}</div>
 
 {#if (dragController.dragging || dragController.animatingReturn) && dragController.element && dragController.transform && dragController.ghostSize}
+	{@const previewSize = dragController.dropPreviewSize}
+	{@const ghostW = previewSize?.width ?? dragController.ghostSize.width}
+	{@const ghostH = previewSize?.height ?? dragController.ghostSize.height}
 	<div
 		class="dnd-ghost"
 		data-dnd-dragged-element
@@ -110,8 +113,8 @@
 		style="
 			left: {dragController.transform.x}px;
 			top: {dragController.transform.y}px;
-			width: {dragController.ghostSize.width}px;
-			height: {dragController.ghostSize.height}px;
+			width: {ghostW}px;
+			height: {ghostH}px;
 			transform: rotate({dragController.animatingReturn ? '0deg' : rotated ? 'var(--dnd-ghost-rotation, 0deg)' : '0deg'});
 		"
 	>
@@ -159,7 +162,10 @@
 		pointer-events: none;
 		z-index: var(--dnd-ghost-z-index, 9999);
 		opacity: var(--dnd-ghost-opacity, 0.8);
-		transition: transform var(--dnd-ghost-rotation-duration, 200ms) ease;
+		transition:
+			transform var(--dnd-ghost-rotation-duration, 200ms) ease,
+			width var(--dnd-ghost-resize-duration, 150ms) ease,
+			height var(--dnd-ghost-resize-duration, 150ms) ease;
 		scale: var(--dnd-ghost-scale, 1);
 	}
 

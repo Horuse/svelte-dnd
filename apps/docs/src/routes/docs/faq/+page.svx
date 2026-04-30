@@ -116,6 +116,37 @@ Pass a `ghost` snippet to `DndProvider`. The snippet receives `{ element, data, 
 
 ---
 
+## My ghost / preview size doesn't match the target's item size
+
+Both the built-in ghost (`.dnd-ghost`) and insert previews (`.dnd-preview`) resize themselves to fit the current drop target as the pointer crosses containers. They read `controller.dropPreviewSize`, which mixes target-sibling and dragged-item dimensions per layout axis:
+
+| Target layout | Width | Height |
+|---------------|-------|--------|
+| `sortable({ layout: 'vertical' })` | target's first item | dragged item |
+| `sortable({ layout: 'horizontal' })` | dragged item | target's first item |
+| `sortable({ layout: 'grid' })` | target's first item | target's first item |
+| `target()` | dragged item | dragged item |
+
+The dragged item keeps its main-axis dimension when it lands; only the cross-axis is borrowed from the target — that's the axis where layout shrinkage actually shows up (e.g. a scrollbar narrowing items in a vertical list, or a horizontal scrollbar shortening items in a row).
+
+Tune the morph duration with `--dnd-ghost-resize-duration` (default `150ms`):
+
+```css
+:root {
+    --dnd-ghost-resize-duration: 250ms;
+}
+```
+
+If you supply a custom `ghost` snippet, the wrapper size still applies — your snippet content lives inside a `.dnd-ghost` div whose width/height already track the target. To opt out, set explicit dimensions on your top-level snippet element:
+
+```svelte
+{#snippet ghost({ element })}
+    <div style:width="{element.offsetWidth}px" style:height="{element.offsetHeight}px">…</div>
+{/snippet}
+```
+
+---
+
 ## Items aren't draggable on touch / mobile devices
 
 Make sure `touch-action: none` is set on draggable elements. The library sets this via `.dnd-draggable` — do not override it in your own CSS:
