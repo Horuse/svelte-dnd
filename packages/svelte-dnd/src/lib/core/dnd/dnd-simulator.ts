@@ -5,6 +5,7 @@ import type { DropZone, DropEvent, DropCancelledEvent, DndItemInfo, DndContainer
 import type { Droppable } from '../entities/droppable.svelte.js'
 import type { Slot } from '../entities/slot.js'
 import type { ResolvedAnimationConfig } from '../animation/animation-config.js'
+import { flushSync } from 'svelte'
 import { AnimationPipeline } from '../animation/steps/animation-pipeline.js'
 import { GhostToTargetStep } from '../animation/steps/ghost-to-target-step.js'
 import { GhostReturnStep } from '../animation/steps/ghost-return-step.js'
@@ -268,21 +269,27 @@ export class DndSimulator {
 		applyState: () => void | Promise<void>,
 		duration: number = this.animation.swapDuration
 	): Promise<void> {
-		// First — record current positions
+		// First — record current positions (visual rects, including any active translates).
 		const oldRects = new Map<string, DOMRect>()
 		for (const id of ids) {
 			const el = this.findElementById(id)
 			if (el) oldRects.set(id, el.getBoundingClientRect())
 		}
 
-		// Apply state change
-		await applyState()
+		// Apply state change. May be sync or async.
+		const result = applyState()
+		if (result && typeof (result as Promise<unknown>).then === 'function') await result
 
-		// Last — wait for Svelte to update DOM
-		const { tick } = await import('svelte')
-		await tick()
+		// Synchronously flush Svelte's pending updates so the new DOM layout is
+		// readable in the same sync block as the inverse transform below. Using
+		// `await tick()` instead leaves a microtask gap during which the browser
+		// can paint the freshly mounted nodes at their new layout positions —
+		// that's the "1-frame jump to the new spot" before the FLIP starts.
+		flushSync()
 
-		// Invert — apply inverted transforms so elements appear in old positions
+		// Invert — apply inverted transforms so elements visually stay at their
+		// pre-state-change positions. This sync block runs before any paint
+		// because there are no awaits between flushSync and the transform write.
 		const elements: HTMLElement[] = []
 		for (const id of ids) {
 			const el = this.findElementById(id)

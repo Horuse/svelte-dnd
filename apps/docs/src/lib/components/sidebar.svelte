@@ -9,6 +9,7 @@
 		{ href: '/examples/horizontal', label: 'Horizontal List' },
 		{ href: '/examples/grid', label: 'Grid' },
 		{ href: '/examples/multi-container', label: 'Multi Container' },
+		{ href: '/examples/target-zones', label: 'Target Zones' },
 		{ href: '/examples/custom-ghost', label: 'Custom Ghost' },
 		{ href: '/examples/sortable-containers', label: 'Sortable Containers' },
 		{ href: '/examples/vertical-sortable-containers', label: 'Vertical Sortable' },
