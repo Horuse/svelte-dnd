@@ -13,6 +13,8 @@ interface ScrollTargetParams {
 	container: HTMLElement
 	expectedSize: number
 	direction: 'vertical' | 'horizontal'
+	/** Extra space (px) to keep between the preview and the container edge after scrolling. Defaults to 0. */
+	padding?: number
 }
 
 interface ScrollTargetResult {
@@ -28,7 +30,7 @@ interface FinalGhostPositionParams {
 
 export class ScrollSyncCalculator {
 	calculateScrollTarget(params: ScrollTargetParams): ScrollTargetResult {
-		const { preview, container, expectedSize, direction } = params
+		const { preview, container, expectedSize, direction, padding = 0 } = params
 		const adapter = getDirectionAdapter(direction)
 
 		const previewRect = preview.getBoundingClientRect()
@@ -43,15 +45,20 @@ export class ScrollSyncCalculator {
 		const previewStart = adapter.getPosition(previewRect)
 		const previewEnd = adapter.getEndPosition(previewRect, previewSize)
 
+		// Inset the visible band by `padding` so the preview lands with a gap
+		// from the container edge — same value droppable.spacing leaves between items.
+		const visibleStart = containerStart + padding
+		const visibleEnd = containerEnd - padding
+
 		let targetScroll = startScroll
 
-		if (previewStart < containerStart) {
-			// Preview is above/left of the visible viewport
-			const overflow = containerStart - previewStart
+		if (previewStart < visibleStart) {
+			// Preview is above/left of the visible band
+			const overflow = visibleStart - previewStart
 			targetScroll = startScroll - overflow
-		} else if (previewEnd > containerEnd) {
-			// Preview is below/right of the visible viewport
-			const overflow = previewEnd - containerEnd
+		} else if (previewEnd > visibleEnd) {
+			// Preview is below/right of the visible band
+			const overflow = previewEnd - visibleEnd
 			targetScroll = startScroll + overflow
 		}
 

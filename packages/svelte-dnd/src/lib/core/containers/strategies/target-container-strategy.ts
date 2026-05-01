@@ -4,9 +4,23 @@ import type { DragSession } from '../../dnd/drag-session.svelte.js'
 import type { DndState } from '../../dnd/dnd-state.svelte.js'
 import type { AnimationStep } from '../../animation/steps/animation-step.js'
 import type { Droppable } from '../../entities/droppable.svelte.js'
+import type { Behavior } from '../../animation/behavior.js'
 import { DOMHelper } from '../../utils/dom-helper.js'
 import { GhostToTargetStep } from '../../animation/steps/ghost-to-target-step.js'
 import { GhostReturnStep } from '../../animation/steps/ghost-return-step.js'
+
+export interface TargetOptions {
+	/**
+	 * Per-strategy behaviors (auto-scroll, scroll-sync, future plugins).
+	 * Pass an array to replace the controller's default behaviors for this droppable.
+	 *
+	 * @example
+	 * ```ts
+	 * target({ behaviors: [autoScroll({ maxSpeed: 60 })] })
+	 * ```
+	 */
+	behaviors?: Behavior[]
+}
 
 /**
  * Target container strategy — single drop zone covering the whole container, no insert previews.
@@ -14,9 +28,14 @@ import { GhostReturnStep } from '../../animation/steps/ghost-return-step.js'
  */
 export class TargetContainerStrategy implements ContainerStrategy {
 	readonly mode: DndMode = 'target'
+	readonly behaviors: Behavior[]
 
 	private state!: DndState
 	private droppablesById!: Map<string, Droppable>
+
+	constructor(options: TargetOptions = {}) {
+		this.behaviors = options.behaviors ?? []
+	}
 
 	bindContext(ctx: StrategyBindContext): void {
 		this.state = ctx.state
@@ -59,8 +78,9 @@ export class TargetContainerStrategy implements ContainerStrategy {
  * @example
  * ```svelte
  * <DndDroppable strategy={target()} />
+ * <DndDroppable strategy={target({ behaviors: [autoScroll({ maxSpeed: 60 })] })} />
  * ```
  */
-export function target(): TargetContainerStrategy {
-	return new TargetContainerStrategy()
+export function target(options?: TargetOptions): TargetContainerStrategy {
+	return new TargetContainerStrategy(options)
 }

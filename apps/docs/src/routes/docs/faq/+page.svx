@@ -195,20 +195,34 @@ See the [CSS Custom Properties & Classes](/docs/css-custom-props) page for the c
 
 ## How do I tune auto-scroll speed or zone size?
 
-Pass `scroll` config to the `DndController` constructor, or call `setScrollConfig()` at any time:
+Auto-scroll lives in the `autoScroll()` behavior — see [Behaviors](/docs/behaviors). Pass tuning to the controller-level default, or override per-droppable on a strategy:
 
 ```ts
-// at creation
-const controller = new DndController({ scroll: { scrollZoneRatio: 0.2, maxSpeed: 15 } });
+import { autoScroll, scrollSync } from '@horuse/svelte-dnd'
 
-// or later
-controller.setScrollConfig({ maxSpeed: 50 });
+// Controller-level default (also applies to data-dnd-scroll wrappers)
+const controller = new DndController({
+    behaviors: [
+        autoScroll({ zoneRatio: 0.2, maxSpeed: 15 }),
+        scrollSync()
+    ]
+});
+
+// Per-droppable override
+sortable({
+    layout: 'vertical',
+    behaviors: [autoScroll({ maxSpeed: 60 })]
+});
+
+// Replace at runtime
+controller.setBehaviors([autoScroll({ maxSpeed: 50 }), scrollSync()]);
 ```
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `scrollZoneRatio` | `0.3` | Fraction of container size that triggers scroll |
+| `zoneRatio` | `0.3` | Fraction of container size that triggers scroll |
 | `maxSpeed` | `30` | Max scroll speed in px/frame at 60fps |
+| `stopOnDrop` | `false` | Halt scroll the moment the user releases (controller-level only) |
 
 ---
 

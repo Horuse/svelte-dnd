@@ -1,0 +1,217 @@
+---
+title: Behaviors
+description: Pluggable drop-side hooks — auto-scroll under drag, scroll-sync during drop animations, and any future plugins. Composable per controller and per strategy.
+---
+
+<script lang="ts">
+	import Steps from '$lib/components/markdown/Steps.svelte'
+	import Step from '$lib/components/markdown/Step.svelte'
+</script>
+
+# Behaviors
+
+Behaviors are the plugin layer for drop-side concerns. They mirror the patterns the rest of the library already uses — `modifiers[]`, `sensors[]`, `collision` factories — so you compose, swap, or replace them the same way.
+
+```ts
+import { autoScroll, scrollSync } from '@horuse/svelte-dnd'
+
+new DndController({
+    behaviors: [autoScroll(), scrollSync()]   // default if omitted
+})
+```
+
+## Where they plug in
+
+<Steps>
+    <Step title="Controller-level (default for the whole app)">
+        Set the <code class="code-block">behaviors</code> field on <code class="code-block">new DndController</code>. Applied to every droppable that doesn't override, plus non-droppable <code class="code-block">data-dnd-scroll</code> wrappers.
+    </Step>
+    <Step title="Per-strategy (one droppable)">
+        Set the <code class="code-block">behaviors</code> option on <code class="code-block">sortable</code> or <code class="code-block">target</code>. Replaces the controller defaults for that droppable.
+    </Step>
+    <Step title="Per-call (one programmatic animation)">
+        Set the <code class="code-block">behaviors</code> option on <code class="code-block">animateItem</code>. Overrides everything for that animation only.
+    </Step>
+</Steps>
+
+Pass `behaviors: []` to opt out of all defaults.
+
+---
+
+## `autoScroll()`
+
+Edge-triggered auto-scroll while a drag is in progress. When the pointer enters the trigger zone near a scrollable container's edge, the container scrolls automatically — speed scales with proximity to the edge.
+
+
+<img src="/behaviors1.gif" width="400" height="200" />
+
+### Options
+
+| Option | Default | Effect |
+|--------|---------|--------|
+| `zoneRatio` | `0.3` | Trigger zone size as a fraction of the container's height/width. `0.3` = innermost 30% from each edge engages scroll. |
+| `maxSpeed` | `30` | Maximum scroll speed in px/frame at 60fps. |
+| `stopOnDrop` | `false` | Halt scroll the moment the user releases the pointer. Controller-level only — per-strategy override is ignored. |
+
+### Examples
+
+```ts
+// Global default — also applies to data-dnd-scroll wrappers
+new DndController({
+    behaviors: [autoScroll({ zoneRatio: 0.2, maxSpeed: 50 })]
+})
+
+// Override on one droppable
+sortable({
+    layout: 'vertical',
+    behaviors: [autoScroll({ maxSpeed: 60 })]
+})
+
+// Disable auto-scroll for a specific list (keep scroll-sync)
+sortable({
+    layout: 'horizontal',
+    behaviors: [scrollSync()]
+})
+```
+
+---
+
+## `scrollSync()`
+
+Wraps the drop / return animation: when the destination slot is hidden enough inside its scrollable container, the container scrolls together with the ghost flight so the ghost stays inside the viewport.
+
+> **Demo:** _GIF — drop into off-screen position triggers scroll-sync_
+
+### Options
+
+| Option | Default | Effect |
+|--------|---------|--------|
+| `threshold` | `1` | Visibility ratio (0..1) below which scroll-sync engages. `1` = scroll if any pixel of the target slot is hidden. `0.5` = scroll only when less than half visible. `0` = never scroll-sync (pass-through to the standard ghost flight). |
+
+### Examples
+
+```ts
+// Tighter threshold — only scroll when most of the slot is off-screen
+sortable({
+    layout: 'vertical',
+    behaviors: [autoScroll(), scrollSync({ threshold: 0.5 })]
+})
+
+// Disable scroll-sync for a specific list
+sortable({
+    layout: 'horizontal',
+    behaviors: [autoScroll()]
+})
+
+// Per-call override — disable for a single programmatic animation
+await controller.animateItem('task-3', {
+    to: { containerId: 'in-progress', position: 0 },
+    behaviors: [autoScroll()]
+})
+```
+
+---
+
+## Composing behaviors
+
+Behaviors stack — pass as many as you want. The first listed wraps outer-most for any `wrapDropAnimation` hooks.
+
+```ts
+new DndController({
+    behaviors: [
+        autoScroll({ maxSpeed: 60 }),
+        scrollSync({ threshold: 0.5 })
+        // future: clipGhost(), edgeIndicator(), …
+    ]
+})
+```
+
+> **Demo:** _GIF — autoScroll + scrollSync working together on a tall list_
+
+---
+
+## Replacing at runtime
+
+```ts
+controller.setBehaviors([
+    autoScroll({ maxSpeed: 60 }),
+    scrollSync({ threshold: 0.5 })
+])
+```
+
+Updates only the controller-level defaults. Per-strategy `behaviors` set on `sortable()` / `target()` are unaffected.
+
+---
+
+## Custom behaviors
+
+A `Behavior` is duck-typed — implement only the hooks you care about. Both library built-ins are written this way.
+
+```ts
+import type { Behavior } from '@horuse/svelte-dnd'
+
+const fadeOnDrop: Behavior = {
+    name: 'fadeOnDrop',
+    wrapDropAnimation(next, ctx) {
+        return {
+            async execute() {
+                ctx.targetEl?.style.setProperty('opacity', '0.5')
+                try {
+                    await next.execute()
+                } finally {
+                    ctx.targetEl?.style.removeProperty('opacity')
+                }
+            },
+            cancel: () => next.cancel?.()
+        }
+    }
+}
+
+new DndController({
+    behaviors: [autoScroll(), scrollSync(), fadeOnDrop]
+})
+```
+
+> **Demo:** _GIF — custom fade-on-drop behavior in action_
+
+### Hook reference
+
+```ts
+interface Behavior {
+    /** Optional debug-friendly identifier. */
+    name?: string
+
+    /** Read by ScrollController to drive auto-scroll under drag. */
+    autoScrollConfig?: AutoScrollConfig
+
+    /** Wraps the drop / return animation step (middleware-style). */
+    wrapDropAnimation?(next: AnimationStep, ctx: BehaviorContext): AnimationStep
+}
+
+interface BehaviorContext {
+    state: DndState
+    /** Layout axis of the destination container. */
+    direction: 'vertical' | 'horizontal'
+    /** Slot wrapper element of the destination position, when known. */
+    targetEl: HTMLElement | null
+    /** Destination droppable's root element, when known. */
+    container: HTMLElement | null
+    /** Configured duration of the inner animation step. */
+    duration: number
+    /** Spacing between sibling items, used as edge padding by scroll-sync. */
+    padding: number
+}
+```
+
+The first behavior in the list wraps outer-most: `[clip, scrollSync]` means `clip` sees the result of `scrollSync` wrapping the base step.
+
+---
+
+## When to put a behavior where
+
+| You want to … | Place it here |
+|---------------|---------------|
+| Apply to every droppable + `data-dnd-scroll` wrappers | Controller-level — `new DndController({ behaviors })` |
+| One container needs different auto-scroll speed / disabled scroll-sync | Per-strategy — `sortable({ behaviors })` |
+| One programmatic animation (undo, demo, onboarding) skips a default | Per-call — `animateItem({ behaviors })` |
+| Replace defaults at runtime (settings panel, accessibility toggle) | `controller.setBehaviors([...])` |

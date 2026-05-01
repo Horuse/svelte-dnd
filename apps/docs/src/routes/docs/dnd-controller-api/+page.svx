@@ -25,11 +25,10 @@ const controller = new DndController();
 
 // Full config:
 const controller = new DndController({
-    scroll: {
-        scrollZoneRatio: 0.2, // trigger zone = 20% of container height/width (default: 0.3)
-        maxSpeed: 20,          // max px/frame at 60fps (default: 30)
-        stopOnDrop: true,      // stop scroll immediately on drop (default: false — scroll continues during ghost animation)
-    },
+    behaviors: [                                // see /docs/behaviors
+        autoScroll({ zoneRatio: 0.2, maxSpeed: 20, stopOnDrop: true }),
+        scrollSync({ threshold: 0.5 }),
+    ],
     preview: {
         showDelay: 150,     // ms before preview slot appears (default: 300)
         collapseDelay: 400, // ms before slot collapses — match --dnd-preview-duration-out (default: 200)
@@ -52,11 +51,7 @@ const controller = new DndController({
 
 // Default values (what you get when omitting each option):
 const controller = new DndController({
-    scroll: {
-        scrollZoneRatio: 0.3,
-        maxSpeed: 30,
-        stopOnDrop: false,
-    },
+    behaviors: [autoScroll(), scrollSync()], // controller-level defaults; see /docs/behaviors
     preview: {
         showDelay: 300,
         collapseDelay: 200,
@@ -226,13 +221,20 @@ controller.endDrag(shouldAnimate?: boolean): void
 
 Ends the drag. When `shouldAnimate` is `true` (default), the ghost animates back to its origin.
 
-### setScrollConfig
+### setBehaviors
 
 ```ts
-controller.setScrollConfig(config: ScrollConfig): void
+controller.setBehaviors(behaviors: Behavior[]): void
 ```
 
-Updates auto-scroll config at runtime. Changes take effect on the next scroll tick.
+Replaces the controller-level default `behaviors` at runtime (see [Behaviors](/docs/behaviors)). Per-strategy `behaviors` set on a `sortable()` / `target()` instance are unaffected. Changes take effect on the next scroll tick / drop animation.
+
+```ts
+controller.setBehaviors([
+    autoScroll({ maxSpeed: 60 }),
+    scrollSync({ threshold: 0.5 })
+]);
+```
 
 ### setPreviewConfig
 
@@ -318,14 +320,27 @@ interface DropZone {
     rect: { x: number; y: number; width: number; height: number };
 }
 
-interface ScrollConfig {
+interface AutoScrollConfig {
     /** Fraction of container size that triggers auto-scroll. Default: 0.3 */
-    scrollZoneRatio?: number;
+    zoneRatio?: number;
     /** Maximum scroll speed in px/frame at 60fps. Default: 30 */
     maxSpeed?: number;
-    /** Stop auto-scroll immediately when drop is committed. Default: false — scroll continues during ghost animation for a smoother feel. */
+    /** Stop auto-scroll immediately when drop is committed. Default: false. */
     stopOnDrop?: boolean;
 }
+
+interface ScrollSyncOptions {
+    /**
+     * Visibility ratio (0..1) below which the drop / return animation scrolls
+     * the destination container in lockstep with the ghost flight. Default: 1
+     * (any hidden pixel triggers scroll). Set 0 to disable.
+     */
+    threshold?: number;
+}
+
+// Built-in behavior factories — see /docs/behaviors
+declare function autoScroll(opts?: AutoScrollConfig): Behavior;
+declare function scrollSync(opts?: ScrollSyncOptions): Behavior;
 
 interface PreviewConfig {
     /** Debounce delay (ms) before revealing the preview slot. Default: 300 */
@@ -346,7 +361,8 @@ interface AnimationConfig {
 }
 
 interface DndControllerConfig {
-    scroll?: ScrollConfig;
+    /** Drop-side plugins (auto-scroll, scroll-sync, future hooks). Default: `[autoScroll(), scrollSync()]`. See [Behaviors](/docs/behaviors). */
+    behaviors?: Behavior[];
     preview?: PreviewConfig;
     animation?: AnimationConfig;
     /** Enable dev warnings (duplicate positions, etc.). Default: false */

@@ -1,5 +1,5 @@
 import { DndState } from './dnd-state.svelte.js'
-import { ScrollController, type ScrollConfig } from '../scroll/scroll-controller.js'
+import { ScrollController } from '../scroll/scroll-controller.js'
 import type { PreviewConfig } from '../entities/preview.svelte.js'
 import { DndEventEmitter } from './dnd-event-emitter.js'
 import { TranslationEngine } from '../zones/translation-engine.svelte.js'
@@ -15,15 +15,25 @@ import type { AnimateItemOptions, AnimateLayoutOptions } from './dnd-simulator.j
 import type { DropZone, DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback, ZonesInvalidatedCallback, DndItemInfo, DndContainerInfo, DragStartEvent, Announcements } from '../../types.js'
 import type { AnimationConfig } from '../animation/animation-config.js'
 import { resolveAnimationConfig } from '../animation/animation-config.js'
+import type { Behavior, AutoScrollConfig } from '../animation/behavior.js'
+import { autoScroll } from '../animation/behaviors/auto-scroll.js'
+import { scrollSync } from '../animation/behaviors/scroll-sync.js'
+import { resolveBehaviors } from '../animation/apply-behaviors.js'
 import { DragSession } from './drag-session.svelte.js'
 import type { Draggable } from '../entities/draggable.svelte.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
 import type { Slot } from '../entities/slot.js'
 
 export interface DndControllerConfig {
-	scroll?: ScrollConfig
 	preview?: PreviewConfig
 	animation?: AnimationConfig
+	/**
+	 * Drop-side plugins. Default — `[autoScroll(), scrollSync()]`. Pass an
+	 * explicit list (including empty `[]` to opt out of all defaults) to
+	 * customise. Strategies can override per-droppable via their own
+	 * `behaviors` option.
+	 */
+	behaviors?: Behavior[]
 	debug?: boolean
 	sensors?: SensorDescriptor[]
 	collision?: CollisionAlgorithm
@@ -71,13 +81,14 @@ export class DndController {
 	debug = $state(false)
 	sensors = $state<SensorDescriptor[] | undefined>(undefined)
 	announcements = $state<Announcements | undefined>(undefined)
+	private defaultBehaviors: Behavior[] = []
 	/**
 	 * Reactive preview delays. DndPreview syncs its Preview entity from this.
 	 * @internal
 	 */
 	previewConfig = $state<{ showDelay: number; collapseDelay: number }>({ showDelay: 300, collapseDelay: 200 })
 
-	constructor({ scroll = {}, preview, animation, debug = false, sensors, collision, modifiers = [], announcements }: DndControllerConfig = {}) {
+	constructor({ preview, animation, behaviors, debug = false, sensors, collision, modifiers = [], announcements }: DndControllerConfig = {}) {
 		this.debug = debug
 		this.sensors = sensors ?? [new PointerSensor(), new KeyboardSensor()]
 		this.announcements = announcements
@@ -86,14 +97,16 @@ export class DndController {
 		if (preview?.collapseDelay !== undefined) this.previewConfig.collapseDelay = preview.collapseDelay
 
 		const animationConfig = resolveAnimationConfig(animation)
+		this.defaultBehaviors = behaviors ?? [autoScroll(), scrollSync()]
 
 		this.translationEngine = new TranslationEngine(this.state, this.droppables)
 		this.dropResolver = new DropResolver(this.state, this.droppablesById, collision)
 
 		this.scrollController = new ScrollController(this.state, {
-			...scroll,
 			onZoneRefresh: () => this.eventEmitter.notifyZonesInvalidated(),
-			onMouseUpdate: (x, y) => this.updateMousePosition(x, y)
+			onMouseUpdate: (x, y) => this.updateMousePosition(x, y),
+			resolveAutoScrollConfig: (container) => this.resolveAutoScrollConfig(container),
+			stopOnDrop: this.controllerAutoScrollConfig()?.stopOnDrop ?? false
 		})
 
 		this.animationCoordinator = new DropAnimationCoordinator(
@@ -102,10 +115,28 @@ export class DndController {
 			this.scrollController,
 			this.dropResolver,
 			this.droppablesById,
-			animationConfig
+			animationConfig,
+			this.defaultBehaviors
 		)
 
-		this.simulator = new DndSimulator(this.state, this.droppablesById, this.slots, this.eventEmitter, animationConfig)
+		this.simulator = new DndSimulator(this.state, this.droppablesById, this.slots, this.eventEmitter, animationConfig, this.defaultBehaviors)
+	}
+
+	/** First `autoScroll(...)` config among the controller's default behaviors. */
+	private controllerAutoScrollConfig(): AutoScrollConfig | null {
+		return this.defaultBehaviors.find((b) => b.autoScrollConfig)?.autoScrollConfig ?? null
+	}
+
+	/** Looks up the active auto-scroll config for any scrollable element ScrollController encounters. */
+	private resolveAutoScrollConfig(container: HTMLElement): AutoScrollConfig | null {
+		const dropId = container.getAttribute('data-dnd-drop-id')
+		if (dropId) {
+			const droppable = this.droppablesById.get(dropId)
+			const behaviors = resolveBehaviors(droppable ?? null, this.defaultBehaviors)
+			return behaviors.find((b) => b.autoScrollConfig)?.autoScrollConfig ?? null
+		}
+		// `data-dnd-scroll` (non-droppable wrappers) — controller defaults only.
+		return this.controllerAutoScrollConfig()
 	}
 
 	// --- Reactive state (read-only) ---
@@ -362,9 +393,18 @@ export class DndController {
 		this.state.setDropZones([...otherZones, ...newZones])
 	}
 
-	/** Update auto-scroll config at runtime. Changes take effect on the next scroll tick. */
-	setScrollConfig(config: ScrollConfig) {
-		this.scrollController.updateConfig(config)
+	/**
+	 * Replace the controller-level default `behaviors` at runtime. Per-strategy
+	 * `behaviors` set on a `sortable()` / `target()` instance are unaffected.
+	 * Changes take effect on the next scroll tick / next drop animation.
+	 */
+	setBehaviors(behaviors: Behavior[]) {
+		this.defaultBehaviors = behaviors
+		this.scrollController.updateOptions({
+			stopOnDrop: this.controllerAutoScrollConfig()?.stopOnDrop ?? false
+		})
+		this.animationCoordinator.setDefaultBehaviors(behaviors)
+		this.simulator.setDefaultBehaviors(behaviors)
 	}
 
 	/**

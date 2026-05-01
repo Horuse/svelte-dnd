@@ -41,6 +41,12 @@ interface AnimateItemOptions {
     emitEvents?: boolean;
     /** Override the configured drop/return duration. */
     duration?: number;
+    /**
+     * Per-call override for the destination droppable's `behaviors`.
+     * Replaces both strategy-level and controller-level defaults for
+     * this animation. See [Behaviors](/docs/behaviors).
+     */
+    behaviors?: Behavior[];
 }
 ```
 

@@ -4,6 +4,7 @@ import type { DragSession } from '../../dnd/drag-session.svelte.js'
 import type { DndState } from '../../dnd/dnd-state.svelte.js'
 import type { AnimationStep } from '../../animation/steps/animation-step.js'
 import type { Droppable } from '../../entities/droppable.svelte.js'
+import type { Behavior } from '../../animation/behavior.js'
 import type { SlotLayoutRect, LayoutSnapshot } from '../../zones/layout-snapshot.js'
 import { GhostToTargetStep } from '../../animation/steps/ghost-to-target-step.js'
 import { GhostReturnStep } from '../../animation/steps/ghost-return-step.js'
@@ -18,6 +19,20 @@ export interface SortableOptions {
 	 * `'column'`: items fill top-to-bottom, wrapping to next column.
 	 */
 	flow?: 'row' | 'column'
+	/**
+	 * Per-strategy behaviors (auto-scroll, scroll-sync, future plugins).
+	 * Pass an array to replace the controller's default behaviors for this droppable.
+	 * Omit (or pass an empty array) to inherit the controller defaults.
+	 *
+	 * @example
+	 * ```ts
+	 * sortable({
+	 *     layout: 'vertical',
+	 *     behaviors: [autoScroll({ maxSpeed: 60 }), scrollSync({ threshold: 0.5 })]
+	 * })
+	 * ```
+	 */
+	behaviors?: Behavior[]
 }
 
 /**
@@ -32,6 +47,7 @@ export class SortableContainerStrategy implements ContainerStrategy {
 	readonly mode: DndMode = 'sortable'
 	readonly layout: DndLayout
 	readonly flow: 'row' | 'column'
+	readonly behaviors: Behavior[]
 
 	private state!: DndState
 	private droppablesById!: Map<string, Droppable>
@@ -39,6 +55,7 @@ export class SortableContainerStrategy implements ContainerStrategy {
 	constructor(options: SortableOptions = {}) {
 		this.layout = options.layout ?? 'vertical'
 		this.flow = options.flow ?? 'row'
+		this.behaviors = options.behaviors ?? []
 	}
 
 	bindContext(ctx: StrategyBindContext): void {

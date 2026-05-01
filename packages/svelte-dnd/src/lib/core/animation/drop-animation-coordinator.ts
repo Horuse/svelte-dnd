@@ -6,10 +6,12 @@ import type { AnimationStep } from './steps/animation-step.js'
 import type { DropPreview, DndItemInfo, DndContainerInfo, DropEvent, DragEndEvent, DragOverEvent, DropCancelledEvent } from '../../types.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
 import type { ResolvedAnimationConfig } from './animation-config.js'
+import type { Behavior, BehaviorContext } from './behavior.js'
 import { AnimationPipeline } from './steps/animation-pipeline.js'
 import { GhostToTargetStep } from './steps/ghost-to-target-step.js'
 import { GhostReturnStep } from './steps/ghost-return-step.js'
 import { DEFAULT_ANIMATION_CONFIG } from './animation-config.js'
+import { resolveBehaviors, wrapWithBehaviors, findTargetSlotWrapper } from './apply-behaviors.js'
 
 export class DropAnimationCoordinator {
 	private currentAnimation: AnimationPipeline | null = null
@@ -21,8 +23,31 @@ export class DropAnimationCoordinator {
 		private scrollController: ScrollController,
 		private dropResolver: DropResolver,
 		private droppablesById: Map<string, Droppable> = new Map(),
-		private animation: ResolvedAnimationConfig = DEFAULT_ANIMATION_CONFIG
+		private animation: ResolvedAnimationConfig = DEFAULT_ANIMATION_CONFIG,
+		private defaultBehaviors: Behavior[] = []
 	) {}
+
+	private buildContext(droppable: Droppable | null, position: number, duration: number): BehaviorContext {
+		const layout = droppable?.layout
+		return {
+			state: this.state,
+			direction: layout === 'horizontal' ? 'horizontal' : 'vertical',
+			targetEl: findTargetSlotWrapper(droppable, position),
+			container: droppable?.element ?? null,
+			duration,
+			padding: droppable?.spacing ?? 0
+		}
+	}
+
+	private wrap(step: AnimationStep, droppable: Droppable | null, position: number, duration: number): AnimationStep {
+		const behaviors = resolveBehaviors(droppable, this.defaultBehaviors)
+		const ctx = this.buildContext(droppable, position, duration)
+		return wrapWithBehaviors(step, behaviors, ctx)
+	}
+
+	setDefaultBehaviors(behaviors: Behavior[]) {
+		this.defaultBehaviors = behaviors
+	}
 
 	updateDropPreview(pointer: { x: number; y: number }) {
 		if (!this.state.dragging) {
@@ -153,7 +178,9 @@ export class DropAnimationCoordinator {
 		}
 
 		if (targetZone && this.state.element && this.state.transform) {
-			this.animate(new GhostToTargetStep(this.state, targetZone, this.droppablesById, this.animation.dropDuration), onDropComplete)
+			const baseStep = new GhostToTargetStep(this.state, targetZone, this.droppablesById, this.animation.dropDuration)
+			const wrapped = this.wrap(baseStep, targetDroppable ?? null, position, this.animation.dropDuration)
+			this.animate(wrapped, onDropComplete)
 		} else {
 			onDropComplete()
 		}
@@ -191,10 +218,12 @@ export class DropAnimationCoordinator {
 
 		if (shouldAnimate && session) {
 			requestAnimationFrame(() => {
-				this.animate(
-					new GhostReturnStep(this.state, this.state.originContainerId, this.state.originPosition, this.droppablesById, this.animation.returnDuration),
-					() => this.finalizeDragEnd(dragEndEvent)
-				)
+				const originId = this.state.originContainerId
+				const originPos = this.state.originPosition
+				const originDroppable = originId ? this.droppablesById.get(originId) ?? null : null
+				const baseStep = new GhostReturnStep(this.state, originId, originPos, this.droppablesById, this.animation.returnDuration)
+				const wrapped = this.wrap(baseStep, originDroppable, originPos, this.animation.returnDuration)
+				this.animate(wrapped, () => this.finalizeDragEnd(dragEndEvent))
 			})
 		} else {
 			this.finalizeDragEnd(dragEndEvent)

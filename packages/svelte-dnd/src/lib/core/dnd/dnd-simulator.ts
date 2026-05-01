@@ -5,11 +5,14 @@ import type { DropZone, DropEvent, DropCancelledEvent, DndItemInfo, DndContainer
 import type { Droppable } from '../entities/droppable.svelte.js'
 import type { Slot } from '../entities/slot.js'
 import type { ResolvedAnimationConfig } from '../animation/animation-config.js'
+import type { Behavior, BehaviorContext } from '../animation/behavior.js'
+import type { AnimationStep } from '../animation/steps/animation-step.js'
 import { flushSync } from 'svelte'
 import { AnimationPipeline } from '../animation/steps/animation-pipeline.js'
 import { GhostToTargetStep } from '../animation/steps/ghost-to-target-step.js'
 import { GhostReturnStep } from '../animation/steps/ghost-return-step.js'
 import { DEFAULT_ANIMATION_CONFIG } from '../animation/animation-config.js'
+import { resolveBehaviors, wrapWithBehaviors, findTargetSlotWrapper } from '../animation/apply-behaviors.js'
 
 export interface ContainerPosition {
 	containerId: string
@@ -25,7 +28,7 @@ export interface AnimateItemOptions {
 	/**
 	 * Animation style:
 	 * - `'drop'` (default) — uses `GhostToTargetStep` for both same- and cross-container moves.
-	 * - `'return'` — uses scroll-aware `GhostReturnStep` when the destination is the same container,
+	 * - `'return'` — uses `GhostReturnStep` when the destination is the same container,
 	 *   falls back to `GhostToTargetStep` for cross-container moves.
 	 */
 	style?: 'return' | 'drop'
@@ -33,6 +36,11 @@ export interface AnimateItemOptions {
 	emitEvents?: boolean
 	/** Override the configured drop/return duration. */
 	duration?: number
+	/**
+	 * Per-call override for the destination droppable's behaviors. Replaces both
+	 * the strategy-level and controller-level defaults for this animation.
+	 */
+	behaviors?: Behavior[]
 }
 
 export interface AnimateLayoutOptions {
@@ -59,8 +67,13 @@ export class DndSimulator {
 		private droppablesById: Map<string, Droppable>,
 		private slots: Map<HTMLElement, Slot>,
 		private eventEmitter?: DndEventEmitter,
-		private animation: ResolvedAnimationConfig = DEFAULT_ANIMATION_CONFIG
+		private animation: ResolvedAnimationConfig = DEFAULT_ANIMATION_CONFIG,
+		private defaultBehaviors: Behavior[] = []
 	) {}
+
+	setDefaultBehaviors(behaviors: Behavior[]) {
+		this.defaultBehaviors = behaviors
+	}
 
 	/**
 	 * Animate a single item flying to a destination through the ghost system.
@@ -79,7 +92,7 @@ export class DndSimulator {
 	 * })
 	 */
 	animateItem(itemId: string, options: AnimateItemOptions): Promise<void> {
-		const { to, from, style = 'drop', emitEvents = false, duration } = options
+		const { to, from, style = 'drop', emitEvents = false, duration, behaviors } = options
 
 		const sourceContainerId = from?.containerId ?? this.findItemContainer(itemId)
 		if (!sourceContainerId) {
@@ -87,12 +100,26 @@ export class DndSimulator {
 		}
 		const toPosition = to.position ?? 0
 		const useReturnStep = style === 'return' && to.containerId === sourceContainerId
-		const dropDur = duration ?? this.animation.dropDuration
-		const returnDur = duration ?? this.animation.returnDuration
+		const stepDuration = useReturnStep
+			? duration ?? this.animation.returnDuration
+			: duration ?? this.animation.dropDuration
 
-		const makeStep = () => useReturnStep
-			? new GhostReturnStep(this.state, to.containerId, toPosition, this.droppablesById, returnDur)
-			: new GhostToTargetStep(this.state, this.syntheticZone(to.containerId, toPosition), this.droppablesById, dropDur)
+		const makeStep = (): AnimationStep => {
+			const baseStep = useReturnStep
+				? new GhostReturnStep(this.state, to.containerId, toPosition, this.droppablesById, stepDuration)
+				: new GhostToTargetStep(this.state, this.syntheticZone(to.containerId, toPosition), this.droppablesById, stepDuration)
+			const targetDroppable = this.droppablesById.get(to.containerId) ?? null
+			const resolved = behaviors ?? resolveBehaviors(targetDroppable, this.defaultBehaviors)
+			const ctx: BehaviorContext = {
+				state: this.state,
+				direction: targetDroppable?.layout === 'horizontal' ? 'horizontal' : 'vertical',
+				targetEl: findTargetSlotWrapper(targetDroppable, toPosition),
+				container: targetDroppable?.element ?? null,
+				duration: stepDuration,
+				padding: targetDroppable?.spacing ?? 0
+			}
+			return wrapWithBehaviors(baseStep, resolved, ctx)
+		}
 
 		const emitKind: EmitKind = style === 'return' ? 'cancel' : 'drop'
 		return this.run(itemId, sourceContainerId, to.containerId, toPosition, makeStep, emitEvents, emitKind)
@@ -198,7 +225,7 @@ export class DndSimulator {
 		fromContainerId: string,
 		toContainerId: string,
 		toPosition: number,
-		makeStep: () => GhostToTargetStep | GhostReturnStep,
+		makeStep: () => AnimationStep,
 		emitEvents: boolean,
 		emitKind: EmitKind
 	): Promise<void> {

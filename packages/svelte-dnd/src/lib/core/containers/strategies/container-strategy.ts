@@ -3,6 +3,7 @@ import type { DragSession } from '../../dnd/drag-session.svelte.js'
 import type { DndState } from '../../dnd/dnd-state.svelte.js'
 import type { AnimationStep } from '../../animation/steps/animation-step.js'
 import type { Droppable } from '../../entities/droppable.svelte.js'
+import type { Behavior } from '../../animation/behavior.js'
 
 export interface StrategyBindContext {
 	state: DndState
@@ -16,6 +17,12 @@ export interface ContainerStrategy {
 	 * Target-like strategies can omit it.
 	 */
 	readonly layout?: DndLayout
+	/**
+	 * Per-strategy behaviors (auto-scroll, scroll-sync, future plugins).
+	 * When `undefined` or empty, the controller's default behaviors apply.
+	 * When non-empty, replaces the controller defaults for this droppable.
+	 */
+	readonly behaviors?: Behavior[]
 	calculateDropZones(droppable: Droppable, session: DragSession | null): DropZone[]
 	getTranslations(droppable: Droppable, session: DragSession): Map<string, { x: number; y: number }>
 	getDropAnimation(session: DragSession, targetZone: DropZone): AnimationStep

@@ -1,21 +1,22 @@
 import type { DndState } from '../dnd/dnd-state.svelte.js'
+import type { AutoScrollConfig } from '../animation/behavior.js'
 
-export interface ScrollConfig {
-	/** Fraction of container size that acts as scroll trigger zone. Default: 0.3 */
-	scrollZoneRatio?: number
-	/** Maximum scroll speed in pixels per frame (at 60fps). Default: 30 */
-	maxSpeed?: number
-	/**
-	 * Stop auto-scroll immediately when a drop is committed.
-	 * When `false` (default), scroll continues during the ghost flight animation for a smoother feel.
-	 * When `true`, scroll stops the moment the user releases — useful if you prefer a hard stop.
-	 */
-	stopOnDrop?: boolean
-}
-
-export interface ScrollOptions extends ScrollConfig {
+export interface ScrollControllerOptions {
 	onZoneRefresh?: () => void
 	onMouseUpdate?: (x: number, y: number) => void
+	/**
+	 * Returns the active auto-scroll config for a scrollable container.
+	 * Source: the first `autoScroll(...)` behavior on that container's
+	 * strategy (per-droppable), falling back to the controller-level
+	 * defaults for `data-dnd-scroll` wrappers. Return `null` to opt this
+	 * container out of auto-scroll entirely.
+	 */
+	resolveAutoScrollConfig?: (container: HTMLElement) => AutoScrollConfig | null
+	/**
+	 * Whether to halt auto-scroll the moment the user releases the pointer.
+	 * Sourced from the controller-level `autoScroll(...)` behavior.
+	 */
+	stopOnDrop?: boolean
 }
 
 export class ScrollController {
@@ -25,7 +26,7 @@ export class ScrollController {
 
 	constructor(
 		private state: DndState,
-		private options: ScrollOptions = {}
+		private options: ScrollControllerOptions = {}
 	) {}
 
 	handleAutoScroll(mouseX: number, mouseY: number) {
@@ -58,10 +59,18 @@ export class ScrollController {
 		})
 	}
 
+	private resolveConfig(container: HTMLElement): AutoScrollConfig | null {
+		return this.options.resolveAutoScrollConfig?.(container) ?? null
+	}
+
 	private calculateScrollConfig(container: HTMLElement) {
+		const cfg = this.resolveConfig(container)
+		if (!cfg) return { shouldScroll: false, directionY: null, speedY: 0, directionX: null, speedX: 0 } as const
+
 		const rect = container.getBoundingClientRect()
 		const { x: mouseX, y: mouseY } = this.lastMousePosition
-		const ratio = this.options.scrollZoneRatio ?? 0.3
+		const ratio = cfg.zoneRatio ?? 0.3
+		const maxSpeed = cfg.maxSpeed ?? 30
 		const scrollZoneY = rect.height * ratio
 		const scrollZoneX = rect.width * ratio
 
@@ -75,10 +84,10 @@ export class ScrollController {
 
 		if (distanceFromTop < scrollZoneY && distanceFromTop > 0) {
 			directionY = 'up'
-			speedY = this.calculateSpeed(1 - distanceFromTop / scrollZoneY)
+			speedY = this.calculateSpeed(1 - distanceFromTop / scrollZoneY, maxSpeed)
 		} else if (distanceFromBottom < scrollZoneY && distanceFromBottom > 0) {
 			directionY = 'down'
-			speedY = this.calculateSpeed(1 - distanceFromBottom / scrollZoneY)
+			speedY = this.calculateSpeed(1 - distanceFromBottom / scrollZoneY, maxSpeed)
 		}
 
 		let speedX = 0
@@ -86,10 +95,10 @@ export class ScrollController {
 
 		if (distanceFromLeft < scrollZoneX && distanceFromLeft > 0) {
 			directionX = 'left'
-			speedX = this.calculateSpeed(1 - distanceFromLeft / scrollZoneX)
+			speedX = this.calculateSpeed(1 - distanceFromLeft / scrollZoneX, maxSpeed)
 		} else if (distanceFromRight < scrollZoneX && distanceFromRight > 0) {
 			directionX = 'right'
-			speedX = this.calculateSpeed(1 - distanceFromRight / scrollZoneX)
+			speedX = this.calculateSpeed(1 - distanceFromRight / scrollZoneX, maxSpeed)
 		}
 
 		return {
@@ -98,11 +107,10 @@ export class ScrollController {
 			speedY,
 			directionX,
 			speedX
-		}
+		} as const
 	}
 
-	private calculateSpeed(proximityRatio: number): number {
-		const maxSpeed = this.options.maxSpeed ?? 30
+	private calculateSpeed(proximityRatio: number, maxSpeed: number): number {
 		let base: number
 		if (proximityRatio < 0.33) {
 			base = 2 + proximityRatio * 3 * 6
@@ -223,8 +231,9 @@ export class ScrollController {
 
 	get stopOnDrop() { return this.options.stopOnDrop ?? false }
 
-	updateConfig(config: ScrollConfig) {
-		this.options = { ...this.options, ...config }
+	/** Replace runtime callbacks/options. Used by `setBehaviors`. */
+	updateOptions(options: Partial<ScrollControllerOptions>) {
+		this.options = { ...this.options, ...options }
 	}
 
 	clearAll() {

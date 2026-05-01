@@ -72,6 +72,24 @@ describe('ScrollSyncCalculator.calculateScrollTarget', () => {
 		expect(result.targetScroll).toBe(50)
 	})
 
+	it('respects the padding option, scrolling extra to keep a gap from the edge', () => {
+		const container = buildContainer({ x: 0, y: 0, width: 200, height: 200 }, 0)
+		const preview = makeElement()
+		// preview bottom = 200 sits exactly on the container edge — without
+		// padding scrollDelta would be 0; with padding 16 we should scroll 16 more.
+		setRect(preview, { x: 0, y: 100, width: 100, height: 100 })
+
+		const result = calc.calculateScrollTarget({
+			preview,
+			container,
+			expectedSize: 100,
+			direction: 'vertical',
+			padding: 16
+		})
+		expect(result.scrollDelta).toBe(16)
+		expect(result.targetScroll).toBe(16)
+	})
+
 	it('clamps the target scroll position to zero (cannot scroll past the start)', () => {
 		const container = buildContainer({ x: 0, y: 0, width: 200, height: 200 }, 30)
 		const preview = makeElement()

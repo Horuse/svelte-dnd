@@ -4,9 +4,11 @@ export { default as DndDroppable } from './components/DndDroppable.svelte'
 export { default as DndPreview } from './components/DndPreview.svelte'
 export { DndController } from './core/dnd/dnd-controller.svelte.js'
 export type { DndControllerConfig } from './core/dnd/dnd-controller.svelte.js'
-export type { ScrollConfig } from './core/scroll/scroll-controller.js'
 export type { PreviewConfig } from './core/entities/preview.svelte.js'
 export type { AnimationConfig } from './core/animation/animation-config.js'
+export type { Behavior, BehaviorContext, AutoScrollConfig } from './core/animation/behavior.js'
+export { autoScroll } from './core/animation/behaviors/auto-scroll.js'
+export { scrollSync, type ScrollSyncOptions } from './core/animation/behaviors/scroll-sync.js'
 export type {
 	DropZone, DropPreview, DndLayout, DndMode,
 	DndItemInfo, DndContainerInfo,
@@ -27,7 +29,8 @@ export {
 } from './core/containers/strategies/sortable-container-strategy.js'
 export {
 	TargetContainerStrategy,
-	target
+	target,
+	type TargetOptions
 } from './core/containers/strategies/target-container-strategy.js'
 export type { GridFlow } from './core/zones/geometries/grid-zone-geometry.js'
 export type { AnimationStep } from './core/animation/steps/animation-step.js'

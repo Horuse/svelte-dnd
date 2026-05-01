@@ -32,6 +32,7 @@
 				{ href: '/docs/sensors', label: 'Sensors' },
 				{ href: '/docs/collision', label: 'Collisions' },
 				{ href: '/docs/modifiers', label: 'Modifiers' },
+				{ href: '/docs/behaviors', label: 'Behaviors' },
 				{ href: '/docs/accessibility', label: 'Accessibility' },
 				{ href: '/docs/custom-strategies', label: 'Strategies' },
 			]

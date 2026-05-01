@@ -50,6 +50,20 @@ export class DOMHelper {
 		)
 	}
 
+	/**
+	 * Fraction of the element's area that is currently inside the container's
+	 * rect, in the range [0, 1]. Returns 0 when the element has zero area.
+	 */
+	static computeVisibleFraction(element: HTMLElement, container: HTMLElement): number {
+		const e = element.getBoundingClientRect()
+		const c = container.getBoundingClientRect()
+		const ix = Math.max(0, Math.min(e.right, c.right) - Math.max(e.left, c.left))
+		const iy = Math.max(0, Math.min(e.bottom, c.bottom) - Math.max(e.top, c.top))
+		const intersection = ix * iy
+		const area = e.width * e.height
+		return area > 0 ? intersection / area : 0
+	}
+
 	// Rect helpers
 	static getRect(element: HTMLElement): DOMRect {
 		return element.getBoundingClientRect()

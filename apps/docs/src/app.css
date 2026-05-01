@@ -228,6 +228,10 @@
     .warning-block a {
         @apply underline underline-offset-2 hover:text-amber-600;
     }
+
+    .code-block {
+        @apply rounded-lg relative box-decoration-clone inline w-fit bg-theme/10 text-theme/60 px-2 mx-1 py-0.5
+    }
 }
 
 .prose {
