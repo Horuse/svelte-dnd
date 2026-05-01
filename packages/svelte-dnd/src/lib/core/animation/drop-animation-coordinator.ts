@@ -270,6 +270,12 @@ export class DropAnimationCoordinator {
 			.filter(s => s.draggable.id !== sourceId && s.position > originPosition)
 			.map(s => s.draggable.element)
 
+		// `flex-shrink: 0` blocks the flex container from collapsing the slot itself
+		// when `overflow: hidden` (next line) drops min-height/width to 0. Without it,
+		// in an overflowing scrollable parent the slot snaps to 0 on the very first
+		// frame and siblings jump up by `fullSize` before our per-frame transform can
+		// compensate.
+		slotEl.style.flexShrink = '0'
 		slotEl.style.overflow = 'hidden'
 
 		// Matches the ghost flight duration so both animations finish together.
