@@ -41,6 +41,8 @@ interface AnimateItemOptions {
     emitEvents?: boolean;
     /** Override the configured drop/return duration. */
     duration?: number;
+    /** Override the configured drop/return easing for this call (any valid CSS timing-function). */
+    easing?: string;
     /**
      * Per-call override for the destination droppable's `behaviors`.
      * Replaces both strategy-level and controller-level defaults for
@@ -110,8 +112,10 @@ interface AnimateLayoutOptions {
      * the FLIP transform.
      */
     morph?: boolean;
-    /** Override the configured swap duration. */
+    /** Override the configured layout duration. */
     duration?: number;
+    /** Override the configured layout easing (any valid CSS timing-function). */
+    easing?: string;
 }
 ```
 

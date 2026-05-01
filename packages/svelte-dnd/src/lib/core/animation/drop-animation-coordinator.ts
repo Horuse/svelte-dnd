@@ -11,6 +11,7 @@ import { AnimationPipeline } from './steps/animation-pipeline.js'
 import { GhostToTargetStep } from './steps/ghost-to-target-step.js'
 import { GhostReturnStep } from './steps/ghost-return-step.js'
 import { DEFAULT_ANIMATION_CONFIG } from './animation-config.js'
+import { parseEasing } from './easing.js'
 import { resolveBehaviors, wrapWithBehaviors, findTargetSlotWrapper } from './apply-behaviors.js'
 
 export class DropAnimationCoordinator {
@@ -27,7 +28,7 @@ export class DropAnimationCoordinator {
 		private defaultBehaviors: Behavior[] = []
 	) {}
 
-	private buildContext(droppable: Droppable | null, position: number, duration: number): BehaviorContext {
+	private buildContext(droppable: Droppable | null, position: number, duration: number, easing: string): BehaviorContext {
 		const layout = droppable?.layout
 		return {
 			state: this.state,
@@ -35,13 +36,14 @@ export class DropAnimationCoordinator {
 			targetEl: findTargetSlotWrapper(droppable, position),
 			container: droppable?.element ?? null,
 			duration,
+			easing,
 			padding: droppable?.spacing ?? 0
 		}
 	}
 
-	private wrap(step: AnimationStep, droppable: Droppable | null, position: number, duration: number): AnimationStep {
+	private wrap(step: AnimationStep, droppable: Droppable | null, position: number, duration: number, easing: string): AnimationStep {
 		const behaviors = resolveBehaviors(droppable, this.defaultBehaviors)
-		const ctx = this.buildContext(droppable, position, duration)
+		const ctx = this.buildContext(droppable, position, duration, easing)
 		return wrapWithBehaviors(step, behaviors, ctx)
 	}
 
@@ -182,8 +184,8 @@ export class DropAnimationCoordinator {
 		}
 
 		if (targetZone && this.state.element && this.state.transform) {
-			const baseStep = new GhostToTargetStep(this.state, targetZone, this.droppablesById, this.animation.drop)
-			const wrapped = this.wrap(baseStep, targetDroppable ?? null, position, this.animation.drop)
+			const baseStep = new GhostToTargetStep(this.state, targetZone, this.droppablesById, this.animation.drop.duration, this.animation.drop.easing)
+			const wrapped = this.wrap(baseStep, targetDroppable ?? null, position, this.animation.drop.duration, this.animation.drop.easing)
 			this.animate(wrapped, onDropComplete)
 		} else {
 			onDropComplete()
@@ -225,8 +227,8 @@ export class DropAnimationCoordinator {
 				const originId = this.state.originContainerId
 				const originPos = this.state.originPosition
 				const originDroppable = originId ? this.droppablesById.get(originId) ?? null : null
-				const baseStep = new GhostReturnStep(this.state, originId, originPos, this.droppablesById, this.animation.return)
-				const wrapped = this.wrap(baseStep, originDroppable, originPos, this.animation.return)
+				const baseStep = new GhostReturnStep(this.state, originId, originPos, this.droppablesById, this.animation.return.duration, this.animation.return.easing)
+				const wrapped = this.wrap(baseStep, originDroppable, originPos, this.animation.return.duration, this.animation.return.easing)
 				this.animate(wrapped, () => this.finalizeDragEnd(dragEndEvent))
 			})
 		} else {
@@ -271,14 +273,15 @@ export class DropAnimationCoordinator {
 		slotEl.style.overflow = 'hidden'
 
 		// Matches the ghost flight duration so both animations finish together.
-		const duration = this.animation.slotCollapse
+		const duration = this.animation.slotCollapse.duration
+		const easeFn = parseEasing(this.animation.slotCollapse.easing)
 		return new Promise<void>(resolve => {
 			const startTime = performance.now()
 
 			const tick = (now: number) => {
 				const elapsed = now - startTime
 				const t = Math.min(elapsed / duration, 1)
-				const eased = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
+				const eased = easeFn(t)
 				const remaining = 1 - eased
 				const collapseAmount = (startDim + startMargin) * eased
 

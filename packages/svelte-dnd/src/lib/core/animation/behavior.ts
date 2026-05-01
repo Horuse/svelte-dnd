@@ -37,6 +37,12 @@ export interface BehaviorContext {
 	container: HTMLElement | null
 	/** Configured duration of the inner animation step. */
 	duration: number
+	/**
+	 * CSS easing string of the inner animation step. Behaviors that replace
+	 * the inner step (e.g. `scrollSync`) should use this to keep visual
+	 * continuity. Pass through `parseEasing()` to get an interpolation fn.
+	 */
+	easing: string
 	/** Spacing between sibling items, used as edge padding by scroll-sync. */
 	padding: number
 }

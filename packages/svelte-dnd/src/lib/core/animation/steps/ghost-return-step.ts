@@ -3,8 +3,7 @@ import type { DndState } from '../../dnd/dnd-state.svelte.js'
 import type { Droppable } from '../../entities/droppable.svelte.js'
 import { DOMHelper } from '../../utils/dom-helper.js'
 import { DEFAULT_ANIMATION_CONFIG } from '../animation-config.js'
-
-const easing = { outCubic: (t: number) => 1 - Math.pow(1 - t, 3) }
+import { parseEasing } from '../easing.js'
 
 /**
  * Animates the ghost back to the dragged item's origin position.
@@ -22,7 +21,8 @@ export class GhostReturnStep implements AnimationStep {
 		private containerId: string | null,
 		private position: number,
 		private droppablesById: Map<string, Droppable>,
-		private duration: number = DEFAULT_ANIMATION_CONFIG.return
+		private duration: number = DEFAULT_ANIMATION_CONFIG.return.duration,
+		private easing: string = DEFAULT_ANIMATION_CONFIG.return.easing
 	) {}
 
 	execute(): Promise<void> {
@@ -36,6 +36,7 @@ export class GhostReturnStep implements AnimationStep {
 			const startPos = { ...this.state.transform }
 			this.state.setAnimating(true)
 			const startTime = Date.now()
+			const easeFn = parseEasing(this.easing)
 
 			const animate = () => {
 				if (this.cancelled) {
@@ -45,7 +46,7 @@ export class GhostReturnStep implements AnimationStep {
 				}
 
 				const progress = Math.min((Date.now() - startTime) / this.duration, 1)
-				const eased = easing.outCubic(progress)
+				const eased = easeFn(progress)
 				const target = this.getCurrentSlotPosition(fallbackPos)
 
 				this.state.setTransform({

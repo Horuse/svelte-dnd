@@ -31,17 +31,15 @@ const controller = new DndController({
     ],
     animation: {
         preview: {
-            showDelay: 150,                                       // ms before preview slot appears (default: 300)
-            hideDelay: 400,                                       // ms before slot collapses (default: 200)
-            show: { duration: 250, easing: 'ease-out' },          // CSS reveal transition (default: 200ms ease)
-            hide: { duration: 200, easing: 'ease-in' },           // CSS collapse transition (default: 200ms ease)
+            show: { delay: 150, duration: 250, easing: 'ease-out' },                  // delay = debounce; duration+easing = CSS reveal
+            hide: { delay: 400, duration: 200, easing: 'ease-in' },                   // delay before collapse, then transition
         },
-        siblingShift: { duration: 220, easing: 'ease' },          // sibling translate + cross-container spacer
-        ghostResize: { duration: 180, easing: 'ease-out' },       // ghost auto-resize on cross-container moves
-        drop: 200,                                                // ghost flight on successful drop (default: 250)
-        return: 250,                                              // ghost return on cancelled drag (default: 300)
-        slotCollapse: 200,                                        // source slot collapse on cross-container drop (default: 250)
-        layout: 280,                                              // animateLayout default (default: 300)
+        siblingShift: { duration: 220, easing: 'ease' },                              // sibling translate + cross-container spacer
+        ghostResize: { duration: 180, easing: 'ease-out' },                           // ghost auto-resize on cross-container moves
+        drop: { duration: 200, easing: 'cubic-bezier(0.5, 1, 0.89, 1)' },             // ghost flight on successful drop
+        return: { duration: 250, easing: 'ease-out' },                                // ghost return on cancelled drag
+        slotCollapse: 200,                                                            // shorthand: number = duration only, easing keeps default
+        layout: { duration: 280, easing: 'ease-in-out' },                             // animateLayout default
     },
     debug: true,                             // position validation warnings in console
     sensors: [new PointerSensor(), new KeyboardSensor()], // see /docs/sensors
@@ -58,17 +56,15 @@ const controller = new DndController({
     behaviors: [autoScroll(), scrollSync()], // controller-level defaults; see /docs/behaviors
     animation: {
         preview: {
-            showDelay: 300,
-            hideDelay: 200,
-            show: { duration: 200, easing: 'ease' },
-            hide: { duration: 200, easing: 'ease' },
+            show: { delay: 300, duration: 200, easing: 'ease' },
+            hide: { delay: 200, duration: 200, easing: 'ease' },
         },
         siblingShift: { duration: 200, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' },
         ghostResize: { duration: 150, easing: 'ease' },
-        drop: 250,
-        return: 300,
-        slotCollapse: 250,
-        layout: 300,
+        drop: { duration: 250, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' },
+        return: { duration: 300, easing: 'cubic-bezier(0.33, 1, 0.68, 1)' },
+        slotCollapse: { duration: 250, easing: 'cubic-bezier(0.45, 0, 0.55, 1)' },
+        layout: { duration: 300, easing: 'ease' },
     },
     debug: false,
     sensors: [new PointerSensor(), new KeyboardSensor()],
@@ -254,7 +250,7 @@ Updates the controller's animation config at runtime. Accepts a partial — prov
 
 ```ts
 // tweak only the preview hide delay; everything else keeps its current value
-controller.setAnimation({ preview: { hideDelay: 500 } });
+controller.setAnimation({ preview: { hide: { delay: 500 } } });
 
 // switch the sibling-shift to a different easing without changing duration
 controller.setAnimation({ siblingShift: { easing: 'ease-out' } });
@@ -359,16 +355,29 @@ type Transition = {
     easing?: string;
 }
 
+/** Transition with an optional debounce delay before it starts. */
+type DelayedTransition = Transition & {
+    /** Milliseconds to wait before the transition begins. Default: 0. */
+    delay?: number;
+}
+
+/** Shorthand: a bare `number` is treated as `{ duration: <n> }` and keeps the default easing. */
+type DurationOrTransition = number | Transition;
+
 interface AnimationConfig {
     preview?: {
-        /** Debounce delay (ms) before revealing the preview slot. Default: 300 */
-        showDelay?: number;
-        /** Delay (ms) before collapsing the preview slot. Default: 200 */
-        hideDelay?: number;
-        /** CSS transition for the reveal (opacity / scale). Default: 200ms ease */
-        show?: Transition;
-        /** CSS transition for the collapse. Default: 200ms ease */
-        hide?: Transition;
+        /**
+         * Reveal animation. `delay` debounces against quick fly-bys before
+         * the CSS `duration` + `easing` reveal kicks in.
+         * Default: { delay: 300, duration: 200, easing: 'ease' }
+         */
+        show?: DelayedTransition;
+        /**
+         * Collapse animation. `delay` keeps the slot open for a beat after
+         * the pointer leaves before the CSS `duration` + `easing` collapse runs.
+         * Default: { delay: 200, duration: 200, easing: 'ease' }
+         */
+        hide?: DelayedTransition;
     };
     /**
      * Items repositioning to make room for the ghost — covers BOTH intra-container
@@ -381,14 +390,14 @@ interface AnimationConfig {
      * dimensions. Default: 150ms ease
      */
     ghostResize?: Transition;
-    /** Ghost flight to a destination on successful drop (rAF, ms). Default: 250 */
-    drop?: number;
-    /** Ghost return flight on cancelled drop (rAF, ms). Default: 300 */
-    return?: number;
-    /** Source slot collapse on cross-container drop (rAF, ms). Default: 250 */
-    slotCollapse?: number;
-    /** Default duration for `animateLayout()` FLIP transitions (ms). Default: 300 */
-    layout?: number;
+    /** Ghost flight to a destination on successful drop. Default: 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94) */
+    drop?: DurationOrTransition;
+    /** Ghost return flight on cancelled drop. Default: 300ms cubic-bezier(0.33, 1, 0.68, 1) */
+    return?: DurationOrTransition;
+    /** Source slot collapse on cross-container drop. Default: 250ms cubic-bezier(0.45, 0, 0.55, 1) */
+    slotCollapse?: DurationOrTransition;
+    /** Default for `animateLayout()` FLIP transitions. Default: 300ms ease */
+    layout?: DurationOrTransition;
 }
 
 interface DndControllerConfig {

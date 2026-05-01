@@ -14,12 +14,29 @@ export type Transition = {
 type ResolvedTransition = Required<Transition>
 
 /**
+ * Transition with an optional debounce `delay` before it starts. Used for
+ * preview show/hide where the library waits a moment after the pointer
+ * enters/leaves a target before triggering the CSS reveal/collapse.
+ */
+export type DelayedTransition = Transition & {
+	/** Milliseconds to wait before the transition begins. Default: 0. */
+	delay?: number
+}
+
+type ResolvedDelayedTransition = Required<DelayedTransition>
+
+/**
+ * Shorthand: a bare number is treated as `{ duration: <n> }` keeping the
+ * default easing. Pass a full `Transition` object to also set easing.
+ */
+export type DurationOrTransition = number | Transition
+
+/**
  * Tuning knobs for built-in drag animations.
  *
- * - JS-rAF fields (`drop`, `return`, `slotCollapse`, `layout`) accept a plain
- *   millisecond number — easing is hardcoded internally.
- * - CSS-driven fields (`preview.show/hide`, `siblingShift`, `ghostResize`)
- *   accept a {@link Transition} so you can tune both duration and easing.
+ * Every field accepts either a plain millisecond `number` (shorthand —
+ * easing stays at the library default) or a {@link Transition} object
+ * `{ duration, easing }` to override both.
  */
 export interface AnimationConfig {
 	/**
@@ -28,27 +45,19 @@ export interface AnimationConfig {
 	 */
 	preview?: {
 		/**
-		 * Delay (ms) after the pointer enters a target before the preview slot
-		 * fades in. Higher values prevent flicker on quick fly-bys; lower
-		 * values feel more responsive. Default: 300.
+		 * Reveal animation for the preview slot (opacity 0→1, transform scale
+		 * 0.5→1). The optional `delay` debounces against pointer fly-bys —
+		 * higher values prevent flicker, lower values feel more responsive.
+		 * Default: `{ delay: 300, duration: 200, easing: 'ease' }`.
 		 */
-		showDelay?: number
+		show?: DelayedTransition
 		/**
-		 * Delay (ms) after the pointer leaves the target before the preview
-		 * slot collapses. Higher values give the user a beat to "come back"
-		 * before the slot shrinks. Default: 200.
+		 * Collapse animation for the preview slot (opacity 1→0, transform
+		 * scale 1→0.5). The optional `delay` gives the user a beat to "come
+		 * back" before the slot shrinks. Default:
+		 * `{ delay: 200, duration: 200, easing: 'ease' }`.
 		 */
-		hideDelay?: number
-		/**
-		 * CSS transition when the preview slot reveals (opacity 0→1, transform
-		 * scale 0.5→1). Default: `{ duration: 200, easing: 'ease' }`.
-		 */
-		show?: Transition
-		/**
-		 * CSS transition when the preview slot collapses (opacity 1→0,
-		 * transform scale 1→0.5). Default: `{ duration: 200, easing: 'ease' }`.
-		 */
-		hide?: Transition
+		hide?: DelayedTransition
 	}
 
 	/**
@@ -71,59 +80,58 @@ export interface AnimationConfig {
 	ghostResize?: Transition
 
 	/**
-	 * Ghost flight to a destination on a successful drop (rAF-driven). Easing
-	 * is hardcoded internally (out-quad). Default: 250.
+	 * Ghost flight to a destination on a successful drop (rAF-driven).
+	 * Default: `{ duration: 250, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' }`.
 	 */
-	drop?: number
+	drop?: DurationOrTransition
 
 	/**
 	 * Ghost return flight to origin on a cancelled drop (rAF-driven,
-	 * scroll-aware). Easing hardcoded (out-cubic). Default: 300.
+	 * scroll-aware). Default:
+	 * `{ duration: 300, easing: 'cubic-bezier(0.33, 1, 0.68, 1)' }` (out-cubic).
 	 */
-	return?: number
+	return?: DurationOrTransition
 
 	/**
 	 * Source slot collapse animation on a cross-container drop — the empty
 	 * space the moved item used to occupy shrinks shut so siblings flow back.
-	 * rAF-driven, easing hardcoded. Default: 250.
+	 * Default:
+	 * `{ duration: 250, easing: 'cubic-bezier(0.45, 0, 0.55, 1)' }` (in-out-quad).
 	 */
-	slotCollapse?: number
+	slotCollapse?: DurationOrTransition
 
 	/**
-	 * Default duration for `controller.animateLayout()` FLIP transitions.
-	 * Overridable per-call via the method's `duration` option. Default: 300.
+	 * Default for `controller.animateLayout()` FLIP transitions. Overridable
+	 * per-call via the method's `duration` / `easing` options. Default:
+	 * `{ duration: 300, easing: 'ease' }`.
 	 */
-	layout?: number
+	layout?: DurationOrTransition
 }
 
 export interface ResolvedAnimationConfig {
 	preview: {
-		showDelay: number
-		hideDelay: number
-		show: ResolvedTransition
-		hide: ResolvedTransition
+		show: ResolvedDelayedTransition
+		hide: ResolvedDelayedTransition
 	}
 	siblingShift: ResolvedTransition
 	ghostResize: ResolvedTransition
-	drop: number
-	return: number
-	slotCollapse: number
-	layout: number
+	drop: ResolvedTransition
+	return: ResolvedTransition
+	slotCollapse: ResolvedTransition
+	layout: ResolvedTransition
 }
 
 export const DEFAULT_ANIMATION_CONFIG: ResolvedAnimationConfig = {
 	preview: {
-		showDelay: 300,
-		hideDelay: 200,
-		show: { duration: 200, easing: 'ease' },
-		hide: { duration: 200, easing: 'ease' }
+		show: { delay: 300, duration: 200, easing: 'ease' },
+		hide: { delay: 200, duration: 200, easing: 'ease' }
 	},
 	siblingShift: { duration: 200, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' },
 	ghostResize: { duration: 150, easing: 'ease' },
-	drop: 250,
-	return: 300,
-	slotCollapse: 250,
-	layout: 300
+	drop: { duration: 250, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' },
+	return: { duration: 300, easing: 'cubic-bezier(0.33, 1, 0.68, 1)' },
+	slotCollapse: { duration: 250, easing: 'cubic-bezier(0.45, 0, 0.55, 1)' },
+	layout: { duration: 300, easing: 'ease' }
 }
 
 function resolveTransition(partial: Transition | undefined, fallback: ResolvedTransition): ResolvedTransition {
@@ -131,6 +139,26 @@ function resolveTransition(partial: Transition | undefined, fallback: ResolvedTr
 		duration: partial?.duration ?? fallback.duration,
 		easing: partial?.easing ?? fallback.easing
 	}
+}
+
+function resolveDelayedTransition(
+	partial: DelayedTransition | undefined,
+	fallback: ResolvedDelayedTransition
+): ResolvedDelayedTransition {
+	return {
+		delay: partial?.delay ?? fallback.delay,
+		duration: partial?.duration ?? fallback.duration,
+		easing: partial?.easing ?? fallback.easing
+	}
+}
+
+function resolveDurationOrTransition(
+	val: DurationOrTransition | undefined,
+	fallback: ResolvedTransition
+): ResolvedTransition {
+	if (val == null) return fallback
+	if (typeof val === 'number') return { duration: val, easing: fallback.easing }
+	return resolveTransition(val, fallback)
 }
 
 /**
@@ -144,16 +172,14 @@ export function resolveAnimationConfig(
 ): ResolvedAnimationConfig {
 	return {
 		preview: {
-			showDelay: config?.preview?.showDelay ?? base.preview.showDelay,
-			hideDelay: config?.preview?.hideDelay ?? base.preview.hideDelay,
-			show: resolveTransition(config?.preview?.show, base.preview.show),
-			hide: resolveTransition(config?.preview?.hide, base.preview.hide)
+			show: resolveDelayedTransition(config?.preview?.show, base.preview.show),
+			hide: resolveDelayedTransition(config?.preview?.hide, base.preview.hide)
 		},
 		siblingShift: resolveTransition(config?.siblingShift, base.siblingShift),
 		ghostResize: resolveTransition(config?.ghostResize, base.ghostResize),
-		drop: config?.drop ?? base.drop,
-		return: config?.return ?? base.return,
-		slotCollapse: config?.slotCollapse ?? base.slotCollapse,
-		layout: config?.layout ?? base.layout
+		drop: resolveDurationOrTransition(config?.drop, base.drop),
+		return: resolveDurationOrTransition(config?.return, base.return),
+		slotCollapse: resolveDurationOrTransition(config?.slotCollapse, base.slotCollapse),
+		layout: resolveDurationOrTransition(config?.layout, base.layout)
 	}
 }

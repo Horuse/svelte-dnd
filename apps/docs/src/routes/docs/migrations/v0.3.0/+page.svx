@@ -94,7 +94,10 @@ v1 also accepts an optional config object:
 const controller = new DndController({
     behaviors: [autoScroll({ zoneRatio: 0.3, maxSpeed: 30 }), scrollSync()],
     animation: {
-        preview: { showDelay: 300, hideDelay: 200 }
+        preview: {
+            show: { delay: 300, duration: 200, easing: 'ease' },
+            hide: { delay: 200, duration: 200, easing: 'ease' }
+        }
     },
     debug: false
 })
@@ -236,4 +239,4 @@ controller.onDropCancelled(({ item, source }) => {
 
 `data: Record<string, any>` props are now typed `Record<string, unknown>`.
 
-New type exports: `DndControllerConfig`, `AnimationConfig`, `ResolvedAnimationConfig`, `Transition`, `Behavior`, `BehaviorContext`, `AutoScrollConfig`, `ContainerStrategy`, `StrategyBindContext`, `SortableOptions`, `TargetOptions`, `GridFlow`, `DndMode`, `DndLayout`, `DragSource`, `DragSession`, `DndItemInfo`, `DndContainerInfo`, `DragStartEvent`, `DropEvent`, `DragEndEvent`, `DragOverEvent`, `DropCancelledEvent`, `DragStartCallback`, `DragEndCallback`, `DropCallback`, `DragOverCallback`, `DropCancelledCallback`, `Announcements`, `AnimateItemOptions`, `AnimateLayoutOptions`, `ContainerPosition`, `SensorDescriptor`, `CollisionAlgorithm`, `Modifier`.
+New type exports: `DndControllerConfig`, `AnimationConfig`, `ResolvedAnimationConfig`, `Transition`, `DelayedTransition`, `DurationOrTransition`, `Behavior`, `BehaviorContext`, `AutoScrollConfig`, `ContainerStrategy`, `StrategyBindContext`, `SortableOptions`, `TargetOptions`, `GridFlow`, `DndMode`, `DndLayout`, `DragSource`, `DragSession`, `DndItemInfo`, `DndContainerInfo`, `DragStartEvent`, `DropEvent`, `DragEndEvent`, `DragOverEvent`, `DropCancelledEvent`, `DragStartCallback`, `DragEndCallback`, `DropCallback`, `DragOverCallback`, `DropCancelledCallback`, `Announcements`, `AnimateItemOptions`, `AnimateLayoutOptions`, `ContainerPosition`, `SensorDescriptor`, `CollisionAlgorithm`, `Modifier`.

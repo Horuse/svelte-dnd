@@ -2,8 +2,7 @@ import type { Behavior } from '../behavior.js'
 import type { AnimationStep } from '../steps/animation-step.js'
 import { DOMHelper } from '../../utils/dom-helper.js'
 import { planScrollSync } from '../scroll-sync-runner.js'
-
-const easing = { outCubic: (t: number) => 1 - Math.pow(1 - t, 3) }
+import { parseEasing } from '../easing.js'
 
 export interface ScrollSyncOptions {
 	/**
@@ -66,6 +65,7 @@ export function scrollSync(opts: ScrollSyncOptions = {}): Behavior {
 						})
 
 						const startTime = Date.now()
+						const easeFn = parseEasing(ctx.easing)
 						const animate = () => {
 							if (cancelled) {
 								ctx.state.setAnimating(false)
@@ -73,7 +73,7 @@ export function scrollSync(opts: ScrollSyncOptions = {}): Behavior {
 								return
 							}
 							const progress = Math.min((Date.now() - startTime) / plan.duration, 1)
-							plan.update(easing.outCubic(progress))
+							plan.update(easeFn(progress))
 							if (progress < 1) {
 								requestAnimationFrame(animate)
 							} else {

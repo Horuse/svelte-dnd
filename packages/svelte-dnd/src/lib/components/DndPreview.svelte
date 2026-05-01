@@ -23,8 +23,8 @@
 		droppable,
 		position,
 		config: {
-			showDelay: dndController?.animation.preview.showDelay,
-			hideDelay: dndController?.animation.preview.hideDelay
+			showDelay: dndController?.animation.preview.show.delay,
+			hideDelay: dndController?.animation.preview.hide.delay
 		}
 	})
 
@@ -32,8 +32,8 @@
 		preview.slot = slot
 		preview.droppable = droppable
 		preview.position = position
-		preview.showDelay = dndController?.animation.preview.showDelay ?? 300
-		preview.hideDelay = dndController?.animation.preview.hideDelay ?? 200
+		preview.showDelay = dndController?.animation.preview.show.delay ?? 300
+		preview.hideDelay = dndController?.animation.preview.hide.delay ?? 200
 	})
 
 	$effect(() => {

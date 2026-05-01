@@ -13,26 +13,58 @@ describe('resolveAnimationConfig', () => {
 		expect(resolveAnimationConfig({})).toEqual(DEFAULT_ANIMATION_CONFIG)
 	})
 
-	it('overrides only the provided number fields and keeps the rest default', () => {
+	it('shorthand number is normalised to a Transition with default easing', () => {
 		const resolved = resolveAnimationConfig({ drop: 100, layout: 500 })
-		expect(resolved.drop).toBe(100)
-		expect(resolved.layout).toBe(500)
-		expect(resolved.return).toBe(DEFAULT_ANIMATION_CONFIG.return)
-		expect(resolved.slotCollapse).toBe(DEFAULT_ANIMATION_CONFIG.slotCollapse)
+		expect(resolved.drop.duration).toBe(100)
+		expect(resolved.drop.easing).toBe(DEFAULT_ANIMATION_CONFIG.drop.easing)
+		expect(resolved.layout.duration).toBe(500)
+		expect(resolved.layout.easing).toBe(DEFAULT_ANIMATION_CONFIG.layout.easing)
+		expect(resolved.return).toEqual(DEFAULT_ANIMATION_CONFIG.return)
+		expect(resolved.slotCollapse).toEqual(DEFAULT_ANIMATION_CONFIG.slotCollapse)
+	})
+
+	it('object form lets you set both duration and easing', () => {
+		const resolved = resolveAnimationConfig({
+			drop: { duration: 400, easing: 'linear' }
+		})
+		expect(resolved.drop).toEqual({ duration: 400, easing: 'linear' })
+	})
+
+	it('object form keeps default easing when only duration is provided', () => {
+		const resolved = resolveAnimationConfig({
+			drop: { duration: 400 }
+		})
+		expect(resolved.drop.duration).toBe(400)
+		expect(resolved.drop.easing).toBe(DEFAULT_ANIMATION_CONFIG.drop.easing)
 	})
 
 	it('treats 0 as an explicit value, not a falsy fallback', () => {
 		const resolved = resolveAnimationConfig({ drop: 0 })
-		expect(resolved.drop).toBe(0)
+		expect(resolved.drop.duration).toBe(0)
 	})
 
-	it('deep-merges preview delays without affecting transitions', () => {
+	it('preview.show accepts delay alongside duration / easing', () => {
 		const resolved = resolveAnimationConfig({
-			preview: { showDelay: 50 }
+			preview: { show: { delay: 50, duration: 300, easing: 'linear' } }
 		})
-		expect(resolved.preview.showDelay).toBe(50)
-		expect(resolved.preview.hideDelay).toBe(DEFAULT_ANIMATION_CONFIG.preview.hideDelay)
-		expect(resolved.preview.show).toEqual(DEFAULT_ANIMATION_CONFIG.preview.show)
+		expect(resolved.preview.show).toEqual({ delay: 50, duration: 300, easing: 'linear' })
+	})
+
+	it('preview.hide.delay overrides only delay; duration and easing keep defaults', () => {
+		const resolved = resolveAnimationConfig({
+			preview: { hide: { delay: 500 } }
+		})
+		expect(resolved.preview.hide.delay).toBe(500)
+		expect(resolved.preview.hide.duration).toBe(DEFAULT_ANIMATION_CONFIG.preview.hide.duration)
+		expect(resolved.preview.hide.easing).toBe(DEFAULT_ANIMATION_CONFIG.preview.hide.easing)
+	})
+
+	it('preview show is independent of hide', () => {
+		const resolved = resolveAnimationConfig({
+			preview: { show: { delay: 100 } }
+		})
+		expect(resolved.preview.show.delay).toBe(100)
+		expect(resolved.preview.hide).toEqual(DEFAULT_ANIMATION_CONFIG.preview.hide)
 	})
 
 	it('deep-merges Transition fields preserving the unspecified half', () => {
@@ -44,16 +76,13 @@ describe('resolveAnimationConfig', () => {
 	})
 
 	it('uses a custom base when provided (partial patch on top of current state)', () => {
-		const current = resolveAnimationConfig({ drop: 999, slotCollapse: 555 })
-		const patched = resolveAnimationConfig({ drop: 100 }, current)
-		expect(patched.drop).toBe(100)
-		expect(patched.slotCollapse).toBe(555)
-	})
-
-	it('lets explicit easing override library default', () => {
-		const resolved = resolveAnimationConfig({
-			preview: { show: { duration: 300, easing: 'linear' } }
+		const current = resolveAnimationConfig({
+			drop: { duration: 999, easing: 'linear' },
+			slotCollapse: 555
 		})
-		expect(resolved.preview.show).toEqual({ duration: 300, easing: 'linear' })
+		const patched = resolveAnimationConfig({ drop: 100 }, current)
+		expect(patched.drop.duration).toBe(100)
+		expect(patched.drop.easing).toBe('linear') // preserved from current base
+		expect(patched.slotCollapse.duration).toBe(555)
 	})
 })

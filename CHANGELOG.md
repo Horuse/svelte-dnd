@@ -12,11 +12,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   Top-level `preview` option on `DndController` is removed — preview delays
   and transitions now live under `animation.preview`. Field renames:
   `dropDuration` → `drop`, `returnDuration` → `return`, `slotCollapseDuration`
-  → `slotCollapse`, `swapDuration` → `layout`, `preview.collapseDelay` →
-  `preview.hideDelay`. CSS-driven entries (`preview.show`/`hide`,
-  `siblingShift`, `ghostResize`) now accept `{ duration, easing }` so easing
-  is configurable. JS-rAF entries (`drop`, `return`, `slotCollapse`,
-  `layout`) stay as plain numbers.
+  → `slotCollapse`, `swapDuration` → `layout`. The previous flat
+  `preview.showDelay` / `preview.collapseDelay` are gone — debounce delay is
+  now part of the same object as the transition itself:
+  `preview.show: { delay, duration, easing }` (a `DelayedTransition`).
+  Other CSS-driven entries (`siblingShift`, `ghostResize`) take a
+  `{ duration, easing }` Transition. The four rAF entries (`drop`, `return`,
+  `slotCollapse`, `layout`) accept either a bare number (shorthand for
+  duration) or a full Transition.
 - **`controller.previewConfig` and `setPreviewConfig` removed.** Read live
   values from `controller.animation` and update partials via
   `controller.setAnimation({ ... })`.
@@ -33,12 +36,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Features
 
-- **Configurable easing** for every CSS-driven animation: preview reveal /
+- **Configurable easing for every animation.** All four rAF-driven entries
+  (`drop`, `return`, `slotCollapse`, `layout`) now accept either a plain
+  number (duration shorthand, default easing kept) or a full
+  `{ duration, easing }` Transition. Easing strings flow through a JS
+  bezier solver (`cubic-bezier(...)`, `ease`/`ease-in`/`ease-out`/
+  `ease-in-out`/`linear`) so animations honour your CSS timing-function
+  even though the engine stays on rAF.
+- **`scrollSync` honours the wrapped step's easing.** When scroll-sync
+  engages, its flight uses the same easing as `drop` / `return`, keeping
+  visual continuity instead of always running out-cubic.
+- **`animateItem` / `animateLayout` accept per-call `easing` override**
+  alongside the existing `duration` option.
+- **`parseEasing(str)` helper exported** for custom AnimationStep
+  implementations — turns any CSS timing-function string into a
+  `(t: number) => number`.
+- **Configurable easing for every CSS-driven animation**: preview reveal /
   collapse, sibling-shift (intra-container translate + cross-container
   spacer growth, both unified under one `siblingShift` field), and ghost
   auto-resize.
 - **Runtime `setAnimation(partial)`** with deep-merge — patch any subset of
   the animation config without touching unrelated fields.
+
+### Internal
+
+- New `BehaviorContext.easing` field. Custom behaviors that wrap the inner
+  step can read it (e.g. via `parseEasing(ctx.easing)`) to match the same
+  timing function. Existing custom behaviors that ignore easing keep
+  working unchanged.
 
 ## [v1.0.0-rc.1] - 2026-04-19
 

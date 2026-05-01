@@ -36,6 +36,8 @@ export interface AnimateItemOptions {
 	emitEvents?: boolean
 	/** Override the configured drop/return duration. */
 	duration?: number
+	/** Override the configured drop/return easing for this call. */
+	easing?: string
 	/**
 	 * Per-call override for the destination droppable's behaviors. Replaces both
 	 * the strategy-level and controller-level defaults for this animation.
@@ -55,8 +57,10 @@ export interface AnimateLayoutOptions {
 	 * scale, background, color, …) transition together with the FLIP transform.
 	 */
 	morph?: boolean
-	/** Override the configured swap duration. */
+	/** Override the configured layout duration. */
 	duration?: number
+	/** Override the configured layout easing (any valid CSS timing-function). */
+	easing?: string
 }
 
 type EmitKind = 'drop' | 'cancel'
@@ -96,7 +100,7 @@ export class DndSimulator {
 	 * })
 	 */
 	animateItem(itemId: string, options: AnimateItemOptions): Promise<void> {
-		const { to, from, style = 'drop', emitEvents = false, duration, behaviors } = options
+		const { to, from, style = 'drop', emitEvents = false, duration, easing, behaviors } = options
 
 		const sourceContainerId = from?.containerId ?? this.findItemContainer(itemId)
 		if (!sourceContainerId) {
@@ -104,14 +108,14 @@ export class DndSimulator {
 		}
 		const toPosition = to.position ?? 0
 		const useReturnStep = style === 'return' && to.containerId === sourceContainerId
-		const stepDuration = useReturnStep
-			? duration ?? this.animation.return
-			: duration ?? this.animation.drop
+		const baseTransition = useReturnStep ? this.animation.return : this.animation.drop
+		const stepDuration = duration ?? baseTransition.duration
+		const stepEasing = easing ?? baseTransition.easing
 
 		const makeStep = (): AnimationStep => {
 			const baseStep = useReturnStep
-				? new GhostReturnStep(this.state, to.containerId, toPosition, this.droppablesById, stepDuration)
-				: new GhostToTargetStep(this.state, this.syntheticZone(to.containerId, toPosition), this.droppablesById, stepDuration)
+				? new GhostReturnStep(this.state, to.containerId, toPosition, this.droppablesById, stepDuration, stepEasing)
+				: new GhostToTargetStep(this.state, this.syntheticZone(to.containerId, toPosition), this.droppablesById, stepDuration, stepEasing)
 			const targetDroppable = this.droppablesById.get(to.containerId) ?? null
 			const resolved = behaviors ?? resolveBehaviors(targetDroppable, this.defaultBehaviors)
 			const ctx: BehaviorContext = {
@@ -120,6 +124,7 @@ export class DndSimulator {
 				targetEl: findTargetSlotWrapper(targetDroppable, toPosition),
 				container: targetDroppable?.element ?? null,
 				duration: stepDuration,
+				easing: stepEasing,
 				padding: targetDroppable?.spacing ?? 0
 			}
 			return wrapWithBehaviors(baseStep, resolved, ctx)
@@ -150,7 +155,7 @@ export class DndSimulator {
 		applyState: () => void | Promise<void>,
 		options: AnimateLayoutOptions = {}
 	): Promise<void> {
-		const { items, morph = false, duration = this.animation.layout } = options
+		const { items, morph = false, duration = this.animation.layout.duration, easing = this.animation.layout.easing } = options
 		const ids = items ?? this.collectAllItemIds().filter((id) => id !== this.state.draggedItem)
 
 		// Capture old rects (visual rects — include any active translates) and class lists.
@@ -210,7 +215,7 @@ export class DndSimulator {
 		// (border-radius, scale, color, …) ride along with the FLIP transform.
 		const transitionProp = morph ? 'all' : 'transform'
 		for (const { el, addedClasses } of elements) {
-			el.style.transition = `${transitionProp} ${duration}ms ease`
+			el.style.transition = `${transitionProp} ${duration}ms ${easing}`
 			el.style.transform = ''
 			for (const c of addedClasses) el.classList.remove(c)
 		}
