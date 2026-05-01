@@ -6,6 +6,9 @@ description: Pluggable drop-side hooks — auto-scroll under drag, scroll-sync d
 <script lang="ts">
 	import Steps from '$lib/components/markdown/Steps.svelte'
 	import Step from '$lib/components/markdown/Step.svelte'
+	import { ComponentPreview } from '$lib/components'
+	import CustomBehaviorExample from '$lib/examples/CustomBehaviorExample.svelte'
+	import CustomBehaviorExampleCode from '$lib/examples/CustomBehaviorExample.svelte?raw'
 </script>
 
 # Behaviors
@@ -42,8 +45,7 @@ Pass `behaviors: []` to opt out of all defaults.
 
 Edge-triggered auto-scroll while a drag is in progress. When the pointer enters the trigger zone near a scrollable container's edge, the container scrolls automatically — speed scales with proximity to the edge.
 
-
-<img src="/behaviors1.gif" width="400" height="200" />
+<img src="/behaviors1.gif" class="dark:invert-0 invert" width="400" height="200" />
 
 ### Options
 
@@ -80,7 +82,7 @@ sortable({
 
 Wraps the drop / return animation: when the destination slot is hidden enough inside its scrollable container, the container scrolls together with the ghost flight so the ghost stays inside the viewport.
 
-> **Demo:** _GIF — drop into off-screen position triggers scroll-sync_
+<img src="/behaviors2.gif" class="dark:invert-0 invert" width="400" height="200" />
 
 ### Options
 
@@ -114,19 +116,18 @@ await controller.animateItem('task-3', {
 
 ## Composing behaviors
 
-Behaviors stack — pass as many as you want. The first listed wraps outer-most for any `wrapDropAnimation` hooks.
+Behaviors stack — pass as many as you want. **The first listed wraps outer-most** for any `wrapDropAnimation` hooks. Order matters when a behavior fully *replaces* the inner step: anything wrapped inside it doesn't run on that branch. `scrollSync()` is the typical case — when its threshold engages, it substitutes a scroll-synchronised flight for the base step, so put any side-effect behaviors that should fire on every drop earlier in the list (i.e. outer).
 
 ```ts
 new DndController({
     behaviors: [
         autoScroll({ maxSpeed: 60 }),
+        dropSound,           // side effect — fires regardless of scrollSync branch
         scrollSync({ threshold: 0.5 })
         // future: clipGhost(), edgeIndicator(), …
     ]
 })
 ```
-
-> **Demo:** _GIF — autoScroll + scrollSync working together on a tall list_
 
 ---
 
@@ -150,17 +151,106 @@ A `Behavior` is duck-typed — implement only the hooks you care about. Both lib
 ```ts
 import type { Behavior } from '@horuse/svelte-dnd'
 
-const fadeOnDrop: Behavior = {
-    name: 'fadeOnDrop',
+// Compose four lightweight drop reactions:
+// 1. dropSound       — short Web Audio chirp on every drop
+// 2. slotRipple      — destination slot flashes indigo, fades out
+// 3. confettiBurst   — six 🎉 spans burst from the drop position
+// 4. arrivalBounce   — destination slot pops (scale 1 → 1.08 → 1)
+//
+// Each is its own Behavior so they can be toggled / reused independently.
+
+let audioCtx: AudioContext | null = null
+const dropSound: Behavior = {
+    name: 'dropSound',
+    wrapDropAnimation(next) {
+        return {
+            execute() {
+                audioCtx ??= new AudioContext()
+                if (audioCtx.state === 'suspended') audioCtx.resume()
+                const osc = audioCtx.createOscillator()
+                const gain = audioCtx.createGain()
+                osc.connect(gain).connect(audioCtx.destination)
+                osc.type = 'sine'
+                osc.frequency.value = 660
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime)
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15)
+                osc.start()
+                osc.stop(audioCtx.currentTime + 0.15)
+                return next.execute()
+            },
+            cancel: () => next.cancel?.()
+        }
+    }
+}
+
+const slotRipple: Behavior = {
+    name: 'slotRipple',
     wrapDropAnimation(next, ctx) {
         return {
-            async execute() {
-                ctx.targetEl?.style.setProperty('opacity', '0.5')
-                try {
-                    await next.execute()
-                } finally {
-                    ctx.targetEl?.style.removeProperty('opacity')
+            execute() {
+                ctx.targetEl?.animate(
+                    [
+                        { backgroundColor: 'rgba(99, 102, 241, 0.35)', borderRadius: '12px' },
+                        { backgroundColor: 'transparent', borderRadius: '12px' }
+                    ],
+                    { duration: 500, easing: 'ease-out' }
+                )
+                return next.execute()
+            },
+            cancel: () => next.cancel?.()
+        }
+    }
+}
+
+const confettiBurst: Behavior = {
+    name: 'confettiBurst',
+    wrapDropAnimation(next, ctx) {
+        return {
+            execute() {
+                if (ctx.targetEl) {
+                    const rect = ctx.targetEl.getBoundingClientRect()
+                    const cx = rect.left + rect.width / 2
+                    const cy = rect.top + rect.height / 2
+                    for (let i = 0; i < 6; i++) {
+                        const span = document.createElement('span')
+                        span.textContent = '🎉'
+                        span.style.cssText = `position:fixed;left:${cx}px;top:${cy}px;font-size:22px;pointer-events:none;z-index:99999;transform:translate(-50%,-50%)`
+                        document.body.appendChild(span)
+                        const angle = (Math.PI * 2 * i) / 6 + (Math.random() - 0.5) * 0.6
+                        const dist = 60 + Math.random() * 50
+                        const tx = Math.cos(angle) * dist
+                        const ty = Math.sin(angle) * dist - 20
+                        const anim = span.animate(
+                            [
+                                { transform: 'translate(-50%, -50%) scale(0.5)', opacity: 1 },
+                                { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(1.2)`, opacity: 0 }
+                            ],
+                            { duration: 700, easing: 'ease-out', fill: 'forwards' }
+                        )
+                        anim.onfinish = () => span.remove()
+                    }
                 }
+                return next.execute()
+            },
+            cancel: () => next.cancel?.()
+        }
+    }
+}
+
+const arrivalBounce: Behavior = {
+    name: 'arrivalBounce',
+    wrapDropAnimation(next, ctx) {
+        return {
+            execute() {
+                ctx.targetEl?.animate(
+                    [
+                        { transform: 'scale(1)' },
+                        { transform: 'scale(1.08)', offset: 0.5 },
+                        { transform: 'scale(1)' }
+                    ],
+                    { duration: 400, easing: 'ease-out' }
+                )
+                return next.execute()
             },
             cancel: () => next.cancel?.()
         }
@@ -168,11 +258,17 @@ const fadeOnDrop: Behavior = {
 }
 
 new DndController({
-    behaviors: [autoScroll(), scrollSync(), fadeOnDrop]
+    // Side-effect behaviors go BEFORE scrollSync — when scrollSync engages
+    // (off-screen drop) it replaces the inner flight, so anything wrapped
+    // INSIDE it would never run. Earlier-listed behaviors wrap outer-most,
+    // so they fire first regardless of scrollSync's branch.
+    behaviors: [autoScroll(), dropSound, slotRipple, confettiBurst, arrivalBounce, scrollSync()]
 })
 ```
 
-> **Demo:** _GIF — custom fade-on-drop behavior in action_
+<ComponentPreview collapsible sources={[{ name: 'CustomBehaviorExample.svelte', code: CustomBehaviorExampleCode, language: 'svelte' }]}>
+	<CustomBehaviorExample />
+</ComponentPreview>
 
 ### Hook reference
 
