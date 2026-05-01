@@ -49,6 +49,10 @@ export class DropAnimationCoordinator {
 		this.defaultBehaviors = behaviors
 	}
 
+	setAnimationConfig(animation: ResolvedAnimationConfig) {
+		this.animation = animation
+	}
+
 	updateDropPreview(pointer: { x: number; y: number }) {
 		if (!this.state.dragging) {
 			this.state.setDropPreview(null)
@@ -178,8 +182,8 @@ export class DropAnimationCoordinator {
 		}
 
 		if (targetZone && this.state.element && this.state.transform) {
-			const baseStep = new GhostToTargetStep(this.state, targetZone, this.droppablesById, this.animation.dropDuration)
-			const wrapped = this.wrap(baseStep, targetDroppable ?? null, position, this.animation.dropDuration)
+			const baseStep = new GhostToTargetStep(this.state, targetZone, this.droppablesById, this.animation.drop)
+			const wrapped = this.wrap(baseStep, targetDroppable ?? null, position, this.animation.drop)
 			this.animate(wrapped, onDropComplete)
 		} else {
 			onDropComplete()
@@ -221,8 +225,8 @@ export class DropAnimationCoordinator {
 				const originId = this.state.originContainerId
 				const originPos = this.state.originPosition
 				const originDroppable = originId ? this.droppablesById.get(originId) ?? null : null
-				const baseStep = new GhostReturnStep(this.state, originId, originPos, this.droppablesById, this.animation.returnDuration)
-				const wrapped = this.wrap(baseStep, originDroppable, originPos, this.animation.returnDuration)
+				const baseStep = new GhostReturnStep(this.state, originId, originPos, this.droppablesById, this.animation.return)
+				const wrapped = this.wrap(baseStep, originDroppable, originPos, this.animation.return)
 				this.animate(wrapped, () => this.finalizeDragEnd(dragEndEvent))
 			})
 		} else {
@@ -267,7 +271,7 @@ export class DropAnimationCoordinator {
 		slotEl.style.overflow = 'hidden'
 
 		// Matches the ghost flight duration so both animations finish together.
-		const duration = this.animation.slotCollapseDuration
+		const duration = this.animation.slotCollapse
 		return new Promise<void>(resolve => {
 			const startTime = performance.now()
 

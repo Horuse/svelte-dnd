@@ -15,10 +15,11 @@ These properties control the floating ghost element that follows the cursor duri
 |----------|---------|-------------|
 | `--dnd-ghost-z-index` | `9999` | Stacking order of the ghost element |
 | `--dnd-ghost-opacity` | `0.8` | Opacity of the ghost element |
-| `--dnd-ghost-rotation` | `0deg` | Rotation angle applied during drag |
-| `--dnd-ghost-rotation-duration` | `200ms` | Transition speed for the rotation animation |
 | `--dnd-ghost-scale` | `1` | Scale factor of the ghost element |
-| `--dnd-ghost-resize-duration` | `150ms` | Transition speed when the ghost resizes to match a target's item size (see [`dropPreviewSize`](/docs/dnd-controller-api#reactive-getters)) |
+| `--dnd-ghost-resize-duration` | `150ms` | Transition speed when the ghost resizes to match a target's item size (see [`dropPreviewSize`](/docs/dnd-controller-api#reactive-getters)). Also tunable via `controller.animation.ghostResize.duration`. |
+| `--dnd-ghost-resize-easing` | `ease` | Easing for the ghost resize transition. Also tunable via `controller.animation.ghostResize.easing`. |
+
+> **Want a tilt effect?** Rotation is no longer applied by the library — add it yourself in custom CSS, e.g. `.dnd-ghost { transform: rotate(5deg); transition: transform 200ms ease; }`.
 
 ## Draggable Element
 
@@ -44,20 +45,21 @@ These properties control the placeholder that appears at potential drop position
 
 | Property | Default | Description |
 |----------|---------|-------------|
-| `--dnd-preview-duration-in` | `200ms` | Transition duration when preview appears |
-| `--dnd-preview-duration-out` | `200ms` | Transition duration when preview disappears |
+| `--dnd-preview-duration-in` | `200ms` | Transition duration when preview appears. Also tunable via `controller.animation.preview.show.duration`. |
+| `--dnd-preview-duration-out` | `200ms` | Transition duration when preview disappears. Also tunable via `controller.animation.preview.hide.duration`. |
+| `--dnd-preview-easing-in` | `ease` | Easing for the reveal transition. Also tunable via `controller.animation.preview.show.easing`. |
+| `--dnd-preview-easing-out` | `ease` | Easing for the collapse transition. Also tunable via `controller.animation.preview.hide.easing`. |
 | `--dnd-preview-bg` | `rgba(99, 102, 241, 0.15)` | Background color of the preview indicator |
 | `--dnd-preview-border` | `2px dashed rgba(99, 102, 241, 0.4)` | Border style of the preview indicator |
 | `--dnd-preview-border-radius` | `1rem` | Border radius of the preview indicator |
 
 ## Customization Examples
 
-### Subtle ghost with no rotation
+### Subtle ghost
 
 ```css
 :root {
   --dnd-ghost-opacity: 0.6;
-  --dnd-ghost-rotation: 0deg;
   --dnd-ghost-scale: 0.95;
 }
 ```

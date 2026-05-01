@@ -13,7 +13,7 @@ export class GhostToTargetStep implements AnimationStep {
 		private state: DndState,
 		private targetZone: DropZone,
 		private droppablesById: Map<string, Droppable>,
-		private duration: number = DEFAULT_ANIMATION_CONFIG.dropDuration
+		private duration: number = DEFAULT_ANIMATION_CONFIG.drop
 	) {}
 
 	execute(): Promise<void> {

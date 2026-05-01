@@ -22,7 +22,7 @@ export class GhostReturnStep implements AnimationStep {
 		private containerId: string | null,
 		private position: number,
 		private droppablesById: Map<string, Droppable>,
-		private duration: number = DEFAULT_ANIMATION_CONFIG.returnDuration
+		private duration: number = DEFAULT_ANIMATION_CONFIG.return
 	) {}
 
 	execute(): Promise<void> {

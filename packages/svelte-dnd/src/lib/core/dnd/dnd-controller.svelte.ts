@@ -1,6 +1,5 @@
 import { DndState } from './dnd-state.svelte.js'
 import { ScrollController } from '../scroll/scroll-controller.js'
-import type { PreviewConfig } from '../entities/preview.svelte.js'
 import { DndEventEmitter } from './dnd-event-emitter.js'
 import { TranslationEngine } from '../zones/translation-engine.svelte.js'
 import type { SensorDescriptor, NavigationDirection } from '../sensors/sensor.js'
@@ -13,8 +12,8 @@ import type { Modifier } from '../modifiers/modifier.js'
 import { DndSimulator } from './dnd-simulator.js'
 import type { AnimateItemOptions, AnimateLayoutOptions } from './dnd-simulator.js'
 import type { DropZone, DragStartCallback, DragEndCallback, DropCallback, DragOverCallback, DropCancelledCallback, ZonesInvalidatedCallback, DndItemInfo, DndContainerInfo, DragStartEvent, Announcements } from '../../types.js'
-import type { AnimationConfig } from '../animation/animation-config.js'
-import { resolveAnimationConfig } from '../animation/animation-config.js'
+import type { AnimationConfig, ResolvedAnimationConfig } from '../animation/animation-config.js'
+import { resolveAnimationConfig, DEFAULT_ANIMATION_CONFIG } from '../animation/animation-config.js'
 import type { Behavior, AutoScrollConfig } from '../animation/behavior.js'
 import { autoScroll } from '../animation/behaviors/auto-scroll.js'
 import { scrollSync } from '../animation/behaviors/scroll-sync.js'
@@ -25,7 +24,6 @@ import type { Droppable } from '../entities/droppable.svelte.js'
 import type { Slot } from '../entities/slot.js'
 
 export interface DndControllerConfig {
-	preview?: PreviewConfig
 	animation?: AnimationConfig
 	/**
 	 * Drop-side plugins. Default — `[autoScroll(), scrollSync()]`. Pass an
@@ -83,20 +81,18 @@ export class DndController {
 	announcements = $state<Announcements | undefined>(undefined)
 	private defaultBehaviors: Behavior[] = []
 	/**
-	 * Reactive preview delays. DndPreview syncs its Preview entity from this.
-	 * @internal
+	 * Reactive resolved animation config. DndPreview, DndProvider, DndDraggable
+	 * and DndDroppable read live values from here for delays, durations and
+	 * easings.
 	 */
-	previewConfig = $state<{ showDelay: number; collapseDelay: number }>({ showDelay: 300, collapseDelay: 200 })
+	animation = $state<ResolvedAnimationConfig>(DEFAULT_ANIMATION_CONFIG)
 
-	constructor({ preview, animation, behaviors, debug = false, sensors, collision, modifiers = [], announcements }: DndControllerConfig = {}) {
+	constructor({ animation, behaviors, debug = false, sensors, collision, modifiers = [], announcements }: DndControllerConfig = {}) {
 		this.debug = debug
 		this.sensors = sensors ?? [new PointerSensor(), new KeyboardSensor()]
 		this.announcements = announcements
 		this.modifiers = modifiers
-		if (preview?.showDelay !== undefined) this.previewConfig.showDelay = preview.showDelay
-		if (preview?.collapseDelay !== undefined) this.previewConfig.collapseDelay = preview.collapseDelay
-
-		const animationConfig = resolveAnimationConfig(animation)
+		this.animation = resolveAnimationConfig(animation)
 		this.defaultBehaviors = behaviors ?? [autoScroll(), scrollSync()]
 
 		this.translationEngine = new TranslationEngine(this.state, this.droppables)
@@ -115,11 +111,11 @@ export class DndController {
 			this.scrollController,
 			this.dropResolver,
 			this.droppablesById,
-			animationConfig,
+			this.animation,
 			this.defaultBehaviors
 		)
 
-		this.simulator = new DndSimulator(this.state, this.droppablesById, this.slots, this.eventEmitter, animationConfig, this.defaultBehaviors)
+		this.simulator = new DndSimulator(this.state, this.droppablesById, this.slots, this.eventEmitter, this.animation, this.defaultBehaviors)
 	}
 
 	/** First `autoScroll(...)` config among the controller's default behaviors. */
@@ -408,12 +404,15 @@ export class DndController {
 	}
 
 	/**
-	 * Update preview animation delays at runtime. Changes propagate reactively
-	 * to every live DndPreview.
+	 * Update animation config at runtime. Accepts a partial — provided fields
+	 * override, omitted fields keep their current value. Changes propagate
+	 * reactively to every live DndPreview, DndDraggable, DndDroppable, and to
+	 * the next drop / return / FLIP animation.
 	 */
-	setPreviewConfig(config: PreviewConfig) {
-		if (config.showDelay !== undefined) this.previewConfig.showDelay = config.showDelay
-		if (config.collapseDelay !== undefined) this.previewConfig.collapseDelay = config.collapseDelay
+	setAnimation(config: AnimationConfig = {}) {
+		this.animation = resolveAnimationConfig(config, this.animation)
+		this.animationCoordinator.setAnimationConfig(this.animation)
+		this.simulator.setAnimationConfig(this.animation)
 	}
 
 	/** Toggle dev warnings (duplicate positions, etc.) at runtime. */

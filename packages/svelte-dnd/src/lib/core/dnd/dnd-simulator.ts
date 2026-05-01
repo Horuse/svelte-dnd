@@ -75,6 +75,10 @@ export class DndSimulator {
 		this.defaultBehaviors = behaviors
 	}
 
+	setAnimationConfig(animation: ResolvedAnimationConfig) {
+		this.animation = animation
+	}
+
 	/**
 	 * Animate a single item flying to a destination through the ghost system.
 	 *
@@ -101,8 +105,8 @@ export class DndSimulator {
 		const toPosition = to.position ?? 0
 		const useReturnStep = style === 'return' && to.containerId === sourceContainerId
 		const stepDuration = useReturnStep
-			? duration ?? this.animation.returnDuration
-			: duration ?? this.animation.dropDuration
+			? duration ?? this.animation.return
+			: duration ?? this.animation.drop
 
 		const makeStep = (): AnimationStep => {
 			const baseStep = useReturnStep
@@ -146,7 +150,7 @@ export class DndSimulator {
 		applyState: () => void | Promise<void>,
 		options: AnimateLayoutOptions = {}
 	): Promise<void> {
-		const { items, morph = false, duration = this.animation.swapDuration } = options
+		const { items, morph = false, duration = this.animation.layout } = options
 		const ids = items ?? this.collectAllItemIds().filter((id) => id !== this.state.draggedItem)
 
 		// Capture old rects (visual rects — include any active translates) and class lists.

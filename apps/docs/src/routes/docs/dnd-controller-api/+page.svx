@@ -29,15 +29,19 @@ const controller = new DndController({
         autoScroll({ zoneRatio: 0.2, maxSpeed: 20, stopOnDrop: true }),
         scrollSync({ threshold: 0.5 }),
     ],
-    preview: {
-        showDelay: 150,     // ms before preview slot appears (default: 300)
-        collapseDelay: 400, // ms before slot collapses — match --dnd-preview-duration-out (default: 200)
-    },
     animation: {
-        dropDuration: 200,         // ghost flight to a slot/target (default: 250)
-        returnDuration: 250,       // ghost return on cancelled drag (default: 300)
-        slotCollapseDuration: 200, // source slot collapse on cross-container drop (default: 250)
-        swapDuration: 280,         // animateLayout default (default: 300)
+        preview: {
+            showDelay: 150,                                       // ms before preview slot appears (default: 300)
+            hideDelay: 400,                                       // ms before slot collapses (default: 200)
+            show: { duration: 250, easing: 'ease-out' },          // CSS reveal transition (default: 200ms ease)
+            hide: { duration: 200, easing: 'ease-in' },           // CSS collapse transition (default: 200ms ease)
+        },
+        siblingShift: { duration: 220, easing: 'ease' },          // sibling translate + cross-container spacer
+        ghostResize: { duration: 180, easing: 'ease-out' },       // ghost auto-resize on cross-container moves
+        drop: 200,                                                // ghost flight on successful drop (default: 250)
+        return: 250,                                              // ghost return on cancelled drag (default: 300)
+        slotCollapse: 200,                                        // source slot collapse on cross-container drop (default: 250)
+        layout: 280,                                              // animateLayout default (default: 300)
     },
     debug: true,                             // position validation warnings in console
     sensors: [new PointerSensor(), new KeyboardSensor()], // see /docs/sensors
@@ -52,15 +56,19 @@ const controller = new DndController({
 // Default values (what you get when omitting each option):
 const controller = new DndController({
     behaviors: [autoScroll(), scrollSync()], // controller-level defaults; see /docs/behaviors
-    preview: {
-        showDelay: 300,
-        collapseDelay: 200,
-    },
     animation: {
-        dropDuration: 250,
-        returnDuration: 300,
-        slotCollapseDuration: 250,
-        swapDuration: 300,
+        preview: {
+            showDelay: 300,
+            hideDelay: 200,
+            show: { duration: 200, easing: 'ease' },
+            hide: { duration: 200, easing: 'ease' },
+        },
+        siblingShift: { duration: 200, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' },
+        ghostResize: { duration: 150, easing: 'ease' },
+        drop: 250,
+        return: 300,
+        slotCollapse: 250,
+        layout: 300,
     },
     debug: false,
     sensors: [new PointerSensor(), new KeyboardSensor()],
@@ -236,19 +244,21 @@ controller.setBehaviors([
 ]);
 ```
 
-### setPreviewConfig
+### setAnimation
 
 ```ts
-controller.setPreviewConfig(config: PreviewConfig): void
+controller.setAnimation(config?: AnimationConfig): void
 ```
 
-Updates preview animation delays at runtime. Changes propagate reactively to every live `DndPreview`.
+Updates the controller's animation config at runtime. Accepts a partial — provided fields override, omitted fields keep their current value. Changes propagate reactively to every live `DndPreview`, `DndDraggable`, `DndDroppable`, and apply to the next drop / return / FLIP animation.
 
 ```ts
-controller.setPreviewConfig({ showDelay: 150, collapseDelay: 400 });
-```
+// tweak only the preview hide delay; everything else keeps its current value
+controller.setAnimation({ preview: { hideDelay: 500 } });
 
-> **Note:** `collapseDelay` should match your `--dnd-preview-duration-out` CSS variable so the slot collapses only after the CSS transition finishes.
+// switch the sibling-shift to a different easing without changing duration
+controller.setAnimation({ siblingShift: { easing: 'ease-out' } });
+```
 
 ### setDebug
 
@@ -342,28 +352,48 @@ interface ScrollSyncOptions {
 declare function autoScroll(opts?: AutoScrollConfig): Behavior;
 declare function scrollSync(opts?: ScrollSyncOptions): Behavior;
 
-interface PreviewConfig {
-    /** Debounce delay (ms) before revealing the preview slot. Default: 300 */
-    showDelay?: number;
-    /** Delay (ms) before collapsing the slot — should match --dnd-preview-duration-out. Default: 200 */
-    collapseDelay?: number;
+type Transition = {
+    /** Duration in milliseconds. */
+    duration: number;
+    /** Any valid CSS timing-function: 'ease', 'cubic-bezier(...)', 'linear', etc. */
+    easing?: string;
 }
 
 interface AnimationConfig {
-    /** Ghost flight to a sortable slot or target zone, in ms. Default: 250 */
-    dropDuration?: number;
-    /** Ghost return animation when a drag is cancelled, in ms. Default: 300 */
-    returnDuration?: number;
-    /** Source slot collapse during a cross-container drop, in ms. Default: 250 */
-    slotCollapseDuration?: number;
-    /** Default duration (ms) for animateLayout. Default: 300 */
-    swapDuration?: number;
+    preview?: {
+        /** Debounce delay (ms) before revealing the preview slot. Default: 300 */
+        showDelay?: number;
+        /** Delay (ms) before collapsing the preview slot. Default: 200 */
+        hideDelay?: number;
+        /** CSS transition for the reveal (opacity / scale). Default: 200ms ease */
+        show?: Transition;
+        /** CSS transition for the collapse. Default: 200ms ease */
+        hide?: Transition;
+    };
+    /**
+     * Items repositioning to make room for the ghost — covers BOTH intra-container
+     * sibling translate AND cross-container spacer growth. One field, both effects.
+     * Default: 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)
+     */
+    siblingShift?: Transition;
+    /**
+     * Ghost auto-resize transition when crossing containers with different item
+     * dimensions. Default: 150ms ease
+     */
+    ghostResize?: Transition;
+    /** Ghost flight to a destination on successful drop (rAF, ms). Default: 250 */
+    drop?: number;
+    /** Ghost return flight on cancelled drop (rAF, ms). Default: 300 */
+    return?: number;
+    /** Source slot collapse on cross-container drop (rAF, ms). Default: 250 */
+    slotCollapse?: number;
+    /** Default duration for `animateLayout()` FLIP transitions (ms). Default: 300 */
+    layout?: number;
 }
 
 interface DndControllerConfig {
     /** Drop-side plugins (auto-scroll, scroll-sync, future hooks). Default: `[autoScroll(), scrollSync()]`. See [Behaviors](/docs/behaviors). */
     behaviors?: Behavior[];
-    preview?: PreviewConfig;
     animation?: AnimationConfig;
     /** Enable dev warnings (duplicate positions, etc.). Default: false */
     debug?: boolean;

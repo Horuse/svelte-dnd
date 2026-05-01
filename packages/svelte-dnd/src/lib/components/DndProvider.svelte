@@ -18,8 +18,6 @@
 	const dragController = untrack(() => rest.controller) ?? new DndController()
 	const ownsController = untrack(() => !rest.controller)
 
-	let rotated = $state(false)
-
 	/**
 	 * Fallback ghost renderer — clones the dragged element's DOM via `cloneNode(true)`.
 	 *
@@ -41,15 +39,6 @@
 			destroy() {}
 		}
 	}
-
-	$effect(() => {
-		if (dragController.dragging) {
-			rotated = false
-			requestAnimationFrame(() => {
-				rotated = true
-			})
-		}
-	})
 
 	setContext('dnd', dragController)
 
@@ -106,6 +95,7 @@
 	{@const previewSize = dragController.dropPreviewSize}
 	{@const ghostW = previewSize?.width ?? dragController.ghostSize.width}
 	{@const ghostH = previewSize?.height ?? dragController.ghostSize.height}
+	{@const resize = dragController.animation.ghostResize}
 	<div
 		class="dnd-ghost"
 		data-dnd-dragged-element
@@ -115,7 +105,8 @@
 			top: {dragController.transform.y}px;
 			width: {ghostW}px;
 			height: {ghostH}px;
-			transform: rotate({dragController.animatingReturn ? '0deg' : rotated ? 'var(--dnd-ghost-rotation, 0deg)' : '0deg'});
+			--dnd-ghost-resize-duration: {resize.duration}ms;
+			--dnd-ghost-resize-easing: {resize.easing};
 		"
 	>
 		{#if ghost && dragController.draggedItem}
@@ -163,14 +154,9 @@
 		z-index: var(--dnd-ghost-z-index, 9999);
 		opacity: var(--dnd-ghost-opacity, 0.8);
 		transition:
-			transform var(--dnd-ghost-rotation-duration, 200ms) ease,
-			width var(--dnd-ghost-resize-duration, 150ms) ease,
-			height var(--dnd-ghost-resize-duration, 150ms) ease;
+			width var(--dnd-ghost-resize-duration, 150ms) var(--dnd-ghost-resize-easing, ease),
+			height var(--dnd-ghost-resize-duration, 150ms) var(--dnd-ghost-resize-easing, ease);
 		scale: var(--dnd-ghost-scale, 1);
-	}
-
-	.dnd-ghost--returning {
-		transform: rotate(0deg) !important;
 	}
 
 	.dnd-debug-zone {

@@ -40,9 +40,8 @@ While a drag is in progress the provider injects a `<style>` tag into `<head>` t
 | `--dnd-ghost-z-index` | `9999` | Z-index of the ghost element |
 | `--dnd-ghost-opacity` | `0.8` | Opacity of the ghost element |
 | `--dnd-ghost-scale` | `1` | Scale of the ghost element |
-| `--dnd-ghost-rotation` | `0deg` | Rotation applied to the ghost while dragging |
-| `--dnd-ghost-rotation-duration` | `200ms` | Duration of the rotation transition |
 | `--dnd-ghost-resize-duration` | `150ms` | Duration of the ghost width/height transition when adapting to the target's item size |
+| `--dnd-ghost-resize-easing` | `ease` | Easing of the ghost width/height transition |
 
 ```svelte
 <DndProvider {controller}>

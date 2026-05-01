@@ -118,6 +118,7 @@
 	})
 
 	const isSortable = $derived(strategy.mode === 'sortable')
+	const shift = $derived(dndController?.animation.siblingShift ?? { duration: 200, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' })
 </script>
 
 <div
@@ -139,7 +140,7 @@
 	     so translated items don't visually overflow outside the container's bounds. -->
 	<div
 		aria-hidden="true"
-		style="height: {spacerHeight}px; width: {crossContainerSpacer.x > 0 ? crossContainerSpacer.x + 'px' : '0'}; flex-shrink: 0; transition: {dndController?.dragging ? 'height 200ms ease, width 200ms ease' : 'none'}"
+		style="height: {spacerHeight}px; width: {crossContainerSpacer.x > 0 ? crossContainerSpacer.x + 'px' : '0'}; flex-shrink: 0; transition: {dndController?.dragging ? `height ${shift.duration}ms ${shift.easing}, width ${shift.duration}ms ${shift.easing}` : 'none'}"
 	></div>
 </div>
 

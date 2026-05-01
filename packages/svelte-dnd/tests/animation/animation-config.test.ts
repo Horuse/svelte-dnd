@@ -13,16 +13,47 @@ describe('resolveAnimationConfig', () => {
 		expect(resolveAnimationConfig({})).toEqual(DEFAULT_ANIMATION_CONFIG)
 	})
 
-	it('overrides only the provided fields and keeps the rest default', () => {
-		const resolved = resolveAnimationConfig({ dropDuration: 100, swapDuration: 500 })
-		expect(resolved.dropDuration).toBe(100)
-		expect(resolved.swapDuration).toBe(500)
-		expect(resolved.returnDuration).toBe(DEFAULT_ANIMATION_CONFIG.returnDuration)
-		expect(resolved.slotCollapseDuration).toBe(DEFAULT_ANIMATION_CONFIG.slotCollapseDuration)
+	it('overrides only the provided number fields and keeps the rest default', () => {
+		const resolved = resolveAnimationConfig({ drop: 100, layout: 500 })
+		expect(resolved.drop).toBe(100)
+		expect(resolved.layout).toBe(500)
+		expect(resolved.return).toBe(DEFAULT_ANIMATION_CONFIG.return)
+		expect(resolved.slotCollapse).toBe(DEFAULT_ANIMATION_CONFIG.slotCollapse)
 	})
 
 	it('treats 0 as an explicit value, not a falsy fallback', () => {
-		const resolved = resolveAnimationConfig({ dropDuration: 0 })
-		expect(resolved.dropDuration).toBe(0)
+		const resolved = resolveAnimationConfig({ drop: 0 })
+		expect(resolved.drop).toBe(0)
+	})
+
+	it('deep-merges preview delays without affecting transitions', () => {
+		const resolved = resolveAnimationConfig({
+			preview: { showDelay: 50 }
+		})
+		expect(resolved.preview.showDelay).toBe(50)
+		expect(resolved.preview.hideDelay).toBe(DEFAULT_ANIMATION_CONFIG.preview.hideDelay)
+		expect(resolved.preview.show).toEqual(DEFAULT_ANIMATION_CONFIG.preview.show)
+	})
+
+	it('deep-merges Transition fields preserving the unspecified half', () => {
+		const resolved = resolveAnimationConfig({
+			siblingShift: { duration: 350 }
+		})
+		expect(resolved.siblingShift.duration).toBe(350)
+		expect(resolved.siblingShift.easing).toBe(DEFAULT_ANIMATION_CONFIG.siblingShift.easing)
+	})
+
+	it('uses a custom base when provided (partial patch on top of current state)', () => {
+		const current = resolveAnimationConfig({ drop: 999, slotCollapse: 555 })
+		const patched = resolveAnimationConfig({ drop: 100 }, current)
+		expect(patched.drop).toBe(100)
+		expect(patched.slotCollapse).toBe(555)
+	})
+
+	it('lets explicit easing override library default', () => {
+		const resolved = resolveAnimationConfig({
+			preview: { show: { duration: 300, easing: 'linear' } }
+		})
+		expect(resolved.preview.show).toEqual({ duration: 300, easing: 'linear' })
 	})
 })

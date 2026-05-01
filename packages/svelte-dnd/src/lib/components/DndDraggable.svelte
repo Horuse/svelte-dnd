@@ -107,6 +107,7 @@
 		(dndController?.animatingReturn === true && dndController?.draggedItem === id) ||
 		(dndController?.performingDrop === true && dndController?.draggedItem === id)
 	)
+	const shift = $derived(dndController?.animation.siblingShift ?? { duration: 200, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' })
 
 	// Block clicks after drag in capture phase — fires before any child onclick handlers.
 	$effect(() => {
@@ -139,7 +140,7 @@
 		aria-roledescription="draggable item"
 		data-dnd-draggable
 		data-dnd-drag-id={id}
-		style="transform: translate3d({translate.x}px, {translate.y}px, 0); transition: {isGhostActive || performingDrop ? 'none' : 'transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)'}"
+		style="transform: translate3d({translate.x}px, {translate.y}px, 0); transition: {isGhostActive || performingDrop ? 'none' : `transform ${shift.duration}ms ${shift.easing}`}"
 		onpointerdown={draggable.handlePointerDown}
 		onkeydown={draggable.handleKeyDown}
 		{@attach slot.attachDraggable(draggable)}

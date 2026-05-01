@@ -6,8 +6,8 @@ import type { DropPreview } from '../../types.js'
 export interface PreviewConfig {
 	/** Debounce delay (ms) before revealing the preview slot. Default: 300 */
 	showDelay?: number
-	/** Delay (ms) before collapsing the slot — should match --dnd-preview-duration-out. Default: 200 */
-	collapseDelay?: number
+	/** Delay (ms) before collapsing the slot. Default: 200 */
+	hideDelay?: number
 }
 
 // Minimal controller interface needed by Preview
@@ -39,7 +39,7 @@ export class Preview {
 	instant = $state(false)
 
 	showDelay: number
-	collapseDelay: number
+	hideDelay: number
 
 	private controller: PreviewControllerRef
 	private showTimer: ReturnType<typeof setTimeout> | null = null
@@ -51,7 +51,7 @@ export class Preview {
 		this.droppable = init.droppable
 		this.position = init.position
 		this.showDelay = init.config?.showDelay ?? 300
-		this.collapseDelay = init.config?.collapseDelay ?? 200
+		this.hideDelay = init.config?.hideDelay ?? 200
 	}
 
 	get containerId(): string {
@@ -123,7 +123,7 @@ export class Preview {
 				this.height = 0
 				this.width = 0
 				this.collapseTimer = null
-			}, this.collapseDelay)
+			}, this.hideDelay)
 		}
 	}
 

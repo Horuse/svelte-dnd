@@ -4,6 +4,42 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Breaking Changes
+
+- **Animation config restructured into a single `animation` namespace.**
+  Top-level `preview` option on `DndController` is removed — preview delays
+  and transitions now live under `animation.preview`. Field renames:
+  `dropDuration` → `drop`, `returnDuration` → `return`, `slotCollapseDuration`
+  → `slotCollapse`, `swapDuration` → `layout`, `preview.collapseDelay` →
+  `preview.hideDelay`. CSS-driven entries (`preview.show`/`hide`,
+  `siblingShift`, `ghostResize`) now accept `{ duration, easing }` so easing
+  is configurable. JS-rAF entries (`drop`, `return`, `slotCollapse`,
+  `layout`) stay as plain numbers.
+- **`controller.previewConfig` and `setPreviewConfig` removed.** Read live
+  values from `controller.animation` and update partials via
+  `controller.setAnimation({ ... })`.
+- **Ghost rotation is no longer applied by the library.** Removed CSS vars
+  `--dnd-ghost-rotation`, `--dnd-ghost-rotation-duration` and the
+  `.dnd-ghost--returning { transform: rotate(0deg) !important }` rule.
+  Implement rotation yourself in custom CSS if you want a tilt effect.
+- **New CSS vars** `--dnd-preview-easing-in`, `--dnd-preview-easing-out`,
+  `--dnd-ghost-resize-easing` complement the existing `*-duration` vars and
+  are written automatically from `controller.animation` (still overridable
+  via your own CSS).
+- **`PreviewConfig` type is no longer exported.** Use `AnimationConfig`
+  (now also exporting `ResolvedAnimationConfig` and `Transition`).
+
+### Features
+
+- **Configurable easing** for every CSS-driven animation: preview reveal /
+  collapse, sibling-shift (intra-container translate + cross-container
+  spacer growth, both unified under one `siblingShift` field), and ghost
+  auto-resize.
+- **Runtime `setAnimation(partial)`** with deep-merge — patch any subset of
+  the animation config without touching unrelated fields.
+
 ## [v1.0.0-rc.1] - 2026-04-19
 
 Release candidate for v1.0. Public API stabilized — please report regressions before stable.
