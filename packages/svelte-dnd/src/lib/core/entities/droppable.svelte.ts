@@ -73,6 +73,20 @@ export class Droppable {
 		return this.layout === 'horizontal'
 	}
 
+	/**
+	 * Number of items the container holds in its public list (the array users
+	 * splice into on drop). For DOM-rendered lists this is `slots.size`; for
+	 * virtualized strategies it comes from the strategy's virtual source so
+	 * "last slot" / "tail position" math reflects the full data length, not the
+	 * mounted window.
+	 */
+	get itemCount(): number {
+		const virt = (this.strategy as { virtual?: { itemCount?: () => number } }).virtual
+		const reported = virt?.itemCount?.()
+		if (typeof reported === 'number' && reported >= 0) return reported
+		return this.slots.size
+	}
+
 	/** Build a public-facing snapshot for event callbacks. */
 	toContainerInfo(position: number): DndContainerInfo {
 		return {

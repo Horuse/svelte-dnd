@@ -1,0 +1,24 @@
+---
+title: Virtualization
+description: Sortable list with 5000 items rendered through virtua's virtualized list.
+---
+
+# Virtualization
+
+Sortable list of 5000 items, rendered through [`virtua`](https://github.com/inokawa/virtua) — only the rows visible in the viewport (plus a small buffer) live in the DOM.
+
+`<DndDraggable>` is rendered inside `<VList>`'s `children` snippet, so each item registers a slot the moment virtua mounts it. `<DndDroppable>` wraps `<VList>` so the strategy still owns the list as a single drop container.
+
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components';
+	import VirtualizationExampleCode from "$lib/examples/VirtualizationExample.svelte?raw";
+	import VirtualizationExample from "$lib/examples/VirtualizationExample.svelte";
+</script>
+
+<ComponentPreview
+	sources={[
+		{ name: "VirtualizationExample.svelte", code: VirtualizationExampleCode, language: "svelte" }
+	]}
+>
+	<VirtualizationExample/>
+</ComponentPreview>

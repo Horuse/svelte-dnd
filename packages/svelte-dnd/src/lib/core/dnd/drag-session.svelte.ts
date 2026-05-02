@@ -1,8 +1,7 @@
 import type { DropPreview } from '../../types.js'
 import type { Draggable } from '../entities/draggable.svelte.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
-import type { LayoutSnapshot } from '../zones/layout-snapshot.js'
-import { captureLayoutSnapshot } from '../zones/layout-snapshot.js'
+import type { SortableSource } from '../zones/sortable-source.js'
 
 export type DragSource = 'user' | 'programmatic'
 
@@ -17,7 +16,7 @@ export class DragSession {
 	ghostSize = $state<{ width: number; height: number }>({ width: 0, height: 0 })
 	slotSize = $state<{ width: number; height: number } | null>(null)
 
-	private snapshots = new Map<string, LayoutSnapshot>()
+	private sources = new Map<string, SortableSource>()
 
 	constructor(
 		source: Draggable,
@@ -36,17 +35,16 @@ export class DragSession {
 	}
 
 	/**
-	 * Capture a container's layout geometry. Must be called at drag start,
-	 * before any reactive translations are applied to slot elements.
+	 * Register a strategy-owned geometry source for a container. Called from
+	 * `ContainerStrategy.onSessionStart`, before any reactive translations are
+	 * applied to slot elements.
 	 */
-	captureSnapshot(droppable: Droppable): LayoutSnapshot {
-		const snapshot = captureLayoutSnapshot(droppable, this.source.id)
-		this.snapshots.set(droppable.id, snapshot)
-		return snapshot
+	setSource(containerId: string, source: SortableSource): void {
+		this.sources.set(containerId, source)
 	}
 
-	getSnapshot(containerId: string): LayoutSnapshot | undefined {
-		return this.snapshots.get(containerId)
+	getSource(containerId: string): SortableSource | undefined {
+		return this.sources.get(containerId)
 	}
 
 	// --- Derived accessors ---

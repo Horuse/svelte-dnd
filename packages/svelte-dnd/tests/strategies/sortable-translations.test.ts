@@ -3,10 +3,11 @@ import { sortable } from '../../src/lib/core/containers/strategies/sortable-cont
 import type { DragSession } from '../../src/lib/core/dnd/drag-session.svelte.js'
 import type { Droppable } from '../../src/lib/core/entities/droppable.svelte.js'
 import type { LayoutSnapshot } from '../../src/lib/core/zones/layout-snapshot.js'
+import { DomSortableSource } from '../../src/lib/core/zones/sortable-source.js'
 import { slotRect } from '../helpers/fixtures.js'
 
-const rect = (slotId: string, x: number, y: number, w = 100, h = 50) =>
-	slotRect(slotId, 0, x, y, w, h)
+const rect = (slotId: string, position: number, x: number, y: number, w = 100, h = 50) =>
+	slotRect(slotId, position, x, y, w, h)
 
 interface FakeSessionInit {
 	snapshot: LayoutSnapshot
@@ -17,12 +18,14 @@ interface FakeSessionInit {
 }
 
 function fakeSession(init: FakeSessionInit): DragSession {
+	const itemId = init.itemId ?? 'dragged'
+	const source = new DomSortableSource(init.snapshot, itemId)
 	return {
-		getSnapshot: (id: string) => (id === init.originContainerId || init.dropPreview?.containerId === id ? init.snapshot : null),
+		getSource: (id: string) => (id === init.originContainerId || init.dropPreview?.containerId === id ? source : undefined),
 		dropPreview: init.dropPreview,
 		slotSize: init.slotSize,
 		originContainerId: init.originContainerId,
-		itemId: init.itemId ?? 'dragged'
+		itemId
 	} as unknown as DragSession
 }
 
@@ -31,7 +34,7 @@ const droppable = (id: string) => ({ id }) as unknown as Droppable
 describe('SortableContainerStrategy.getTranslations — vertical', () => {
 	const strategy = sortable({ layout: 'vertical' })
 	const snapshot: LayoutSnapshot = {
-		rects: [rect('a', 0, 0), rect('b', 0, 60), rect('c', 0, 120)],
+		rects: [rect('a', 0, 0, 0), rect('b', 1, 0, 60), rect('c', 2, 0, 120)],
 		draggedIndex: 2
 	}
 
@@ -53,7 +56,7 @@ describe('SortableContainerStrategy.getTranslations — vertical', () => {
 
 	it('shifts later items backward when the drag moves to a later position', () => {
 		const earlySnapshot: LayoutSnapshot = {
-			rects: [rect('a', 0, 0), rect('b', 0, 60), rect('c', 0, 120)],
+			rects: [rect('a', 0, 0, 0), rect('b', 1, 0, 60), rect('c', 2, 0, 120)],
 			draggedIndex: 0
 		}
 		const session = fakeSession({
@@ -87,7 +90,7 @@ describe('SortableContainerStrategy.getTranslations — vertical', () => {
 
 	it('collapses the origin gap when hovering a different container', () => {
 		const earlySnapshot: LayoutSnapshot = {
-			rects: [rect('a', 0, 0), rect('b', 0, 60), rect('c', 0, 120)],
+			rects: [rect('a', 0, 0, 0), rect('b', 1, 0, 60), rect('c', 2, 0, 120)],
 			draggedIndex: 0
 		}
 		const session = fakeSession({
@@ -107,7 +110,7 @@ describe('SortableContainerStrategy.getTranslations — vertical', () => {
 
 	it('shifts target items forward when the dragged item arrives from another container', () => {
 		const targetSnapshot: LayoutSnapshot = {
-			rects: [rect('x', 0, 0), rect('y', 0, 60), rect('z', 0, 120)],
+			rects: [rect('x', 0, 0, 0), rect('y', 1, 0, 60), rect('z', 2, 0, 120)],
 			draggedIndex: -1 // dragged item is not native to this snapshot
 		}
 		const session = fakeSession({
@@ -144,7 +147,7 @@ describe('SortableContainerStrategy.getTranslations — horizontal', () => {
 
 	it('shifts later items backward along the x axis', () => {
 		const snapshot: LayoutSnapshot = {
-			rects: [rect('a', 0, 0, 80, 50), rect('b', 90, 0, 80, 50), rect('c', 180, 0, 80, 50)],
+			rects: [rect('a', 0, 0, 0, 80, 50), rect('b', 1, 90, 0, 80, 50), rect('c', 2, 180, 0, 80, 50)],
 			draggedIndex: 0
 		}
 		const session = fakeSession({

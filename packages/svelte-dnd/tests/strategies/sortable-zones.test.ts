@@ -3,6 +3,7 @@ import { sortable } from '../../src/lib/core/containers/strategies/sortable-cont
 import type { DragSession } from '../../src/lib/core/dnd/drag-session.svelte.js'
 import type { Droppable } from '../../src/lib/core/entities/droppable.svelte.js'
 import type { LayoutSnapshot } from '../../src/lib/core/zones/layout-snapshot.js'
+import { DomSortableSource } from '../../src/lib/core/zones/sortable-source.js'
 import { scrollableEl, slotRect } from '../helpers/fixtures.js'
 
 const droppableWith = (id: string, rect: { x: number; y: number; width: number; height: number }, scroll = { top: 0, left: 0 }) => {
@@ -10,10 +11,13 @@ const droppableWith = (id: string, rect: { x: number; y: number; width: number; 
 	return { id, element } as unknown as Droppable
 }
 
-const sessionWith = (snapshot: LayoutSnapshot, itemId = 'dragged'): DragSession => ({
-	getSnapshot: (id: string) => (id === snapshot.containerId ? snapshot : null),
-	itemId
-} as unknown as DragSession)
+const sessionWith = (snapshot: LayoutSnapshot, itemId = 'dragged'): DragSession => {
+	const source = new DomSortableSource(snapshot, itemId)
+	return {
+		getSource: (id: string) => (id === snapshot.containerId ? source : undefined),
+		itemId
+	} as unknown as DragSession
+}
 
 describe('SortableContainerStrategy.calculateDropZones — scroll viewport clipping', () => {
 	const strategy = sortable({ layout: 'vertical' })

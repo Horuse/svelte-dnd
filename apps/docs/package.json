@@ -45,5 +45,8 @@
 	},
 	"imports": {
 		"#app.css": "./src/app.css"
+	},
+	"dependencies": {
+		"virtua": "^0.49.1"
 	}
 }

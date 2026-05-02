@@ -90,10 +90,11 @@
 	// When the tail preview is active, the last slot needs its margin so the preview has visual space.
 	const suppressSpacing = $derived.by(() => {
 		if (position === undefined || !droppable) return false
-		const isLast = position === droppable.slots.size - 1
+		const total = droppable.itemCount
+		const isLast = position === total - 1
 		if (!isLast) return false
 		const preview = dndController?.dropPreview
-		const tailActive = preview && preview.containerId === droppable.id && preview.position === droppable.slots.size
+		const tailActive = preview && preview.containerId === droppable.id && preview.position === total
 		return !tailActive
 	})
 

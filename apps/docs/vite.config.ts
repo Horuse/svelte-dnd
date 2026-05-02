@@ -9,5 +9,11 @@ export default defineConfig({
 		alias: {
 			'@horuse/svelte-dnd': path.resolve('../../packages/svelte-dnd/src/lib')
 		}
+	},
+	optimizeDeps: {
+		exclude: ['virtua/svelte']
+	},
+	ssr: {
+		noExternal: ['virtua']
 	}
 });

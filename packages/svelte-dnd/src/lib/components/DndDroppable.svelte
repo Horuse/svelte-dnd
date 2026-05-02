@@ -96,11 +96,11 @@
 		return { x: info.x, y: info.y }
 	})
 
-	// Tail preview: handles position = slots.size (drop after last item in cross-container drags).
+	// Tail preview: handles position = itemCount (drop after last item in cross-container drags).
 	// Returns -1 (inactive) unless this container is the current drop target.
 	const tailPosition = $derived.by(() => {
 		if (!dndController?.dropPreview || dndController.dropPreview.containerId !== id) return -1
-		return droppable.slots.size
+		return droppable.itemCount
 	})
 
 	// Keep the last valid tail position so the preview knows its size while animating out.

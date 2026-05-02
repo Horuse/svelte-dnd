@@ -13,6 +13,7 @@
 		{ href: '/examples/custom-ghost', label: 'Custom Ghost' },
 		{ href: '/examples/sortable-containers', label: 'Sortable Containers' },
 		{ href: '/examples/vertical-sortable-containers', label: 'Vertical Sortable' },
+		{ href: '/examples/virtualization', label: 'Virtualization' },
 	];
 
 	type NavLink = {

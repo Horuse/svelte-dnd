@@ -27,6 +27,7 @@ export {
 	sortable,
 	type SortableOptions
 } from './core/containers/strategies/sortable-container-strategy.js'
+export type { VirtualSource, SortableSource } from './core/zones/sortable-source.js'
 export {
 	TargetContainerStrategy,
 	target,

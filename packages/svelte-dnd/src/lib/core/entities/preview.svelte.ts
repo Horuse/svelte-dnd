@@ -55,16 +55,18 @@ export class Preview {
 	}
 
 	get containerId(): string {
-		return this.slot?.droppable.id ?? this.droppable?.id ?? ''
+		return this.slot?.droppable?.id ?? this.droppable?.id ?? ''
 	}
 
 	get isHorizontal(): boolean {
-		return this.slot?.droppable.isHorizontal ?? this.droppable?.isHorizontal ?? false
+		return this.slot?.droppable?.isHorizontal ?? this.droppable?.isHorizontal ?? false
 	}
 
 	get isVisible(): boolean {
 		const dp = this.controller.dropPreview
-		return !!dp && dp.containerId === this.containerId && dp.position === this.position
+		const cid = this.containerId
+		if (!cid) return false
+		return !!dp && dp.containerId === cid && dp.position === this.position
 	}
 
 	/**
