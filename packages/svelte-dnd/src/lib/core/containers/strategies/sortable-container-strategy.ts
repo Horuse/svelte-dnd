@@ -73,18 +73,29 @@ export class SortableContainerStrategy implements ContainerStrategy {
 		const scrollTop = droppable.element.scrollTop
 		const geometry = pickGeometry(this.layout, this.flow)
 
+		const snapshot = session?.getSnapshot(droppable.id)
 		const ctx = {
 			containerId: droppable.id,
 			containerRect,
 			scrollLeft,
-			scrollTop
+			scrollTop,
+			draggedIndex: snapshot?.draggedIndex ?? -1
 		}
 
-		const snapshot = session?.getSnapshot(droppable.id)
 		if (!snapshot) return [geometry.buildEmptyZone(ctx)]
 
 		const draggedId = session!.itemId
-		const visible = snapshot.rects.filter((r) => r.slotId !== draggedId)
+		const visible = snapshot.rects.filter((r) => {
+			if (r.slotId === draggedId) return false
+			const vy = r.offsetTop + containerRect.top - scrollTop
+			const vx = r.offsetLeft + containerRect.left - scrollLeft
+			return (
+				vy + r.height > containerRect.top &&
+				vy < containerRect.bottom &&
+				vx + r.width > containerRect.left &&
+				vx < containerRect.right
+			)
+		})
 
 		if (visible.length === 0) return [geometry.buildEmptyZone(ctx)]
 		return geometry.buildZones(visible, ctx)

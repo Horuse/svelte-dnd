@@ -6,6 +6,13 @@ export interface ZoneGeometryContext {
 	containerRect: DOMRect
 	scrollLeft: number
 	scrollTop: number
+	/**
+	 * Index of the dragged item inside the captured snapshot, or -1 when the
+	 * drag originated in a different container. Geometries use it to translate
+	 * a slot's full-array `position` into its `splice`-target position in the
+	 * array-without-dragged that drop handlers consume.
+	 */
+	draggedIndex: number
 }
 
 /**

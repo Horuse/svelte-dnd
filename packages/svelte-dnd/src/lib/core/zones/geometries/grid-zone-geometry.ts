@@ -23,7 +23,10 @@ export class GridZoneGeometry implements ZoneGeometry {
 		const ax = axisFor(this.flow)
 		const groups = groupByTrack(visibleRects, ax)
 		const zones: DropZone[] = []
-		let positionIndex = 0
+		const beforePos = (rect: SlotLayoutRect) =>
+			ctx.draggedIndex !== -1 && rect.position > ctx.draggedIndex
+				? rect.position - 1
+				: rect.position
 
 		for (let gi = 0; gi < groups.length; gi++) {
 			const group = groups[gi]
@@ -44,24 +47,21 @@ export class GridZoneGeometry implements ZoneGeometry {
 				const rect = group[ii]
 				const prev = group[ii - 1]
 				const next = group[ii + 1]
+				const before = beforePos(rect)
 
 				const primaryStart = ax.primaryOf(rect)
 				const primarySize = ax.primarySizeOf(rect)
 				const primaryMid = primaryStart + primarySize / 2
 
-				// "Before me" zone → position = positionIndex
 				const beforeStart = prev
 					? (ax.primaryOf(prev) + ax.primarySizeOf(prev) + primaryStart) / 2
 					: Math.min(0, primaryStart)
-				zones.push(ax.toZone(ctx, positionIndex, beforeStart, primaryMid, secStart, secEnd))
+				zones.push(ax.toZone(ctx, before, beforeStart, primaryMid, secStart, secEnd))
 
-				// "After me" zone → position = positionIndex + 1
 				const afterEnd = next
 					? (primaryStart + primarySize + ax.primaryOf(next)) / 2
 					: Math.max(ax.containerPrimaryLength(ctx) + ax.scrollPrimary(ctx), primaryStart + primarySize)
-				zones.push(ax.toZone(ctx, positionIndex + 1, primaryMid, afterEnd, secStart, secEnd))
-
-				positionIndex++
+				zones.push(ax.toZone(ctx, before + 1, primaryMid, afterEnd, secStart, secEnd))
 			}
 		}
 

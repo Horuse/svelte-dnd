@@ -17,9 +17,14 @@ export class AxisZoneGeometry implements ZoneGeometry {
 
 		const zones: DropZone[] = []
 		const layout: DndLayout = this.axis
+		const beforePos = (rect: SlotLayoutRect) =>
+			ctx.draggedIndex !== -1 && rect.position > ctx.draggedIndex
+				? rect.position - 1
+				: rect.position
 
 		visibleRects.forEach((rect, index) => {
 			const viewport = this.toViewport(rect, ctx)
+			const before = beforePos(rect)
 
 			if (this.axis === 'vertical') {
 				const halfHeight = viewport.height / 2
@@ -27,11 +32,11 @@ export class AxisZoneGeometry implements ZoneGeometry {
 				if (index === 0) {
 					zones.push({
 						containerId: ctx.containerId,
-						position: 0,
+						position: before,
 						layout,
 						rect: {
 							x: ctx.containerRect.left,
-							y: Math.min(ctx.containerRect.top, viewport.y),
+							y: ctx.containerRect.top,
 							width: ctx.containerRect.width,
 							height: Math.max(halfHeight, viewport.y - ctx.containerRect.top + halfHeight)
 						}
@@ -51,7 +56,7 @@ export class AxisZoneGeometry implements ZoneGeometry {
 
 				zones.push({
 					containerId: ctx.containerId,
-					position: index + 1,
+					position: before + 1,
 					layout,
 					rect: { x: ctx.containerRect.left, y: zoneY, width: ctx.containerRect.width, height: zoneHeight }
 				})
@@ -61,10 +66,10 @@ export class AxisZoneGeometry implements ZoneGeometry {
 				if (index === 0) {
 					zones.push({
 						containerId: ctx.containerId,
-						position: 0,
+						position: before,
 						layout,
 						rect: {
-							x: Math.min(ctx.containerRect.left, viewport.x),
+							x: ctx.containerRect.left,
 							y: ctx.containerRect.top,
 							width: Math.max(halfWidth, viewport.x - ctx.containerRect.left + halfWidth),
 							height: ctx.containerRect.height
@@ -85,7 +90,7 @@ export class AxisZoneGeometry implements ZoneGeometry {
 
 				zones.push({
 					containerId: ctx.containerId,
-					position: index + 1,
+					position: before + 1,
 					layout,
 					rect: { x: zoneX, y: ctx.containerRect.top, width: zoneWidth, height: ctx.containerRect.height }
 				})

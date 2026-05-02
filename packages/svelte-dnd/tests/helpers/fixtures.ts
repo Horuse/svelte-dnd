@@ -31,6 +31,7 @@ export function geometryCtx(partial: Partial<ZoneGeometryContext> = {}): ZoneGeo
 		containerRect,
 		scrollLeft: 0,
 		scrollTop: 0,
+		draggedIndex: -1,
 		...partial
 	}
 }
