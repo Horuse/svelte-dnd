@@ -133,7 +133,6 @@ export class DropAnimationCoordinator {
 		targetContainerId: string,
 		position: number
 	) {
-		// Capture session data upfront — state.reset() clears it later
 		const element = this.state.element
 		const type = this.state.draggedType ?? undefined
 		const originContainerId = this.state.originContainerId
@@ -150,9 +149,8 @@ export class DropAnimationCoordinator {
 
 		const isCrossContainer = targetContainerId !== originContainerId
 
-		// Start slot collapse immediately, in parallel with the ghost flight.
-		// GhostToTargetStep.calculateTargetPosition() reads live DOM positions each frame,
-		// so the ghost automatically tracks the preview as block B moves up/left.
+		// Smooth source-slot collapse runs in parallel with the ghost flight so
+		// items below the dragged source move up smoothly while the ghost flies.
 		const collapsePromise = isCrossContainer && element && sourceDroppable
 			? this.startSlotCollapse(element, sourceDroppable, sourceId, originPosition)
 			: Promise.resolve()
@@ -166,17 +164,24 @@ export class DropAnimationCoordinator {
 				const targetInfo: DndContainerInfo = targetDroppable.toContainerInfo(position)
 				const dropEvent: DropEvent = { item: itemInfo, source: sourceInfo, target: targetInfo }
 				const dragEndEvent: DragEndEvent = { item: itemInfo, source: sourceInfo, target: targetInfo, cancelled: false }
+
 				// Save scroll positions before DOM reorder — browser scroll anchoring
 				// can shift scrollTop when content height changes after items update.
-				const srcScroll = sourceDroppable.element?.scrollTop
-				const tgtScroll = sourceDroppable !== targetDroppable ? targetDroppable.element?.scrollTop : undefined
+				// Skip for virtualized containers entirely: they manage their own
+				// scroll state and any extra write fights their reconciliation.
+				const srcScrollTarget = !sourceDroppable.isVirtualized ? sourceDroppable.element : undefined
+				const tgtScrollTarget = (sourceDroppable !== targetDroppable && !targetDroppable.isVirtualized)
+					? targetDroppable.element
+					: undefined
+				const srcScroll = srcScrollTarget?.scrollTop
+				const tgtScroll = tgtScrollTarget?.scrollTop
+
 				this.eventEmitter.notifyDrop(dropEvent)
 				this.finalizeDragEnd(dragEndEvent)
-				// Restore after Svelte flushes DOM updates (two microtasks: Svelte schedules
-				// its flush as a microtask, we need to run after it completes)
+
 				queueMicrotask(() => queueMicrotask(() => {
-					if (srcScroll !== undefined && sourceDroppable.element) sourceDroppable.element.scrollTop = srcScroll
-					if (tgtScroll !== undefined && targetDroppable.element) targetDroppable.element.scrollTop = tgtScroll
+					if (srcScroll !== undefined && srcScrollTarget) srcScrollTarget.scrollTop = srcScroll
+					if (tgtScroll !== undefined && tgtScrollTarget) tgtScrollTarget.scrollTop = tgtScroll
 				}))
 			} else {
 				this.finalizeDragEnd(null)

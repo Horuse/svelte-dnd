@@ -87,6 +87,17 @@ export class Droppable {
 		return this.slots.size
 	}
 
+	/**
+	 * Whether this container delegates its scroll viewport to a virtualizer
+	 * (virtua, tanstack/virtual, …) rather than scrolling its own element.
+	 * The drop coordinator uses this to skip its DOM scroll save/restore for
+	 * virtualized droppables — those manage their own scroll-jump compensation
+	 * and an extra write fights it.
+	 */
+	get isVirtualized(): boolean {
+		return !!(this.strategy as { virtual?: unknown }).virtual
+	}
+
 	/** Build a public-facing snapshot for event callbacks. */
 	toContainerInfo(position: number): DndContainerInfo {
 		return {
