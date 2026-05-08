@@ -48,6 +48,15 @@ export function scrollSync(opts: ScrollSyncOptions = {}): Behavior {
 							next.execute().then(resolve)
 							return
 						}
+						// Degenerate target wrapper (zero area, e.g. a tail-preview wrapper
+						// whose preview is position:absolute so the wrapper collapses to 0 height) —
+						// nothing for scroll-sync to bring into view. Delegate to the inner step,
+						// which re-reads the target rect each frame and tracks it as siblings shift.
+						const targetRect = ctx.targetEl.getBoundingClientRect()
+						if (targetRect.width === 0 || targetRect.height === 0) {
+							next.execute().then(resolve)
+							return
+						}
 						const visible = DOMHelper.computeVisibleFraction(ctx.targetEl, ctx.container)
 						if (visible >= threshold) {
 							next.execute().then(resolve)
