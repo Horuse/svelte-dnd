@@ -113,8 +113,10 @@ export class Preview {
 		if (this.showTimer) { clearTimeout(this.showTimer); this.showTimer = null }
 		this.revealed = false
 
+		// Repeated hide() during a drag would otherwise leak orphan timers that later zero out height after show().
+		if (this.collapseTimer) { clearTimeout(this.collapseTimer); this.collapseTimer = null }
+
 		if (instant) {
-			if (this.collapseTimer) { clearTimeout(this.collapseTimer); this.collapseTimer = null }
 			this.instant = true
 			this.height = 0
 			this.width = 0
