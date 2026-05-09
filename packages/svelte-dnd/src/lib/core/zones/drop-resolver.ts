@@ -3,7 +3,6 @@ import type { DndState } from '../dnd/dnd-state.svelte.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
 import type { CollisionAlgorithm } from '../collision/collision-algorithm.js'
 import { centerPoint } from '../collision/center-point.js'
-import { DOMHelper } from '../utils/dom-helper.js'
 
 /**
  * Resolves which drop zone contains a given point during an active drag.

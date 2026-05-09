@@ -249,7 +249,10 @@ export class DndController {
 	// synchronous layout each tick). The slotId is stored alongside so we re-measure if
 	// the first non-dragged slot identity changes (e.g. virtualizer remounts).
 	// Cleared at session start so a stale rect from the previous drag never leaks in.
-	private firstSlotRectCache = new Map<string, { slotId: string; width: number; height: number }>()
+	private firstSlotRectCache = new Map<
+		string,
+		{ slotId: string; width: number; height: number }
+	>()
 
 	/**
 	 * Reactive size for sizing ghost/preview to match the destination layout.

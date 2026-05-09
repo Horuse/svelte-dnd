@@ -86,7 +86,7 @@ export class PointerSensor implements SensorDescriptor {
 
 		let isDragging = false
 		let isPotentialDrag = true
-		let lastPointerId = e.pointerId
+		const lastPointerId = e.pointerId
 		const lastPointerPos = { x: e.clientX, y: e.clientY }
 		let conditionTimer: ReturnType<typeof setTimeout> | null = null
 		const touchScroll = new TouchScroll()

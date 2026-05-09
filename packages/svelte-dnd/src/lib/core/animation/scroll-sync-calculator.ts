@@ -1,4 +1,4 @@
-import { getDirectionAdapter, type DirectionAdapter } from './direction-adapter.js'
+import { getDirectionAdapter } from './direction-adapter.js'
 
 // Animation timing constants
 const ANIMATION_DURATION = {

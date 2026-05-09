@@ -127,7 +127,7 @@
 {/if}
 
 {#if dragController.debugZones && dragController.dropZones}
-	{#each dragController.dragging ? dragController.filteredDropZones : dragController.dropZones as zone, index}
+	{#each dragController.dragging ? dragController.filteredDropZones : dragController.dropZones as zone (zone.containerId + ':' + zone.position)}
 		<div
 			class="dnd-debug-zone"
 			class:dnd-debug-zone--first={zone.position === 0}

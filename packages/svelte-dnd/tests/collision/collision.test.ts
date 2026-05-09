@@ -42,7 +42,9 @@ describe('centerPoint', () => {
 	})
 
 	it('returns null when no zone contains the center', () => {
-		const hit = centerPoint(ctx(zones, { x: 0, y: 0 }, { x: 200, y: 200, width: 10, height: 10 }))
+		const hit = centerPoint(
+			ctx(zones, { x: 0, y: 0 }, { x: 200, y: 200, width: 10, height: 10 })
+		)
 		expect(hit).toBeNull()
 	})
 
@@ -53,7 +55,9 @@ describe('centerPoint', () => {
 	})
 
 	it('ignores pointer position entirely (only ghost rect matters)', () => {
-		const hit = centerPoint(ctx(zones, { x: 999, y: 999 }, { x: 10, y: 10, width: 20, height: 20 }))
+		const hit = centerPoint(
+			ctx(zones, { x: 999, y: 999 }, { x: 10, y: 10, width: 20, height: 20 })
+		)
 		expect(hit).toBe(zones[0])
 	})
 })
@@ -73,9 +77,7 @@ describe('cursorOver', () => {
 
 	it('ignores ghost size entirely', () => {
 		// Ghost would overlap zones[0] but cursor is in zones[1]
-		const hit = cursorOver(
-			ctx(zones, { x: 30, y: 80 }, { x: 0, y: 0, width: 100, height: 50 })
-		)
+		const hit = cursorOver(ctx(zones, { x: 30, y: 80 }, { x: 0, y: 0, width: 100, height: 50 }))
 		expect(hit).toBe(zones[1])
 	})
 })
@@ -131,7 +133,9 @@ describe('closestCenter', () => {
 			zone('a', 2, 0, 200, 100, 100) // center 50,250
 		]
 		// Ghost center 60,60 → zones[0] is closest
-		const hit = closestCenter(ctx(zones, { x: 0, y: 0 }, { x: 10, y: 10, width: 100, height: 100 }))
+		const hit = closestCenter(
+			ctx(zones, { x: 0, y: 0 }, { x: 10, y: 10, width: 100, height: 100 })
+		)
 		expect(hit).toBe(zones[0])
 	})
 

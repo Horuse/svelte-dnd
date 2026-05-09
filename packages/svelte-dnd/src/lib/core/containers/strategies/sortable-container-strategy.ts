@@ -5,7 +5,7 @@ import type { DndState } from '../../dnd/dnd-state.svelte.js'
 import type { AnimationStep } from '../../animation/steps/animation-step.js'
 import type { Droppable } from '../../entities/droppable.svelte.js'
 import type { Behavior } from '../../animation/behavior.js'
-import type { SlotLayoutRect, LayoutSnapshot } from '../../zones/layout-snapshot.js'
+import type { SlotLayoutRect } from '../../zones/layout-snapshot.js'
 import { captureLayoutSnapshot } from '../../zones/layout-snapshot.js'
 import type { VirtualSource } from '../../zones/sortable-source.js'
 import { DomSortableSource, VirtualSortableSource } from '../../zones/sortable-source.js'
@@ -300,4 +300,3 @@ export class SortableContainerStrategy implements ContainerStrategy {
 export function sortable(options?: SortableOptions): SortableContainerStrategy {
 	return new SortableContainerStrategy(options)
 }
-

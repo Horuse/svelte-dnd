@@ -52,7 +52,9 @@ describe('resolveAnimationConfig', () => {
 
 	it('preview.hide.delay overrides only delay; duration and easing keep defaults', () => {
 		const resolved = resolveAnimationConfig({
-			preview: { hide: { delay: 500, duration: DEFAULT_ANIMATION_CONFIG.preview.hide.duration } }
+			preview: {
+				hide: { delay: 500, duration: DEFAULT_ANIMATION_CONFIG.preview.hide.duration }
+			}
 		})
 		expect(resolved.preview.hide.delay).toBe(500)
 		expect(resolved.preview.hide.duration).toBe(DEFAULT_ANIMATION_CONFIG.preview.hide.duration)
@@ -61,7 +63,9 @@ describe('resolveAnimationConfig', () => {
 
 	it('preview show is independent of hide', () => {
 		const resolved = resolveAnimationConfig({
-			preview: { show: { delay: 100, duration: DEFAULT_ANIMATION_CONFIG.preview.show.duration } }
+			preview: {
+				show: { delay: 100, duration: DEFAULT_ANIMATION_CONFIG.preview.show.duration }
+			}
 		})
 		expect(resolved.preview.show.delay).toBe(100)
 		expect(resolved.preview.hide).toEqual(DEFAULT_ANIMATION_CONFIG.preview.hide)
