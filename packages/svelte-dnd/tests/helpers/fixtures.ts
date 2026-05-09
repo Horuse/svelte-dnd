@@ -112,20 +112,20 @@ export function pointerEvent(opts: PointerEventInit = {}): PointerEvent {
 	return event
 }
 
-export type SpyCallbacks = SensorCallbacks & {
-	onStart: ReturnType<typeof vi.fn>
-	onMove: ReturnType<typeof vi.fn>
-	onEnd: ReturnType<typeof vi.fn>
-	onCancel: ReturnType<typeof vi.fn>
-	onNavigate: ReturnType<typeof vi.fn>
+export type SpyCallbacks = {
+	onStart: ReturnType<typeof vi.fn<SensorCallbacks['onStart']>>
+	onMove: ReturnType<typeof vi.fn<SensorCallbacks['onMove']>>
+	onEnd: ReturnType<typeof vi.fn<SensorCallbacks['onEnd']>>
+	onCancel: ReturnType<typeof vi.fn<SensorCallbacks['onCancel']>>
+	onNavigate: ReturnType<typeof vi.fn<NonNullable<SensorCallbacks['onNavigate']>>>
 }
 
 export function spyCallbacks(): SpyCallbacks {
 	return {
-		onStart: vi.fn(),
-		onMove: vi.fn(),
-		onEnd: vi.fn(),
-		onCancel: vi.fn(),
-		onNavigate: vi.fn()
+		onStart: vi.fn<SensorCallbacks['onStart']>(),
+		onMove: vi.fn<SensorCallbacks['onMove']>(),
+		onEnd: vi.fn<SensorCallbacks['onEnd']>(),
+		onCancel: vi.fn<SensorCallbacks['onCancel']>(),
+		onNavigate: vi.fn<NonNullable<SensorCallbacks['onNavigate']>>()
 	}
 }

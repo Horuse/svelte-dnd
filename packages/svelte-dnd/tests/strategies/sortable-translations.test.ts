@@ -37,6 +37,7 @@ const droppable = (id: string) => ({ id }) as unknown as Droppable
 describe('SortableContainerStrategy.getTranslations — vertical', () => {
 	const strategy = sortable({ layout: 'vertical' })
 	const snapshot: LayoutSnapshot = {
+		containerId: 'list',
 		rects: [rect('a', 0, 0, 0), rect('b', 1, 0, 60), rect('c', 2, 0, 120)],
 		draggedIndex: 2
 	}
@@ -59,6 +60,7 @@ describe('SortableContainerStrategy.getTranslations — vertical', () => {
 
 	it('shifts later items backward when the drag moves to a later position', () => {
 		const earlySnapshot: LayoutSnapshot = {
+			containerId: 'list',
 			rects: [rect('a', 0, 0, 0), rect('b', 1, 0, 60), rect('c', 2, 0, 120)],
 			draggedIndex: 0
 		}
@@ -93,6 +95,7 @@ describe('SortableContainerStrategy.getTranslations — vertical', () => {
 
 	it('collapses the origin gap when hovering a different container', () => {
 		const earlySnapshot: LayoutSnapshot = {
+			containerId: 'list',
 			rects: [rect('a', 0, 0, 0), rect('b', 1, 0, 60), rect('c', 2, 0, 120)],
 			draggedIndex: 0
 		}
@@ -113,6 +116,7 @@ describe('SortableContainerStrategy.getTranslations — vertical', () => {
 
 	it('shifts target items forward when the dragged item arrives from another container', () => {
 		const targetSnapshot: LayoutSnapshot = {
+			containerId: 'target',
 			rects: [rect('x', 0, 0, 0), rect('y', 1, 0, 60), rect('z', 2, 0, 120)],
 			draggedIndex: -1 // dragged item is not native to this snapshot
 		}
@@ -150,6 +154,7 @@ describe('SortableContainerStrategy.getTranslations — horizontal', () => {
 
 	it('shifts later items backward along the x axis', () => {
 		const snapshot: LayoutSnapshot = {
+			containerId: 'row',
 			rects: [
 				rect('a', 0, 0, 0, 80, 50),
 				rect('b', 1, 90, 0, 80, 50),

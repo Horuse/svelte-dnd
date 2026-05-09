@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getContext, setContext } from 'svelte'
+	import { getContext, setContext, untrack } from 'svelte'
 	import type { DndController } from '../core/dnd/dnd-controller.svelte.js'
 	import type { ContainerStrategy } from '../core/containers/strategies/container-strategy.js'
 	import type { CollisionAlgorithm } from '../core/collision/collision-algorithm.js'
@@ -68,15 +68,16 @@
 
 	if (dndController.debug) setContext('dnd-position-registry', new Map<number, string>())
 
+	// Initial values only — per-prop $effects below keep the entity reactive.
 	const droppable = new Droppable(
-		{
+		untrack(() => ({
 			id,
 			data,
 			disabled,
 			collision,
 			accepts,
 			strategy
-		},
+		})),
 		dndController
 	)
 	setContext('dnd-droppable', droppable)

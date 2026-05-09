@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getContext } from 'svelte'
+	import { getContext, untrack } from 'svelte'
 	import type { DndController } from '../core/dnd/dnd-controller.svelte.js'
 	import { Preview } from '../core/entities/preview.svelte.js'
 	import type { Slot } from '../core/entities/slot.js'
@@ -18,15 +18,19 @@
 	let { slot, droppable, position, class: className = '' }: Props = $props()
 
 	const dndController = getContext<DndController>('dnd')
-	const preview = new Preview(dndController, {
-		slot,
-		droppable,
-		position,
-		config: {
-			showDelay: dndController?.animation.preview.show.delay,
-			hideDelay: dndController?.animation.preview.hide.delay
-		}
-	})
+	// Initial values only — reactive sync is handled by the $effect below.
+	const preview = new Preview(
+		dndController,
+		untrack(() => ({
+			slot,
+			droppable,
+			position,
+			config: {
+				showDelay: dndController?.animation.preview.show.delay,
+				hideDelay: dndController?.animation.preview.hide.delay
+			}
+		}))
+	)
 
 	$effect(() => {
 		preview.slot = slot

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getContext } from 'svelte'
+	import { getContext, untrack } from 'svelte'
 	import type { DndController } from '../core/dnd/dnd-controller.svelte.js'
 	import type { SensorDescriptor } from '../core/sensors/sensor.js'
 	import type { Snippet } from 'svelte'
@@ -70,7 +70,8 @@
 		}
 	})
 
-	const slot = new Slot(position ?? 0)
+	// Initial position only — the $effect below keeps slot.position reactive.
+	const slot = new Slot(untrack(() => position ?? 0))
 
 	// Keep slot.position in sync with the reactive position prop — Slot is a plain class,
 	// so without this {#each} reorders leave slot.position stale and getSortedSlots() returns
@@ -79,7 +80,11 @@
 		slot.position = position ?? 0
 	})
 
-	const draggable = new Draggable({ id, type, data, disabled, sensors }, dndController)
+	// Initial values only — per-prop $effects below keep the entity reactive.
+	const draggable = new Draggable(
+		untrack(() => ({ id, type, data, disabled, sensors })),
+		dndController
+	)
 
 	$effect(() => {
 		draggable.type = type
@@ -165,7 +170,6 @@
 		class:dnd-draggable--disabled={disabled}
 		role="button"
 		tabindex={disabled ? -1 : 0}
-		aria-grabbed={isGhostActive}
 		aria-roledescription="draggable item"
 		data-dnd-draggable
 		data-dnd-drag-id={id}
