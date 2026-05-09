@@ -76,6 +76,10 @@ export interface AnimateLayoutOptions {
 type EmitKind = 'drop' | 'cancel'
 
 export class DndSimulator {
+	// Guards against concurrent animateLayout invocations. Two overlapping calls would
+	// race on captured rects and DOM transforms, producing visible jumps.
+	private layoutAnimating = false
+
 	constructor(
 		private state: DndState,
 		private droppablesById: Map<string, Droppable>,
@@ -196,6 +200,13 @@ export class DndSimulator {
 		applyState: () => void | Promise<void>,
 		options: AnimateLayoutOptions = {}
 	): Promise<void> {
+		if (this.layoutAnimating) {
+			throw new Error(
+				'DndSimulator.animateLayout: another layout animation is already running'
+			)
+		}
+		this.layoutAnimating = true
+
 		const {
 			items,
 			morph = false,
@@ -214,67 +225,76 @@ export class DndSimulator {
 			if (oldClasses) oldClasses.set(id, [...el.classList])
 		}
 
-		// Apply state change (sync or async).
-		const result = applyState()
-		if (result && typeof (result as Promise<unknown>).then === 'function') await result
-
-		// Synchronously flush pending Svelte updates so the new DOM layout is readable
-		// in the same sync block as the inverse transform below. `await tick()` would
-		// leave a microtask gap during which the browser could paint the post-state
-		// layout — visible as a 1-frame jump to the new position.
-		flushSync()
-
-		// Invert — apply inverse transforms (and restore the old class diff when morphing)
-		// so items visually stay at their pre-state-change positions.
+		// Tracked outside the try block so the finally clause can always undo morph
+		// classes / inline styles even if applyState or a rAF rejects mid-flight.
 		interface Patched {
 			el: HTMLElement
 			addedClasses: string[]
 		}
 		const elements: Patched[] = []
-		for (const id of ids) {
-			const el = this.findElementById(id)
-			const oldRect = oldRects.get(id)
-			if (!el || !oldRect) continue
 
-			const newRect = el.getBoundingClientRect()
-			const dx = oldRect.left - newRect.left
-			const dy = oldRect.top - newRect.top
+		try {
+			// Apply state change (sync or async).
+			const result = applyState()
+			if (result && typeof (result as Promise<unknown>).then === 'function') await result
 
-			let addedClasses: string[] = []
-			if (oldClasses) {
-				const old = oldClasses.get(id) ?? []
-				const newSet = new Set(el.classList)
-				addedClasses = old.filter((c) => !newSet.has(c))
-				for (const c of addedClasses) el.classList.add(c)
+			// Synchronously flush pending Svelte updates so the new DOM layout is readable
+			// in the same sync block as the inverse transform below. `await tick()` would
+			// leave a microtask gap during which the browser could paint the post-state
+			// layout — visible as a 1-frame jump to the new position.
+			flushSync()
+
+			// Invert — apply inverse transforms (and restore the old class diff when morphing)
+			// so items visually stay at their pre-state-change positions.
+			for (const id of ids) {
+				const el = this.findElementById(id)
+				const oldRect = oldRects.get(id)
+				if (!el || !oldRect) continue
+
+				const newRect = el.getBoundingClientRect()
+				const dx = oldRect.left - newRect.left
+				const dy = oldRect.top - newRect.top
+
+				let addedClasses: string[] = []
+				if (oldClasses) {
+					const old = oldClasses.get(id) ?? []
+					const newSet = new Set(el.classList)
+					addedClasses = old.filter((c) => !newSet.has(c))
+					for (const c of addedClasses) el.classList.add(c)
+				}
+
+				if (dx === 0 && dy === 0 && addedClasses.length === 0) continue
+
+				el.style.transition = 'none'
+				if (dx !== 0 || dy !== 0) el.style.transform = `translate(${dx}px, ${dy}px)`
+				elements.push({ el, addedClasses })
 			}
 
-			if (dx === 0 && dy === 0 && addedClasses.length === 0) continue
+			if (elements.length === 0) return
 
-			el.style.transition = 'none'
-			if (dx !== 0 || dy !== 0) el.style.transform = `translate(${dx}px, ${dy}px)`
-			elements.push({ el, addedClasses })
-		}
+			// Double rAF to force reflow before enabling transitions.
+			await new Promise<void>((resolve) =>
+				requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+			)
 
-		if (elements.length === 0) return
+			// Play — animate to final positions/styles. `all` lets class-driven properties
+			// (border-radius, scale, color, …) ride along with the FLIP transform.
+			const transitionProp = morph ? 'all' : 'transform'
+			for (const { el, addedClasses } of elements) {
+				el.style.transition = `${transitionProp} ${duration}ms ${easing}`
+				el.style.transform = ''
+				for (const c of addedClasses) el.classList.remove(c)
+			}
 
-		// Double rAF to force reflow before enabling transitions.
-		await new Promise<void>((resolve) =>
-			requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
-		)
-
-		// Play — animate to final positions/styles. `all` lets class-driven properties
-		// (border-radius, scale, color, …) ride along with the FLIP transform.
-		const transitionProp = morph ? 'all' : 'transform'
-		for (const { el, addedClasses } of elements) {
-			el.style.transition = `${transitionProp} ${duration}ms ${easing}`
-			el.style.transform = ''
-			for (const c of addedClasses) el.classList.remove(c)
-		}
-
-		await new Promise<void>((resolve) => setTimeout(resolve, duration + 50))
-
-		for (const { el } of elements) {
-			el.style.transition = ''
+			await new Promise<void>((resolve) => setTimeout(resolve, duration + 50))
+		} finally {
+			// Always strip transition + leftover morph classes — without this an exception
+			// during applyState or a rAF leaves stray classes on the element forever.
+			for (const { el, addedClasses } of elements) {
+				el.style.transition = ''
+				for (const c of addedClasses) el.classList.remove(c)
+			}
+			this.layoutAnimating = false
 		}
 	}
 

@@ -26,7 +26,7 @@ export class GhostReturnStep implements AnimationStep {
 	) {}
 
 	execute(): Promise<void> {
-		return new Promise((resolve) => {
+		return new Promise((resolve, reject) => {
 			if (!this.state.element || !this.state.transform || !this.state.originalPosition) {
 				resolve()
 				return
@@ -37,28 +37,37 @@ export class GhostReturnStep implements AnimationStep {
 			this.state.setAnimating(true)
 			const startTime = Date.now()
 			const easeFn = parseEasing(this.easing)
+			// Single exit point — every path through animate() either calls finish()
+			// or rethrows after clearing setAnimating, so the flag never leaks.
+			const finish = () => {
+				this.state.setAnimating(false)
+				resolve()
+			}
 
 			const animate = () => {
-				if (this.cancelled) {
+				try {
+					if (this.cancelled) {
+						finish()
+						return
+					}
+
+					const progress = Math.min((Date.now() - startTime) / this.duration, 1)
+					const eased = easeFn(progress)
+					const target = this.getCurrentSlotPosition(fallbackPos)
+
+					this.state.setTransform({
+						x: startPos.x + (target.x - startPos.x) * eased,
+						y: startPos.y + (target.y - startPos.y) * eased
+					})
+
+					if (progress < 1) {
+						requestAnimationFrame(animate)
+					} else {
+						finish()
+					}
+				} catch (err) {
 					this.state.setAnimating(false)
-					resolve()
-					return
-				}
-
-				const progress = Math.min((Date.now() - startTime) / this.duration, 1)
-				const eased = easeFn(progress)
-				const target = this.getCurrentSlotPosition(fallbackPos)
-
-				this.state.setTransform({
-					x: startPos.x + (target.x - startPos.x) * eased,
-					y: startPos.y + (target.y - startPos.y) * eased
-				})
-
-				if (progress < 1) {
-					requestAnimationFrame(animate)
-				} else {
-					this.state.setAnimating(false)
-					resolve()
+					reject(err)
 				}
 			}
 
