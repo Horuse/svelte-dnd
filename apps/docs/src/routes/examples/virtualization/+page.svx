@@ -9,6 +9,26 @@ Sortable list of 5000 items, rendered through [`virtua`](https://github.com/inok
 
 `<DndDraggable>` is rendered inside `<VList>`'s `children` snippet, so each item registers a slot the moment virtua mounts it. `<DndDroppable>` wraps `<VList>` so the strategy still owns the list as a single drop container.
 
+## `VirtualSource` adapter
+
+Pass a `VirtualSource` to `sortable({ virtual })` so the strategy knows the **full** list length even when only a window of slots is mounted:
+
+```ts
+import type { VirtualSource } from '@horuse/svelte-dnd';
+
+const virtualSource: VirtualSource = {
+    itemCount: () => items.length
+    // getOffset/getSize are optional — reserved for future features
+    // (drop into not-yet-mounted gaps, virtual preview rendering)
+};
+
+<DndDroppable strategy={sortable({ layout: 'vertical', virtual: virtualSource })} />
+```
+
+Without `virtual`, the strategy treats `slots.size` (mounted DOM nodes) as the list length — which is wrong for a virtualized list and breaks tail-position math for cross-container drops into the bottom of a long list.
+
+> The bundled example above uses `virtua` — that's the virtualizer this integration has been tested with.
+
 <script lang="ts">
 	import { ComponentPreview } from '$lib/components';
 	import VirtualizationExampleCode from "$lib/examples/VirtualizationExample.svelte?raw";

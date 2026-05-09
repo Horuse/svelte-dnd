@@ -13,11 +13,12 @@ A drag-and-drop library for Svelte 5 with animated drop previews, auto-scroll, p
 - [Simulations](/docs/simulations.md): Programmatically trigger drag animations with DndSimulator for undo/redo, onboarding, or demo sequences
 - [Custom Strategies](/docs/custom-strategies.md): Replace or extend built-in drop zone strategies, or add entirely new container modes
 
-## Componentss
+## Components
 
 - [DndProvider](/docs/components-api/DndProvider.md): Root provider component — props, ghost snippet, and CSS variables
 - [DndDraggable](/docs/components-api/DndDraggable.md): Draggable item component — props, events, CSS variables, and drag handle attributes
 - [DndDroppable](/docs/components-api/DndDroppable.md): Drop zone component — props, direction, mode, and type filtering
+- [DndPreview](/docs/components-api/DndDroppable.md#dndpreview): Drop placeholder component — emitted automatically by DndDroppable; documented inline on the DndDroppable page
 
 ## Reference
 

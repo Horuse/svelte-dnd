@@ -226,6 +226,38 @@ controller.setBehaviors([autoScroll({ maxSpeed: 50 }), scrollSync()]);
 
 ---
 
+## Does it work with SvelteKit SSR?
+
+Yes. The library is SSR-safe — `DndController`, sensors, and the scroll controller all skip browser-only work (event listeners, `window`/`document` lookups) when running on the server. The components render markup on the server and fully activate on hydration. No `onMount`/`browser` guards are needed in your code.
+
+If you instantiate a `DndController` in module scope of a `.ts` file imported by a `+page.server.ts`, move it inside the component (or behind a `browser` check) — the rest of the library handles SSR transparently.
+
+---
+
+## How do I make a sortable list of thousands of items?
+
+Wrap [`virtua`](https://github.com/inokawa/virtua) (the tested adapter) with `DndDroppable` and pass a `VirtualSource` so the strategy knows the full list length even when only a window of slots is mounted:
+
+```svelte
+<script lang="ts">
+    import { DndDroppable, sortable, type VirtualSource } from '@horuse/svelte-dnd';
+    import { VList } from 'virtua/svelte';
+    const virtual: VirtualSource = { itemCount: () => items.length };
+</script>
+
+<DndDroppable strategy={sortable({ virtual })}>
+    <VList data={items}>
+        {#snippet children(item, index)}
+            <DndDraggable id={item.id} position={index}>{item.label}</DndDraggable>
+        {/snippet}
+    </VList>
+</DndDroppable>
+```
+
+See the [Virtualization example](/examples/virtualization) for the complete setup including drop-time scroll-jump compensation.
+
+---
+
 ## How do I disable dragging conditionally?
 
 Pass the `disabled` prop to `DndDraggable`:

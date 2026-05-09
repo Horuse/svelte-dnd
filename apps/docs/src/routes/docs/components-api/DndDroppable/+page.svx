@@ -55,6 +55,8 @@ For writing your own strategy see [Custom Strategies](/docs/custom-strategies).
 |--------|------|---------|-------------|
 | `layout` | `'vertical' \| 'horizontal' \| 'grid'` | `'vertical'` | Container layout |
 | `flow` | `'row' \| 'column'` | `'row'` | For `layout: 'grid'`, which axis items fill first. `'row'` = left-to-right wrapping; `'column'` = top-to-bottom wrapping |
+| `behaviors` | `Behavior[]` | inherited | Per-container behavior list (e.g. `[autoScroll(), scrollSync()]`). Replaces the controller-level defaults for this droppable only. See [Behaviors](/docs/behaviors) |
+| `virtual` | `VirtualSource` | `undefined` | Virtualization adapter — set when items are rendered through a virtualizer. The bundled integration is tested with [`virtua`](https://github.com/inokawa/virtua); see [Virtualization example](/examples/virtualization) |
 
 ### Snippets
 
@@ -107,8 +109,10 @@ Renders a placeholder at a specific position within a container to indicate wher
 | `--dnd-preview-bg` | `rgba(99, 102, 241, 0.15)` | Background color of the preview |
 | `--dnd-preview-border` | `2px dashed rgba(99, 102, 241, 0.4)` | Border of the preview |
 | `--dnd-preview-border-radius` | `1rem` | Border radius of the preview |
-| `--dnd-preview-duration-in` | `200ms` | Transition duration when preview appears |
-| `--dnd-preview-duration-out` | `200ms` | Transition duration when preview disappears |
+| `--dnd-preview-duration-in` | `200ms` | Transition duration when preview appears. Also tunable via `controller.animation.preview.show.duration`. |
+| `--dnd-preview-duration-out` | `200ms` | Transition duration when preview disappears. Also tunable via `controller.animation.preview.hide.duration`. |
+| `--dnd-preview-easing-in` | `ease` | Easing for the reveal transition. Also tunable via `controller.animation.preview.show.easing`. |
+| `--dnd-preview-easing-out` | `ease` | Easing for the collapse transition. Also tunable via `controller.animation.preview.hide.easing`. |
 
 ---
 
