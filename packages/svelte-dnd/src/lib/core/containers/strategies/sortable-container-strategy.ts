@@ -301,5 +301,3 @@ export function sortable(options?: SortableOptions): SortableContainerStrategy {
 	return new SortableContainerStrategy(options)
 }
 
-// Re-export for any external consumers that previously imported the type.
-export type { LayoutSnapshot }

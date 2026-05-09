@@ -32,6 +32,9 @@ export type {
 	DropCallback,
 	DragOverCallback,
 	DropCancelledCallback,
+	ZonesInvalidatedCallback,
+	GhostSnippet,
+	GhostSnippetProps,
 	Announcements
 } from './types.js'
 export { defaultAnnouncements } from './types.js'
