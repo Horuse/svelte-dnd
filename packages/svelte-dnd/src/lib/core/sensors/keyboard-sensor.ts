@@ -1,4 +1,9 @@
-import type { SensorDescriptor, SensorActivation, SensorCallbacks, NavigationDirection } from './sensor.js'
+import type {
+	SensorDescriptor,
+	SensorActivation,
+	SensorCallbacks,
+	NavigationDirection
+} from './sensor.js'
 
 export class KeyboardSensor implements SensorDescriptor {
 	activate(

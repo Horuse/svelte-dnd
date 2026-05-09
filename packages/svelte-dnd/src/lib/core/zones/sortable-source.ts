@@ -108,7 +108,8 @@ export class VirtualSortableSource implements SortableSource {
 				r.top >= containerRect.bottom ||
 				r.right <= containerRect.left ||
 				r.left >= containerRect.right
-			) continue
+			)
+				continue
 			out.push({
 				slotId: slot.draggable.id,
 				position,
@@ -130,4 +131,3 @@ export class VirtualSortableSource implements SortableSource {
 		return out
 	}
 }
-

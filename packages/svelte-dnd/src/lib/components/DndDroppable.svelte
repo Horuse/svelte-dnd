@@ -81,12 +81,24 @@
 	)
 	setContext('dnd-droppable', droppable)
 
-	$effect(() => { droppable.data = data })
-	$effect(() => { droppable.disabled = disabled })
-	$effect(() => { droppable.collision = collision })
-	$effect(() => { droppable.accepts = accepts })
-	$effect(() => { droppable.strategy = strategy })
-	$effect(() => { droppable.spacing = spacing })
+	$effect(() => {
+		droppable.data = data
+	})
+	$effect(() => {
+		droppable.disabled = disabled
+	})
+	$effect(() => {
+		droppable.collision = collision
+	})
+	$effect(() => {
+		droppable.accepts = accepts
+	})
+	$effect(() => {
+		droppable.strategy = strategy
+	})
+	$effect(() => {
+		droppable.spacing = spacing
+	})
 
 	// Extra margin added during cross-container drag so the container grows in layout flow,
 	// preventing translated items from overflowing into siblings below/right.
@@ -113,12 +125,18 @@
 	// Subtract that margin from the spacer to avoid double-spacing.
 	const spacerHeight = $derived.by(() => {
 		if (crossContainerSpacer.y === 0) return 0
-		const tailActive = tailPosition >= 0 && dndController?.dropPreview?.position === tailPosition
+		const tailActive =
+			tailPosition >= 0 && dndController?.dropPreview?.position === tailPosition
 		return Math.max(0, crossContainerSpacer.y - (tailActive ? (spacing ?? 0) : 0))
 	})
 
 	const isSortable = $derived(strategy.mode === 'sortable')
-	const shift = $derived(dndController?.animation.siblingShift ?? { duration: 200, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' })
+	const shift = $derived(
+		dndController?.animation.siblingShift ?? {
+			duration: 200,
+			easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+		}
+	)
 </script>
 
 <div
@@ -127,20 +145,27 @@
 	aria-dropeffect={disabled ? 'none' : 'move'}
 	data-dnd-droppable
 	data-dnd-drop-id={id}
-	data-dnd-layout={strategy.mode === 'sortable' ? strategy.layout ?? 'vertical' : undefined}
+	data-dnd-layout={strategy.mode === 'sortable' ? (strategy.layout ?? 'vertical') : undefined}
 	{@attach dndController?.attachDroppable(droppable)}
 >
 	{@render children?.()}
 	{#if isSortable}
 		<div style="position: relative">
-			<DndPreview {droppable} position={tailPosition >= 0 ? tailPosition : lastValidTailPosition} />
+			<DndPreview
+				{droppable}
+				position={tailPosition >= 0 ? tailPosition : lastValidTailPosition}
+			/>
 		</div>
 	{/if}
 	<!-- Spacer that grows the container (including background) during cross-container drag,
 	     so translated items don't visually overflow outside the container's bounds. -->
 	<div
 		aria-hidden="true"
-		style="height: {spacerHeight}px; width: {crossContainerSpacer.x > 0 ? crossContainerSpacer.x + 'px' : '0'}; flex-shrink: 0; transition: {dndController?.dragging ? `height ${shift.duration}ms ${shift.easing}, width ${shift.duration}ms ${shift.easing}` : 'none'}"
+		style="height: {spacerHeight}px; width: {crossContainerSpacer.x > 0
+			? crossContainerSpacer.x + 'px'
+			: '0'}; flex-shrink: 0; transition: {dndController?.dragging
+			? `height ${shift.duration}ms ${shift.easing}, width ${shift.duration}ms ${shift.easing}`
+			: 'none'}"
 	></div>
 </div>
 
@@ -153,11 +178,11 @@
 	   any consumer class (e.g. Tailwind .grid or .flex-col) wins without
 	   needing !important. Grid sortables don't get a default — grid templates
 	   are too use-case specific. Target containers carry no data-dnd-layout. */
-	:where(.dnd-droppable[data-dnd-layout="vertical"]) {
+	:where(.dnd-droppable[data-dnd-layout='vertical']) {
 		display: flex;
 		flex-direction: column;
 	}
-	:where(.dnd-droppable[data-dnd-layout="horizontal"]) {
+	:where(.dnd-droppable[data-dnd-layout='horizontal']) {
 		display: flex;
 		flex-direction: row;
 	}

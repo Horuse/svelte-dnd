@@ -67,12 +67,22 @@ describe('AxisZoneGeometry — horizontal', () => {
 
 	it('emits zones along the x axis using container height as zone height', () => {
 		const rects = [rect('a', 0, 0, 0, 80, 100), rect('b', 1, 90, 0, 80, 100)]
-		const zones = geometry.buildZones(rects, ctx({
-			containerRect: {
-				x: 0, y: 0, left: 0, top: 0, right: 400, bottom: 100,
-				width: 400, height: 100, toJSON: () => ({})
-			} as DOMRect
-		}))
+		const zones = geometry.buildZones(
+			rects,
+			ctx({
+				containerRect: {
+					x: 0,
+					y: 0,
+					left: 0,
+					top: 0,
+					right: 400,
+					bottom: 100,
+					width: 400,
+					height: 100,
+					toJSON: () => ({})
+				} as DOMRect
+			})
+		)
 
 		// 2 items → 3 zones (positions 0, 1, 2)
 		expect(zones.map((z) => z.position)).toEqual([0, 1, 2])

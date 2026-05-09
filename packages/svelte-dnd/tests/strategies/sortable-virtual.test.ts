@@ -90,9 +90,21 @@ describe('SortableContainerStrategy.calculateDropZones — virtual mode', () => 
 		// item-100 is mounted but offscreen (e.g. virtua keeps it via keepMounted).
 		// Two more slots are inside the viewport.
 		const slots = [
-			mountedSlot({ id: 'item-100', position: 100, rect: { x: 0, y: -200, width: 200, height: itemSize } }),
-			mountedSlot({ id: 'item-201', position: 201, rect: { x: 0, y: 0, width: 200, height: itemSize } }),
-			mountedSlot({ id: 'item-202', position: 202, rect: { x: 0, y: itemSize, width: 200, height: itemSize } })
+			mountedSlot({
+				id: 'item-100',
+				position: 100,
+				rect: { x: 0, y: -200, width: 200, height: itemSize }
+			}),
+			mountedSlot({
+				id: 'item-201',
+				position: 201,
+				rect: { x: 0, y: 0, width: 200, height: itemSize }
+			}),
+			mountedSlot({
+				id: 'item-202',
+				position: 202,
+				rect: { x: 0, y: itemSize, width: 200, height: itemSize }
+			})
 		]
 		const droppable = droppableWith('virt', { x: 0, y: 0, width: 200, height: 400 }, slots)
 		const session = makeSession({ itemId: 'none', originContainerId: 'other' })
@@ -122,7 +134,9 @@ describe('SortableContainerStrategy.getTranslations — virtual mode', () => {
 	const strategy = sortable({ layout: 'vertical', virtual })
 
 	it('shifts later mounted slots back when the drag moves to a higher position', () => {
-		const slots = [100, 101, 102, 103, 104].map((p) => mountedSlot({ id: `item-${p}`, position: p }))
+		const slots = [100, 101, 102, 103, 104].map((p) =>
+			mountedSlot({ id: `item-${p}`, position: p })
+		)
 		const droppable = droppableWith('virt', { x: 0, y: 0, width: 200, height: 400 }, slots)
 		const session = makeSession({
 			itemId: 'item-100',

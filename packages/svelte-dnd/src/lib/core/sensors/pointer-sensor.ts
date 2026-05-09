@@ -1,6 +1,13 @@
 import { TouchScroll } from '../scroll/touch-scroll.js'
 import { isBrowser } from '../utils/dom-helper.js'
-import type { SensorDescriptor, SensorActivation, SensorCallbacks, ActivationState, StartCondition, StartConditionInput } from './sensor.js'
+import type {
+	SensorDescriptor,
+	SensorActivation,
+	SensorCallbacks,
+	ActivationState,
+	StartCondition,
+	StartConditionInput
+} from './sensor.js'
 import { Distance, Delay } from './activation-constraints.js'
 
 export interface PointerSensorOptions {
@@ -53,9 +60,12 @@ export class PointerSensor implements SensorDescriptor {
 		const contentLeft = rect.left + parseFloat(styles.paddingLeft)
 		const contentRight = rect.right - parseFloat(styles.paddingRight)
 		if (
-			e.clientY < contentTop || e.clientY > contentBottom ||
-			e.clientX < contentLeft || e.clientX > contentRight
-		) return null
+			e.clientY < contentTop ||
+			e.clientY > contentBottom ||
+			e.clientX < contentLeft ||
+			e.clientX > contentRight
+		)
+			return null
 
 		e.stopPropagation()
 

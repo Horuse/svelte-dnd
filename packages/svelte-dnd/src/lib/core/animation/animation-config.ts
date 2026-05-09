@@ -134,7 +134,10 @@ export const DEFAULT_ANIMATION_CONFIG: ResolvedAnimationConfig = {
 	layout: { duration: 300, easing: 'ease' }
 }
 
-function resolveTransition(partial: Transition | undefined, fallback: ResolvedTransition): ResolvedTransition {
+function resolveTransition(
+	partial: Transition | undefined,
+	fallback: ResolvedTransition
+): ResolvedTransition {
 	return {
 		duration: partial?.duration ?? fallback.duration,
 		easing: partial?.easing ?? fallback.easing

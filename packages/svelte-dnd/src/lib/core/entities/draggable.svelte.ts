@@ -12,7 +12,12 @@ export type DraggableControllerRef = {
 	navigate(direction: import('../sensors/sensor.js').NavigationDirection): void
 	dropPreview: import('../../types.js').DropPreview | null
 	setSkipDropPreviewAnimation(value: boolean): void
-	performDrop(sourceId: string, sourceData: Record<string, unknown> | undefined, targetContainerId: string, position: number): void
+	performDrop(
+		sourceId: string,
+		sourceData: Record<string, unknown> | undefined,
+		targetContainerId: string,
+		position: number
+	): void
 	endDrag(shouldAnimate?: boolean): void
 }
 
@@ -83,9 +88,15 @@ export class Draggable {
 				onMove: (transform, mouseX, mouseY) => {
 					this.handleDragMove(transform, mouseX, mouseY)
 				},
-				onEnd: () => { this.handleDragEnd() },
-				onCancel: () => { this.handleDragCancel() },
-				onNavigate: (direction) => { this.controller.navigate(direction) }
+				onEnd: () => {
+					this.handleDragEnd()
+				},
+				onCancel: () => {
+					this.handleDragCancel()
+				},
+				onNavigate: (direction) => {
+					this.controller.navigate(direction)
+				}
 			})
 
 			if (activation) {
@@ -115,9 +126,15 @@ export class Draggable {
 				onMove: (transform, mouseX, mouseY) => {
 					this.handleDragMove(transform, mouseX, mouseY)
 				},
-				onEnd: () => { this.handleDragEnd() },
-				onCancel: () => { this.handleDragCancel() },
-				onNavigate: (direction) => { this.controller.navigate(direction) }
+				onEnd: () => {
+					this.handleDragEnd()
+				},
+				onCancel: () => {
+					this.handleDragCancel()
+				},
+				onNavigate: (direction) => {
+					this.controller.navigate(direction)
+				}
 			})
 
 			if (activation) {
@@ -175,7 +192,12 @@ export class Draggable {
 		const dropPreview = this.controller.dropPreview
 		if (dropPreview) {
 			this.controller.setSkipDropPreviewAnimation(true)
-			this.controller.performDrop(this.id, this.data, dropPreview.containerId, dropPreview.position)
+			this.controller.performDrop(
+				this.id,
+				this.data,
+				dropPreview.containerId,
+				dropPreview.position
+			)
 		} else {
 			this.controller.endDrag(true)
 		}

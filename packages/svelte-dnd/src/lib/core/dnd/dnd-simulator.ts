@@ -1,7 +1,13 @@
 import type { DndState } from './dnd-state.svelte.js'
 import type { DndEventEmitter } from './dnd-event-emitter.js'
 import { DragSession } from './drag-session.svelte.js'
-import type { DropZone, DropEvent, DropCancelledEvent, DndItemInfo, DndContainerInfo } from '../../types.js'
+import type {
+	DropZone,
+	DropEvent,
+	DropCancelledEvent,
+	DndItemInfo,
+	DndContainerInfo
+} from '../../types.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
 import type { Slot } from '../entities/slot.js'
 import type { ResolvedAnimationConfig } from '../animation/animation-config.js'
@@ -12,7 +18,11 @@ import { AnimationPipeline } from '../animation/steps/animation-pipeline.js'
 import { GhostToTargetStep } from '../animation/steps/ghost-to-target-step.js'
 import { GhostReturnStep } from '../animation/steps/ghost-return-step.js'
 import { DEFAULT_ANIMATION_CONFIG } from '../animation/animation-config.js'
-import { resolveBehaviors, wrapWithBehaviors, findTargetSlotWrapper } from '../animation/apply-behaviors.js'
+import {
+	resolveBehaviors,
+	wrapWithBehaviors,
+	findTargetSlotWrapper
+} from '../animation/apply-behaviors.js'
 
 export interface ContainerPosition {
 	containerId: string
@@ -100,11 +110,21 @@ export class DndSimulator {
 	 * })
 	 */
 	animateItem(itemId: string, options: AnimateItemOptions): Promise<void> {
-		const { to, from, style = 'drop', emitEvents = false, duration, easing, behaviors } = options
+		const {
+			to,
+			from,
+			style = 'drop',
+			emitEvents = false,
+			duration,
+			easing,
+			behaviors
+		} = options
 
 		const sourceContainerId = from?.containerId ?? this.findItemContainer(itemId)
 		if (!sourceContainerId) {
-			return Promise.reject(new Error(`DndSimulator.animateItem: item "${itemId}" not found in any container`))
+			return Promise.reject(
+				new Error(`DndSimulator.animateItem: item "${itemId}" not found in any container`)
+			)
 		}
 		const toPosition = to.position ?? 0
 		const useReturnStep = style === 'return' && to.containerId === sourceContainerId
@@ -114,8 +134,21 @@ export class DndSimulator {
 
 		const makeStep = (): AnimationStep => {
 			const baseStep = useReturnStep
-				? new GhostReturnStep(this.state, to.containerId, toPosition, this.droppablesById, stepDuration, stepEasing)
-				: new GhostToTargetStep(this.state, this.syntheticZone(to.containerId, toPosition), this.droppablesById, stepDuration, stepEasing)
+				? new GhostReturnStep(
+						this.state,
+						to.containerId,
+						toPosition,
+						this.droppablesById,
+						stepDuration,
+						stepEasing
+					)
+				: new GhostToTargetStep(
+						this.state,
+						this.syntheticZone(to.containerId, toPosition),
+						this.droppablesById,
+						stepDuration,
+						stepEasing
+					)
 			const targetDroppable = this.droppablesById.get(to.containerId) ?? null
 			const resolved = behaviors ?? resolveBehaviors(targetDroppable, this.defaultBehaviors)
 			const ctx: BehaviorContext = {
@@ -131,7 +164,15 @@ export class DndSimulator {
 		}
 
 		const emitKind: EmitKind = style === 'return' ? 'cancel' : 'drop'
-		return this.run(itemId, sourceContainerId, to.containerId, toPosition, makeStep, emitEvents, emitKind)
+		return this.run(
+			itemId,
+			sourceContainerId,
+			to.containerId,
+			toPosition,
+			makeStep,
+			emitEvents,
+			emitKind
+		)
 	}
 
 	/**
@@ -155,7 +196,12 @@ export class DndSimulator {
 		applyState: () => void | Promise<void>,
 		options: AnimateLayoutOptions = {}
 	): Promise<void> {
-		const { items, morph = false, duration = this.animation.layout.duration, easing = this.animation.layout.easing } = options
+		const {
+			items,
+			morph = false,
+			duration = this.animation.layout.duration,
+			easing = this.animation.layout.easing
+		} = options
 		const ids = items ?? this.collectAllItemIds().filter((id) => id !== this.state.draggedItem)
 
 		// Capture old rects (visual rects — include any active translates) and class lists.
@@ -180,7 +226,10 @@ export class DndSimulator {
 
 		// Invert — apply inverse transforms (and restore the old class diff when morphing)
 		// so items visually stay at their pre-state-change positions.
-		interface Patched { el: HTMLElement; addedClasses: string[] }
+		interface Patched {
+			el: HTMLElement
+			addedClasses: string[]
+		}
 		const elements: Patched[] = []
 		for (const id of ids) {
 			const el = this.findElementById(id)
@@ -209,7 +258,9 @@ export class DndSimulator {
 		if (elements.length === 0) return
 
 		// Double rAF to force reflow before enabling transitions.
-		await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+		await new Promise<void>((resolve) =>
+			requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+		)
 
 		// Play — animate to final positions/styles. `all` lets class-driven properties
 		// (border-radius, scale, color, …) ride along with the FLIP transform.
@@ -252,7 +303,11 @@ export class DndSimulator {
 
 			const fromSlot = fromDroppable.getSortedSlots().find((s) => s.draggable.id === itemId)
 			if (!fromSlot) {
-				reject(new Error(`DndSimulator: item "${itemId}" not found in container "${fromContainerId}"`))
+				reject(
+					new Error(
+						`DndSimulator: item "${itemId}" not found in container "${fromContainerId}"`
+					)
+				)
 				return
 			}
 
@@ -305,34 +360,46 @@ export class DndSimulator {
 
 			// Wait one frame for DndPreview to render at toContainerId/toPosition.
 			requestAnimationFrame(() => {
-				AnimationPipeline.chain(step).execute().then(() => {
-					// setPerformingDrop(true) so Preview.hide() collapses instantly.
-					this.state.setPerformingDrop(true)
-					if (emitEvents && this.eventEmitter) {
-						const draggable = fromSlot.draggable
-						const itemInfo: DndItemInfo = {
-							id: itemId,
-							data: draggable.data,
-							type: draggable.type,
-							element
-						}
-						const sourceInfo: DndContainerInfo = fromDroppable.toContainerInfo(positionInFrom >= 0 ? positionInFrom : 0)
-
-						if (emitKind === 'drop') {
-							const toDroppable = this.droppablesById.get(toContainerId)
-							if (toDroppable) {
-								const targetInfo: DndContainerInfo = toDroppable.toContainerInfo(toPosition)
-								const dropEvent: DropEvent = { item: itemInfo, source: sourceInfo, target: targetInfo }
-								this.eventEmitter.notifyDrop(dropEvent)
+				AnimationPipeline.chain(step)
+					.execute()
+					.then(() => {
+						// setPerformingDrop(true) so Preview.hide() collapses instantly.
+						this.state.setPerformingDrop(true)
+						if (emitEvents && this.eventEmitter) {
+							const draggable = fromSlot.draggable
+							const itemInfo: DndItemInfo = {
+								id: itemId,
+								data: draggable.data,
+								type: draggable.type,
+								element
 							}
-						} else {
-							const cancelEvent: DropCancelledEvent = { item: itemInfo, source: sourceInfo }
-							this.eventEmitter.notifyDropCancelled(cancelEvent)
+							const sourceInfo: DndContainerInfo = fromDroppable.toContainerInfo(
+								positionInFrom >= 0 ? positionInFrom : 0
+							)
+
+							if (emitKind === 'drop') {
+								const toDroppable = this.droppablesById.get(toContainerId)
+								if (toDroppable) {
+									const targetInfo: DndContainerInfo =
+										toDroppable.toContainerInfo(toPosition)
+									const dropEvent: DropEvent = {
+										item: itemInfo,
+										source: sourceInfo,
+										target: targetInfo
+									}
+									this.eventEmitter.notifyDrop(dropEvent)
+								}
+							} else {
+								const cancelEvent: DropCancelledEvent = {
+									item: itemInfo,
+									source: sourceInfo
+								}
+								this.eventEmitter.notifyDropCancelled(cancelEvent)
+							}
 						}
-					}
-					this.cleanup()
-					resolve()
-				})
+						this.cleanup()
+						resolve()
+					})
 			})
 		})
 	}

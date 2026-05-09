@@ -29,41 +29,41 @@ A minimal working drag-and-drop setup requires three components: `DndProvider`, 
 
 ```svelte
 <script lang="ts">
-    import {
-        DndProvider,
-        DndDroppable,
-        DndDraggable,
-        DndController,
-        sortable
-    } from '@horuse/svelte-dnd';
+	import {
+		DndProvider,
+		DndDroppable,
+		DndDraggable,
+		DndController,
+		sortable
+	} from '@horuse/svelte-dnd'
 
-    let items = $state([
-        { id: '1', label: 'First item' },
-        { id: '2', label: 'Second item' },
-        { id: '3', label: 'Third item' }
-    ]);
+	let items = $state([
+		{ id: '1', label: 'First item' },
+		{ id: '2', label: 'Second item' },
+		{ id: '3', label: 'Third item' }
+	])
 
-    const controller = new DndController();
+	const controller = new DndController()
 
-    controller.onDrop(({ item, target }) => {
-        const fromIndex = items.findIndex((i) => i.id === item.id);
-        if (fromIndex === -1) return;
+	controller.onDrop(({ item, target }) => {
+		const fromIndex = items.findIndex((i) => i.id === item.id)
+		if (fromIndex === -1) return
 
-        const updated = [...items];
-        const [moved] = updated.splice(fromIndex, 1);
-        updated.splice(target.position, 0, moved);
-        items = updated;
-    });
+		const updated = [...items]
+		const [moved] = updated.splice(fromIndex, 1)
+		updated.splice(target.position, 0, moved)
+		items = updated
+	})
 </script>
 
 <DndProvider {controller}>
-    <DndDroppable id="list" strategy={sortable()}>
-        {#each items as item, index (item.id)}
-            <DndDraggable id={item.id} position={index}>
-                {item.label}
-            </DndDraggable>
-        {/each}
-    </DndDroppable>
+	<DndDroppable id="list" strategy={sortable()}>
+		{#each items as item, index (item.id)}
+			<DndDraggable id={item.id} position={index}>
+				{item.label}
+			</DndDraggable>
+		{/each}
+	</DndDroppable>
 </DndProvider>
 ```
 

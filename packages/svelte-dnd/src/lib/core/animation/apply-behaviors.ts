@@ -38,7 +38,10 @@ export function wrapWithBehaviors(
  * droppable. Returns `null` for `target()` containers (no per-slot preview)
  * or when no preview entity is registered for that position yet.
  */
-export function findTargetSlotWrapper(droppable: Droppable | null, position: number): HTMLElement | null {
+export function findTargetSlotWrapper(
+	droppable: Droppable | null,
+	position: number
+): HTMLElement | null {
 	if (!droppable || droppable.mode === 'target') return null
 	const previewEntity = droppable.getSlotAt(position)?.preview ?? droppable.tailPreview
 	const previewEl = previewEntity?.element

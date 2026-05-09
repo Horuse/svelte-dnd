@@ -7,20 +7,15 @@ description: Installation and basic setup of @horuse/svelte-dnd
     import InstallTabs from '$lib/components/InstallTabs.svelte'
     import Step from '$lib/components/markdown/Step.svelte'
     import Steps from '$lib/components/markdown/Steps.svelte'
-     import Warning from '$lib/components/markdown/Warning.svelte'
 </script>
 
 # Getting Started
 
 ## Installation
 
-<InstallTabs pkg="@horuse/svelte-dnd@1.0.0-rc.1">
-bun add @horuse/svelte-dnd@1.0.0-rc.1
+<InstallTabs pkg="@horuse/svelte-dnd">
+bun add @horuse/svelte-dnd
 </InstallTabs>
-
-<Warning>
-This is a beta release. The API is unstable and may change significantly between versions.
-</Warning>
 
 ## Basic Example
 

@@ -93,14 +93,22 @@ export class Preview {
 		this.height = previewSize?.height ?? ghostSize?.height ?? 0
 		this.width = previewSize?.width ?? ghostSize?.width ?? 0
 
-		if (this.collapseTimer) { clearTimeout(this.collapseTimer); this.collapseTimer = null }
+		if (this.collapseTimer) {
+			clearTimeout(this.collapseTimer)
+			this.collapseTimer = null
+		}
 
 		const skip = untrack(() => this.controller.skipDropPreviewAnimation)
 		if (skip) {
-			if (this.showTimer) { clearTimeout(this.showTimer); this.showTimer = null }
+			if (this.showTimer) {
+				clearTimeout(this.showTimer)
+				this.showTimer = null
+			}
 			this.revealed = true
 			this.instant = true
-			requestAnimationFrame(() => { this.instant = false })
+			requestAnimationFrame(() => {
+				this.instant = false
+			})
 		} else if (!this.showTimer) {
 			this.showTimer = setTimeout(() => {
 				this.revealed = true
@@ -110,17 +118,25 @@ export class Preview {
 	}
 
 	hide(instant = false) {
-		if (this.showTimer) { clearTimeout(this.showTimer); this.showTimer = null }
+		if (this.showTimer) {
+			clearTimeout(this.showTimer)
+			this.showTimer = null
+		}
 		this.revealed = false
 
 		// Repeated hide() during a drag would otherwise leak orphan timers that later zero out height after show().
-		if (this.collapseTimer) { clearTimeout(this.collapseTimer); this.collapseTimer = null }
+		if (this.collapseTimer) {
+			clearTimeout(this.collapseTimer)
+			this.collapseTimer = null
+		}
 
 		if (instant) {
 			this.instant = true
 			this.height = 0
 			this.width = 0
-			requestAnimationFrame(() => { this.instant = false })
+			requestAnimationFrame(() => {
+				this.instant = false
+			})
 		} else {
 			this.instant = false
 			this.collapseTimer = setTimeout(() => {

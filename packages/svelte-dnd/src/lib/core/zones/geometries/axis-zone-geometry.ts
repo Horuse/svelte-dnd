@@ -38,7 +38,10 @@ export class AxisZoneGeometry implements ZoneGeometry {
 							x: ctx.containerRect.left,
 							y: ctx.containerRect.top,
 							width: ctx.containerRect.width,
-							height: Math.max(halfHeight, viewport.y - ctx.containerRect.top + halfHeight)
+							height: Math.max(
+								halfHeight,
+								viewport.y - ctx.containerRect.top + halfHeight
+							)
 						}
 					})
 				}
@@ -49,7 +52,10 @@ export class AxisZoneGeometry implements ZoneGeometry {
 
 				if (next) {
 					const nextViewport = this.toViewport(next, ctx)
-					zoneHeight = halfHeight + (nextViewport.y - (viewport.y + viewport.height)) + nextViewport.height / 2
+					zoneHeight =
+						halfHeight +
+						(nextViewport.y - (viewport.y + viewport.height)) +
+						nextViewport.height / 2
 				} else {
 					zoneHeight = Math.max(halfHeight, ctx.containerRect.bottom - zoneY)
 				}
@@ -58,7 +64,12 @@ export class AxisZoneGeometry implements ZoneGeometry {
 					containerId: ctx.containerId,
 					position: before + 1,
 					layout,
-					rect: { x: ctx.containerRect.left, y: zoneY, width: ctx.containerRect.width, height: zoneHeight }
+					rect: {
+						x: ctx.containerRect.left,
+						y: zoneY,
+						width: ctx.containerRect.width,
+						height: zoneHeight
+					}
 				})
 			} else {
 				const halfWidth = viewport.width / 2
@@ -71,7 +82,10 @@ export class AxisZoneGeometry implements ZoneGeometry {
 						rect: {
 							x: ctx.containerRect.left,
 							y: ctx.containerRect.top,
-							width: Math.max(halfWidth, viewport.x - ctx.containerRect.left + halfWidth),
+							width: Math.max(
+								halfWidth,
+								viewport.x - ctx.containerRect.left + halfWidth
+							),
 							height: ctx.containerRect.height
 						}
 					})
@@ -83,7 +97,10 @@ export class AxisZoneGeometry implements ZoneGeometry {
 
 				if (next) {
 					const nextViewport = this.toViewport(next, ctx)
-					zoneWidth = halfWidth + (nextViewport.x - (viewport.x + viewport.width)) + nextViewport.width / 2
+					zoneWidth =
+						halfWidth +
+						(nextViewport.x - (viewport.x + viewport.width)) +
+						nextViewport.width / 2
 				} else {
 					zoneWidth = Math.max(halfWidth, ctx.containerRect.right - zoneX)
 				}
@@ -92,7 +109,12 @@ export class AxisZoneGeometry implements ZoneGeometry {
 					containerId: ctx.containerId,
 					position: before + 1,
 					layout,
-					rect: { x: zoneX, y: ctx.containerRect.top, width: zoneWidth, height: ctx.containerRect.height }
+					rect: {
+						x: zoneX,
+						y: ctx.containerRect.top,
+						width: zoneWidth,
+						height: ctx.containerRect.height
+					}
 				})
 			}
 		})

@@ -6,7 +6,11 @@ import type { LayoutSnapshot } from '../../src/lib/core/zones/layout-snapshot.js
 import { DomSortableSource } from '../../src/lib/core/zones/sortable-source.js'
 import { scrollableEl, slotRect } from '../helpers/fixtures.js'
 
-const droppableWith = (id: string, rect: { x: number; y: number; width: number; height: number }, scroll = { top: 0, left: 0 }) => {
+const droppableWith = (
+	id: string,
+	rect: { x: number; y: number; width: number; height: number },
+	scroll = { top: 0, left: 0 }
+) => {
 	const element = scrollableEl(rect, scroll)
 	return { id, element } as unknown as Droppable
 }
@@ -64,7 +68,11 @@ describe('SortableContainerStrategy.calculateDropZones — scroll viewport clipp
 		)
 		const snapshot: LayoutSnapshot = { containerId: 'list', rects, draggedIndex: -1 }
 		// Scrolled to y=500 ⇒ content rows 10..17 become visible.
-		const droppable = droppableWith('list', { x: 0, y: 0, width: 200, height: 400 }, { top: 500, left: 0 })
+		const droppable = droppableWith(
+			'list',
+			{ x: 0, y: 0, width: 200, height: 400 },
+			{ top: 500, left: 0 }
+		)
 		const session = sessionWith(snapshot, 'none')
 
 		const zones = strategy.calculateDropZones(droppable, session)

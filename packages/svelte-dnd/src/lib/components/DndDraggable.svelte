@@ -51,16 +51,22 @@
 		if (!dndController?.debug) return
 		if (position === undefined) return
 		if (!Number.isInteger(position) || position < 0) {
-			console.warn(`[svelte-dnd] DndDraggable "${id}": invalid position ${position}. Must be a non-negative integer.`)
+			console.warn(
+				`[svelte-dnd] DndDraggable "${id}": invalid position ${position}. Must be a non-negative integer.`
+			)
 		}
 		if (positionRegistry) {
 			const pos = position
 			const existing = positionRegistry.get(pos)
 			if (existing !== undefined && existing !== id) {
-				console.warn(`[svelte-dnd] DndDraggable "${id}": duplicate position ${pos} — already used by "${existing}". Reordering will be unpredictable.`)
+				console.warn(
+					`[svelte-dnd] DndDraggable "${id}": duplicate position ${pos} — already used by "${existing}". Reordering will be unpredictable.`
+				)
 			}
 			positionRegistry.set(pos, id)
-			return () => { if (positionRegistry.get(pos) === id) positionRegistry.delete(pos) }
+			return () => {
+				if (positionRegistry.get(pos) === id) positionRegistry.delete(pos)
+			}
 		}
 	})
 
@@ -69,17 +75,24 @@
 	// Keep slot.position in sync with the reactive position prop — Slot is a plain class,
 	// so without this {#each} reorders leave slot.position stale and getSortedSlots() returns
 	// wrong order on subsequent drags.
-	$effect(() => { slot.position = position ?? 0 })
+	$effect(() => {
+		slot.position = position ?? 0
+	})
 
-	const draggable = new Draggable(
-		{ id, type, data, disabled, sensors },
-		dndController
-	)
+	const draggable = new Draggable({ id, type, data, disabled, sensors }, dndController)
 
-	$effect(() => { draggable.type = type })
-	$effect(() => { draggable.data = data })
-	$effect(() => { draggable.disabled = disabled })
-	$effect(() => { draggable.sensors = sensors })
+	$effect(() => {
+		draggable.type = type
+	})
+	$effect(() => {
+		draggable.data = data
+	})
+	$effect(() => {
+		draggable.disabled = disabled
+	})
+	$effect(() => {
+		draggable.sensors = sensors
+	})
 
 	// Separate ref for click-capture effect (draggable.element is set via @attach, not reactive)
 	let draggableEl = $state<HTMLElement | undefined>(undefined)
@@ -94,7 +107,8 @@
 		const isLast = position === total - 1
 		if (!isLast) return false
 		const preview = dndController?.dropPreview
-		const tailActive = preview && preview.containerId === droppable.id && preview.position === total
+		const tailActive =
+			preview && preview.containerId === droppable.id && preview.position === total
 		return !tailActive
 	})
 
@@ -105,10 +119,15 @@
 	const performingDrop = $derived(dndController?.performingDrop ?? false)
 	const isGhostActive = $derived(
 		draggable.isDragging ||
-		(dndController?.animatingReturn === true && dndController?.draggedItem === id) ||
-		(dndController?.performingDrop === true && dndController?.draggedItem === id)
+			(dndController?.animatingReturn === true && dndController?.draggedItem === id) ||
+			(dndController?.performingDrop === true && dndController?.draggedItem === id)
 	)
-	const shift = $derived(dndController?.animation.siblingShift ?? { duration: 200, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' })
+	const shift = $derived(
+		dndController?.animation.siblingShift ?? {
+			duration: 200,
+			easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+		}
+	)
 
 	// Block clicks after drag in capture phase — fires before any child onclick handlers.
 	$effect(() => {
@@ -125,7 +144,16 @@
 	})
 </script>
 
-<div class="dnd-slot" data-dnd-slot style="position: relative; overflow: visible; {droppable?.layout === 'grid' ? '' : droppable?.layout === 'horizontal' ? `margin-right: ${spacingPx}px` : `margin-bottom: ${spacingPx}px`}" {@attach droppable?.attachSlot(slot)}>
+<div
+	class="dnd-slot"
+	data-dnd-slot
+	style="position: relative; overflow: visible; {droppable?.layout === 'grid'
+		? ''
+		: droppable?.layout === 'horizontal'
+			? `margin-right: ${spacingPx}px`
+			: `margin-bottom: ${spacingPx}px`}"
+	{@attach droppable?.attachSlot(slot)}
+>
 	{#if position !== undefined}
 		<DndPreview {slot} {position} />
 	{/if}
@@ -141,7 +169,10 @@
 		aria-roledescription="draggable item"
 		data-dnd-draggable
 		data-dnd-drag-id={id}
-		style="transform: translate3d({translate.x}px, {translate.y}px, 0); transition: {isGhostActive || performingDrop ? 'none' : `transform ${shift.duration}ms ${shift.easing}`}"
+		style="transform: translate3d({translate.x}px, {translate.y}px, 0); transition: {isGhostActive ||
+		performingDrop
+			? 'none'
+			: `transform ${shift.duration}ms ${shift.easing}`}"
 		onpointerdown={draggable.handlePointerDown}
 		onkeydown={draggable.handleKeyDown}
 		{@attach slot.attachDraggable(draggable)}

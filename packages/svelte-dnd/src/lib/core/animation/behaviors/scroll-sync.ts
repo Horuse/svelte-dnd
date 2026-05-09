@@ -57,7 +57,10 @@ export function scrollSync(opts: ScrollSyncOptions = {}): Behavior {
 							next.execute().then(resolve)
 							return
 						}
-						const visible = DOMHelper.computeVisibleFraction(ctx.targetEl, ctx.container)
+						const visible = DOMHelper.computeVisibleFraction(
+							ctx.targetEl,
+							ctx.container
+						)
 						if (visible >= threshold) {
 							next.execute().then(resolve)
 							return

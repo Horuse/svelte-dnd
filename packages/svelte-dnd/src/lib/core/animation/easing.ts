@@ -21,7 +21,9 @@ export function parseEasing(easing: string): (t: number) => number {
 	if (trimmed === 'ease-out') return cubicBezierFn(0, 0, 0.58, 1)
 	if (trimmed === 'ease-in-out') return cubicBezierFn(0.42, 0, 0.58, 1)
 
-	const m = trimmed.match(/^cubic-bezier\(\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\)$/)
+	const m = trimmed.match(
+		/^cubic-bezier\(\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\)$/
+	)
 	if (m) {
 		return cubicBezierFn(parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3]), parseFloat(m[4]))
 	}
@@ -44,8 +46,10 @@ function cubicBezierFn(x1: number, y1: number, x2: number, y2: number): (t: numb
 	const a = (a1: number, a2: number) => 1 - 3 * a2 + 3 * a1
 	const b = (a1: number, a2: number) => 3 * a2 - 6 * a1
 	const c = (a1: number) => 3 * a1
-	const calc = (t: number, a1: number, a2: number) => ((a(a1, a2) * t + b(a1, a2)) * t + c(a1)) * t
-	const slope = (t: number, a1: number, a2: number) => 3 * a(a1, a2) * t * t + 2 * b(a1, a2) * t + c(a1)
+	const calc = (t: number, a1: number, a2: number) =>
+		((a(a1, a2) * t + b(a1, a2)) * t + c(a1)) * t
+	const slope = (t: number, a1: number, a2: number) =>
+		3 * a(a1, a2) * t * t + 2 * b(a1, a2) * t + c(a1)
 
 	for (let i = 0; i < SAMPLE_COUNT; i++) samples[i] = calc(i * SAMPLE_STEP, x1, x2)
 

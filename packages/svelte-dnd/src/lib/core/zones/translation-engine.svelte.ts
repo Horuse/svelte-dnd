@@ -47,7 +47,10 @@ export class TranslationEngine {
 
 		let targetDroppable: Droppable | undefined
 		for (const d of this.droppables.values()) {
-			if (d.id === preview.containerId) { targetDroppable = d; break }
+			if (d.id === preview.containerId) {
+				targetDroppable = d
+				break
+			}
 		}
 		if (!targetDroppable) return null
 

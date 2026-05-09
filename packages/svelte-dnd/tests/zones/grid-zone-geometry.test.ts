@@ -3,8 +3,14 @@ import { GridZoneGeometry } from '../../src/lib/core/zones/geometries/grid-zone-
 import { geometryCtx, slotRect } from '../helpers/fixtures.js'
 
 const GRID_RECT = {
-	x: 0, y: 0, left: 0, top: 0, right: 400, bottom: 400,
-	width: 400, height: 400,
+	x: 0,
+	y: 0,
+	left: 0,
+	top: 0,
+	right: 400,
+	bottom: 400,
+	width: 400,
+	height: 400,
 	toJSON: () => ({})
 } as DOMRect
 

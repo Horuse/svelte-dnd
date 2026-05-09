@@ -1,6 +1,12 @@
 import { SvelteMap } from 'svelte/reactivity'
 import { isBrowser } from '../utils/dom-helper.js'
-import type { DndContainerInfo, DndLayout, DndMode, DragStartCallback, DragEndCallback } from '../../types.js'
+import type {
+	DndContainerInfo,
+	DndLayout,
+	DndMode,
+	DragStartCallback,
+	DragEndCallback
+} from '../../types.js'
 import type { CollisionAlgorithm } from '../collision/collision-algorithm.js'
 import type { ContainerStrategy } from '../containers/strategies/container-strategy.js'
 import type { Slot } from './slot.js'

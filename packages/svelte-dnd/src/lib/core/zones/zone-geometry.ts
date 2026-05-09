@@ -24,10 +24,7 @@ export interface ZoneGeometryContext {
  * not touching SortableContainerStrategy.
  */
 export interface ZoneGeometry {
-	buildZones(
-		visibleRects: SlotLayoutRect[],
-		context: ZoneGeometryContext
-	): DropZone[]
+	buildZones(visibleRects: SlotLayoutRect[], context: ZoneGeometryContext): DropZone[]
 
 	buildEmptyZone(context: ZoneGeometryContext): DropZone
 }

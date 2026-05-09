@@ -77,8 +77,10 @@ export interface Announcements {
 
 export const defaultAnnouncements: Announcements = {
 	onDragStart: ({ item }) => `Started dragging item ${item.id}.`,
-	onDragOver: ({ item, current }) => `Item ${item.id} is over ${current.id} at position ${current.position}.`,
-	onDrop: ({ item, target }) => `Dropped item ${item.id} into ${target.id} at position ${target.position}.`,
+	onDragOver: ({ item, current }) =>
+		`Item ${item.id} is over ${current.id} at position ${current.position}.`,
+	onDrop: ({ item, target }) =>
+		`Dropped item ${item.id} into ${target.id} at position ${target.position}.`,
 	onCancel: ({ item }) => `Dragging ${item.id} was cancelled.`
 }
 

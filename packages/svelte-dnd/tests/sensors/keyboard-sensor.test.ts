@@ -105,7 +105,11 @@ describe('KeyboardSensor.activate — lifecycle', () => {
 	it('destroy() cancels the deferred listener so a follow-up Enter does not fire onEnd', () => {
 		const sensor = new KeyboardSensor()
 		const callbacks = spyCallbacks()
-		const result = sensor.activate(new KeyboardEvent('keydown', { key: 'Enter' }), element, callbacks)!
+		const result = sensor.activate(
+			new KeyboardEvent('keydown', { key: 'Enter' }),
+			element,
+			callbacks
+		)!
 
 		// destroy before the deferred setTimeout(0) attaches the window listener
 		result.destroy()

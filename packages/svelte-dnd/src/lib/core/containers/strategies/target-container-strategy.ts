@@ -44,22 +44,27 @@ export class TargetContainerStrategy implements ContainerStrategy {
 
 	calculateDropZones(droppable: Droppable, _session: DragSession | null): DropZone[] {
 		const rect = DOMHelper.getRect(droppable.element)
-		return [{
-			containerId: droppable.id,
-			position: 0,
-			layout: 'vertical',
-			rect: {
-				x: rect.left,
-				y: rect.top,
-				width: rect.width,
-				height: Math.max(rect.height, 20)
+		return [
+			{
+				containerId: droppable.id,
+				position: 0,
+				layout: 'vertical',
+				rect: {
+					x: rect.left,
+					y: rect.top,
+					width: rect.width,
+					height: Math.max(rect.height, 20)
+				}
 			}
-		}]
+		]
 	}
 
 	// Target containers don't have sortable items — no translations needed.
 	// The origin container's strategy handles gap collapse.
-	getTranslations(_droppable: Droppable, _session: DragSession): Map<string, { x: number; y: number }> {
+	getTranslations(
+		_droppable: Droppable,
+		_session: DragSession
+	): Map<string, { x: number; y: number }> {
 		return new Map()
 	}
 
@@ -68,7 +73,12 @@ export class TargetContainerStrategy implements ContainerStrategy {
 	}
 
 	getReturnAnimation(session: DragSession): AnimationStep {
-		return new GhostReturnStep(this.state, session.originContainerId, session.originPosition, this.droppablesById)
+		return new GhostReturnStep(
+			this.state,
+			session.originContainerId,
+			session.originPosition,
+			this.droppablesById
+		)
 	}
 }
 

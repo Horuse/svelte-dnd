@@ -31,7 +31,7 @@
 	 */
 	function cloneContent(node: HTMLElement, source: HTMLElement) {
 		const doClone = (src: HTMLElement) => {
-			node.replaceChildren(...Array.from(src.childNodes).map(n => n.cloneNode(true)))
+			node.replaceChildren(...Array.from(src.childNodes).map((n) => n.cloneNode(true)))
 		}
 		doClone(source)
 		return {
@@ -49,19 +49,24 @@
 	const ann = $derived({ ...defaultAnnouncements, ...dragController.announcements })
 
 	$effect(() => {
-		const unsubStart = dragController.onDragStart(event => {
+		const unsubStart = dragController.onDragStart((event) => {
 			announcement = ann.onDragStart?.(event) ?? ''
 		})
-		const unsubOver = dragController.onDragOver(event => {
+		const unsubOver = dragController.onDragOver((event) => {
 			announcement = ann.onDragOver?.(event) ?? ''
 		})
-		const unsubDrop = dragController.onDrop(event => {
+		const unsubDrop = dragController.onDrop((event) => {
 			announcement = ann.onDrop?.(event) ?? ''
 		})
-		const unsubCancel = dragController.onDropCancelled(event => {
+		const unsubCancel = dragController.onDropCancelled((event) => {
 			announcement = ann.onCancel?.(event) ?? ''
 		})
-		return () => { unsubStart(); unsubOver(); unsubDrop(); unsubCancel() }
+		return () => {
+			unsubStart()
+			unsubOver()
+			unsubDrop()
+			unsubCancel()
+		}
 	})
 
 	let dragCursorStyle: HTMLStyleElement | null = null
@@ -126,7 +131,8 @@
 		<div
 			class="dnd-debug-zone"
 			class:dnd-debug-zone--first={zone.position === 0}
-			style="left: {zone.rect.x}px; top: {zone.rect.y}px; width: {zone.rect.width}px; height: {zone.rect.height}px;"
+			style="left: {zone.rect.x}px; top: {zone.rect.y}px; width: {zone.rect
+				.width}px; height: {zone.rect.height}px;"
 		>
 			<span class="dnd-debug-zone__label">
 				{zone.containerId} pos:{zone.position}

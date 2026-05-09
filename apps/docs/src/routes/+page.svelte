@@ -52,7 +52,7 @@
 	<!-- Install -->
 	<div class="flex flex-col gap-3">
 		<h2 class="text-xl font-bold text-neutral-700 dark:text-neutral-300">Installation</h2>
-		<InstallTabs pkg="@horuse/svelte-dnd@1.0.0-rc.1" />
+		<InstallTabs pkg="@horuse/svelte-dnd" />
 	</div>
 
 	<!-- Quick start -->

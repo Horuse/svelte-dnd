@@ -1,6 +1,7 @@
 import type { Modifier } from './modifier.js'
 
-export const snapToGrid = (gridSize: number | { x: number; y: number }): Modifier =>
+export const snapToGrid =
+	(gridSize: number | { x: number; y: number }): Modifier =>
 	({ transform }) => {
 		const gx = typeof gridSize === 'number' ? gridSize : gridSize.x
 		const gy = typeof gridSize === 'number' ? gridSize : gridSize.y

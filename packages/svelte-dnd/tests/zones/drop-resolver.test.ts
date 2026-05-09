@@ -63,10 +63,13 @@ describe('DropResolver.findZoneAt', () => {
 			transform: { x: 220, y: 20 },
 			ghostSize: { width: 30, height: 30 }
 		})
-		const resolver = new DropResolver(state, fakeDroppables({
-			a: { accepts: 'card' },
-			b: { accepts: 'task' }
-		}))
+		const resolver = new DropResolver(
+			state,
+			fakeDroppables({
+				a: { accepts: 'card' },
+				b: { accepts: 'task' }
+			})
+		)
 
 		// ghost center sits inside rejected, but `b` does not accept 'card'.
 		expect(resolver.findZoneAt({ x: 0, y: 0 })).toBeNull()
@@ -81,9 +84,12 @@ describe('DropResolver.findZoneAt', () => {
 		})
 		// Default centerPoint would not match (ghost far from zone), but closestCenter always picks the
 		// nearest zone within a container.
-		const resolver = new DropResolver(state, fakeDroppables({
-			a: { collision: closestCenter }
-		}))
+		const resolver = new DropResolver(
+			state,
+			fakeDroppables({
+				a: { collision: closestCenter }
+			})
+		)
 
 		expect(resolver.findZoneAt({ x: 0, y: 0 })).toBe(z)
 	})

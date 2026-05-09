@@ -3,7 +3,15 @@ import type { DndEventEmitter } from '../dnd/dnd-event-emitter.js'
 import type { ScrollController } from '../scroll/scroll-controller.js'
 import type { DropResolver } from '../zones/drop-resolver.js'
 import type { AnimationStep } from './steps/animation-step.js'
-import type { DropPreview, DndItemInfo, DndContainerInfo, DropEvent, DragEndEvent, DragOverEvent, DropCancelledEvent } from '../../types.js'
+import type {
+	DropPreview,
+	DndItemInfo,
+	DndContainerInfo,
+	DropEvent,
+	DragEndEvent,
+	DragOverEvent,
+	DropCancelledEvent
+} from '../../types.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
 import type { ResolvedAnimationConfig } from './animation-config.js'
 import type { Behavior, BehaviorContext } from './behavior.js'
@@ -28,7 +36,12 @@ export class DropAnimationCoordinator {
 		private defaultBehaviors: Behavior[] = []
 	) {}
 
-	private buildContext(droppable: Droppable | null, position: number, duration: number, easing: string): BehaviorContext {
+	private buildContext(
+		droppable: Droppable | null,
+		position: number,
+		duration: number,
+		easing: string
+	): BehaviorContext {
 		const layout = droppable?.layout
 		return {
 			state: this.state,
@@ -41,7 +54,13 @@ export class DropAnimationCoordinator {
 		}
 	}
 
-	private wrap(step: AnimationStep, droppable: Droppable | null, position: number, duration: number, easing: string): AnimationStep {
+	private wrap(
+		step: AnimationStep,
+		droppable: Droppable | null,
+		position: number,
+		duration: number,
+		easing: string
+	): AnimationStep {
 		const behaviors = resolveBehaviors(droppable, this.defaultBehaviors)
 		const ctx = this.buildContext(droppable, position, duration, easing)
 		return wrapWithBehaviors(step, behaviors, ctx)
@@ -85,12 +104,18 @@ export class DropAnimationCoordinator {
 						element
 					}
 					const originContainerId = this.state.originContainerId
-					const sourceDroppable = originContainerId ? this.droppablesById.get(originContainerId) : null
+					const sourceDroppable = originContainerId
+						? this.droppablesById.get(originContainerId)
+						: null
 					const targetDroppable = this.droppablesById.get(targetZone.containerId)
 
 					if (sourceDroppable && targetDroppable) {
-						const sourceInfo: DndContainerInfo = sourceDroppable.toContainerInfo(this.state.originPosition)
-						const currentInfo: DndContainerInfo = targetDroppable.toContainerInfo(targetZone.position)
+						const sourceInfo: DndContainerInfo = sourceDroppable.toContainerInfo(
+							this.state.originPosition
+						)
+						const currentInfo: DndContainerInfo = targetDroppable.toContainerInfo(
+							targetZone.position
+						)
 
 						let previousInfo: DndContainerInfo | null = null
 						if (prevKey) {
@@ -137,7 +162,9 @@ export class DropAnimationCoordinator {
 		const type = this.state.draggedType ?? undefined
 		const originContainerId = this.state.originContainerId
 		const originPosition = this.state.originPosition
-		const sourceDroppable = originContainerId ? this.droppablesById.get(originContainerId) : null
+		const sourceDroppable = originContainerId
+			? this.droppablesById.get(originContainerId)
+			: null
 		const targetDroppable = this.droppablesById.get(targetContainerId)
 
 		const targetZone = this.state.zones.find(
@@ -151,9 +178,10 @@ export class DropAnimationCoordinator {
 
 		// Smooth source-slot collapse runs in parallel with the ghost flight so
 		// items below the dragged source move up smoothly while the ghost flies.
-		const collapsePromise = isCrossContainer && element && sourceDroppable
-			? this.startSlotCollapse(element, sourceDroppable, sourceId, originPosition)
-			: Promise.resolve()
+		const collapsePromise =
+			isCrossContainer && element && sourceDroppable
+				? this.startSlotCollapse(element, sourceDroppable, sourceId, originPosition)
+				: Promise.resolve()
 
 		const onDropComplete = async () => {
 			await collapsePromise
@@ -162,35 +190,63 @@ export class DropAnimationCoordinator {
 				const itemInfo: DndItemInfo = { id: sourceId, data: sourceData, type, element }
 				const sourceInfo: DndContainerInfo = sourceDroppable.toContainerInfo(originPosition)
 				const targetInfo: DndContainerInfo = targetDroppable.toContainerInfo(position)
-				const dropEvent: DropEvent = { item: itemInfo, source: sourceInfo, target: targetInfo }
-				const dragEndEvent: DragEndEvent = { item: itemInfo, source: sourceInfo, target: targetInfo, cancelled: false }
+				const dropEvent: DropEvent = {
+					item: itemInfo,
+					source: sourceInfo,
+					target: targetInfo
+				}
+				const dragEndEvent: DragEndEvent = {
+					item: itemInfo,
+					source: sourceInfo,
+					target: targetInfo,
+					cancelled: false
+				}
 
 				// Save scroll positions before DOM reorder — browser scroll anchoring
 				// can shift scrollTop when content height changes after items update.
 				// Skip for virtualized containers entirely: they manage their own
 				// scroll state and any extra write fights their reconciliation.
-				const srcScrollTarget = !sourceDroppable.isVirtualized ? sourceDroppable.element : undefined
-				const tgtScrollTarget = (sourceDroppable !== targetDroppable && !targetDroppable.isVirtualized)
-					? targetDroppable.element
+				const srcScrollTarget = !sourceDroppable.isVirtualized
+					? sourceDroppable.element
 					: undefined
+				const tgtScrollTarget =
+					sourceDroppable !== targetDroppable && !targetDroppable.isVirtualized
+						? targetDroppable.element
+						: undefined
 				const srcScroll = srcScrollTarget?.scrollTop
 				const tgtScroll = tgtScrollTarget?.scrollTop
 
 				this.eventEmitter.notifyDrop(dropEvent)
 				this.finalizeDragEnd(dragEndEvent)
 
-				queueMicrotask(() => queueMicrotask(() => {
-					if (srcScroll !== undefined && srcScrollTarget) srcScrollTarget.scrollTop = srcScroll
-					if (tgtScroll !== undefined && tgtScrollTarget) tgtScrollTarget.scrollTop = tgtScroll
-				}))
+				queueMicrotask(() =>
+					queueMicrotask(() => {
+						if (srcScroll !== undefined && srcScrollTarget)
+							srcScrollTarget.scrollTop = srcScroll
+						if (tgtScroll !== undefined && tgtScrollTarget)
+							tgtScrollTarget.scrollTop = tgtScroll
+					})
+				)
 			} else {
 				this.finalizeDragEnd(null)
 			}
 		}
 
 		if (targetZone && this.state.element && this.state.transform) {
-			const baseStep = new GhostToTargetStep(this.state, targetZone, this.droppablesById, this.animation.drop.duration, this.animation.drop.easing)
-			const wrapped = this.wrap(baseStep, targetDroppable ?? null, position, this.animation.drop.duration, this.animation.drop.easing)
+			const baseStep = new GhostToTargetStep(
+				this.state,
+				targetZone,
+				this.droppablesById,
+				this.animation.drop.duration,
+				this.animation.drop.easing
+			)
+			const wrapped = this.wrap(
+				baseStep,
+				targetDroppable ?? null,
+				position,
+				this.animation.drop.duration,
+				this.animation.drop.easing
+			)
 			this.animate(wrapped, onDropComplete)
 		} else {
 			onDropComplete()
@@ -206,13 +262,20 @@ export class DropAnimationCoordinator {
 		const type = this.state.draggedType ?? undefined
 		const originContainerId = this.state.originContainerId
 		const originPosition = this.state.originPosition
-		const sourceDroppable = originContainerId ? this.droppablesById.get(originContainerId) : null
+		const sourceDroppable = originContainerId
+			? this.droppablesById.get(originContainerId)
+			: null
 
 		let cancelledEvent: DropCancelledEvent | null = null
 		let dragEndEvent: DragEndEvent | null = null
 
 		if (itemId && element && sourceDroppable) {
-			const itemInfo: DndItemInfo = { id: itemId, data: this.state.draggedItemData, type, element }
+			const itemInfo: DndItemInfo = {
+				id: itemId,
+				data: this.state.draggedItemData,
+				type,
+				element
+			}
 			const sourceInfo: DndContainerInfo = sourceDroppable.toContainerInfo(originPosition)
 			cancelledEvent = { item: itemInfo, source: sourceInfo }
 			dragEndEvent = { item: itemInfo, source: sourceInfo, target: null, cancelled: true }
@@ -231,9 +294,24 @@ export class DropAnimationCoordinator {
 			requestAnimationFrame(() => {
 				const originId = this.state.originContainerId
 				const originPos = this.state.originPosition
-				const originDroppable = originId ? this.droppablesById.get(originId) ?? null : null
-				const baseStep = new GhostReturnStep(this.state, originId, originPos, this.droppablesById, this.animation.return.duration, this.animation.return.easing)
-				const wrapped = this.wrap(baseStep, originDroppable, originPos, this.animation.return.duration, this.animation.return.easing)
+				const originDroppable = originId
+					? (this.droppablesById.get(originId) ?? null)
+					: null
+				const baseStep = new GhostReturnStep(
+					this.state,
+					originId,
+					originPos,
+					this.droppablesById,
+					this.animation.return.duration,
+					this.animation.return.easing
+				)
+				const wrapped = this.wrap(
+					baseStep,
+					originDroppable,
+					originPos,
+					this.animation.return.duration,
+					this.animation.return.easing
+				)
 				this.animate(wrapped, () => this.finalizeDragEnd(dragEndEvent))
 			})
 		} else {
@@ -271,9 +349,10 @@ export class DropAnimationCoordinator {
 
 		// Items below the dragged item need their transforms adjusted per-frame
 		// so they appear to stay still as the DOM layout shrinks beneath them.
-		const affectedDraggables = sourceDroppable.getSortedSlots()
-			.filter(s => s.draggable.id !== sourceId && s.position > originPosition)
-			.map(s => s.draggable.element)
+		const affectedDraggables = sourceDroppable
+			.getSortedSlots()
+			.filter((s) => s.draggable.id !== sourceId && s.position > originPosition)
+			.map((s) => s.draggable.element)
 
 		// `flex-shrink: 0` blocks the flex container from collapsing the slot itself
 		// when `overflow: hidden` (next line) drops min-height/width to 0. Without it,
@@ -286,7 +365,7 @@ export class DropAnimationCoordinator {
 		// Matches the ghost flight duration so both animations finish together.
 		const duration = this.animation.slotCollapse.duration
 		const easeFn = parseEasing(this.animation.slotCollapse.easing)
-		return new Promise<void>(resolve => {
+		return new Promise<void>((resolve) => {
 			const startTime = performance.now()
 
 			const tick = (now: number) => {

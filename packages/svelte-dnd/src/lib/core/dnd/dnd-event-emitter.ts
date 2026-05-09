@@ -1,7 +1,15 @@
 import type {
-	DragStartCallback, DragEndCallback, DropCallback, DragOverCallback,
-	DropCancelledCallback, ZonesInvalidatedCallback,
-	DragStartEvent, DragEndEvent, DropEvent, DragOverEvent, DropCancelledEvent
+	DragStartCallback,
+	DragEndCallback,
+	DropCallback,
+	DragOverCallback,
+	DropCancelledCallback,
+	ZonesInvalidatedCallback,
+	DragStartEvent,
+	DragEndEvent,
+	DropEvent,
+	DragOverEvent,
+	DropCancelledEvent
 } from '../../types.js'
 
 export class DndEventEmitter {
@@ -14,56 +22,68 @@ export class DndEventEmitter {
 
 	onDragStart(cb: DragStartCallback): () => void {
 		this.dragStartCallbacks.add(cb)
-		return () => { this.dragStartCallbacks.delete(cb) }
+		return () => {
+			this.dragStartCallbacks.delete(cb)
+		}
 	}
 
 	onDragEnd(cb: DragEndCallback): () => void {
 		this.dragEndCallbacks.add(cb)
-		return () => { this.dragEndCallbacks.delete(cb) }
+		return () => {
+			this.dragEndCallbacks.delete(cb)
+		}
 	}
 
 	onDrop(cb: DropCallback): () => void {
 		this.dropCallbacks.add(cb)
-		return () => { this.dropCallbacks.delete(cb) }
+		return () => {
+			this.dropCallbacks.delete(cb)
+		}
 	}
 
 	onDragOver(cb: DragOverCallback): () => void {
 		this.dragOverCallbacks.add(cb)
-		return () => { this.dragOverCallbacks.delete(cb) }
+		return () => {
+			this.dragOverCallbacks.delete(cb)
+		}
 	}
 
 	onDropCancelled(cb: DropCancelledCallback): () => void {
 		this.dropCancelledCallbacks.add(cb)
-		return () => { this.dropCancelledCallbacks.delete(cb) }
+		return () => {
+			this.dropCancelledCallbacks.delete(cb)
+		}
 	}
 
 	notifyDragStart(event: DragStartEvent) {
-		this.dragStartCallbacks.forEach(cb => cb(event))
+		this.dragStartCallbacks.forEach((cb) => cb(event))
 	}
 
 	notifyDragEnd(event: DragEndEvent) {
-		this.dragEndCallbacks.forEach(cb => cb(event))
+		this.dragEndCallbacks.forEach((cb) => cb(event))
 	}
 
 	notifyDrop(event: DropEvent) {
-		this.dropCallbacks.forEach(cb => cb(event))
+		this.dropCallbacks.forEach((cb) => cb(event))
 	}
 
 	notifyDragOver(event: DragOverEvent) {
-		this.dragOverCallbacks.forEach(cb => cb(event))
+		this.dragOverCallbacks.forEach((cb) => cb(event))
 	}
 
 	notifyDropCancelled(event: DropCancelledEvent) {
-		this.dropCancelledCallbacks.forEach(cb => cb(event))
+		this.dropCancelledCallbacks.forEach((cb) => cb(event))
 	}
 
 	onZonesInvalidated(cb: ZonesInvalidatedCallback): () => void {
 		this.zonesInvalidatedCallbacks.add(cb)
-		return () => { this.zonesInvalidatedCallbacks.delete(cb) }
+		return () => {
+			this.zonesInvalidatedCallbacks.delete(cb)
+		}
 	}
 
 	notifyZonesInvalidated() {
-		this.zonesInvalidatedCallbacks.forEach(cb => cb())
+		this.zonesInvalidatedCallbacks.forEach((cb) => cb())
 	}
 
 	destroy() {

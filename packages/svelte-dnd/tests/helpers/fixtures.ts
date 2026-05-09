@@ -21,11 +21,19 @@ export function noopController(): DroppableControllerRef {
 }
 
 export function geometryCtx(partial: Partial<ZoneGeometryContext> = {}): ZoneGeometryContext {
-	const containerRect = partial.containerRect ?? ({
-		x: 0, y: 0, left: 0, top: 0, right: 200, bottom: 600,
-		width: 200, height: 600,
-		toJSON: () => ({})
-	} as DOMRect)
+	const containerRect =
+		partial.containerRect ??
+		({
+			x: 0,
+			y: 0,
+			left: 0,
+			top: 0,
+			right: 200,
+			bottom: 600,
+			width: 200,
+			height: 600,
+			toJSON: () => ({})
+		} as DOMRect)
 	return {
 		containerId: 'list',
 		containerRect,
@@ -36,19 +44,45 @@ export function geometryCtx(partial: Partial<ZoneGeometryContext> = {}): ZoneGeo
 	}
 }
 
-export function slotRect(slotId: string, position: number, x: number, y: number, w = 100, h = 50): SlotLayoutRect {
+export function slotRect(
+	slotId: string,
+	position: number,
+	x: number,
+	y: number,
+	w = 100,
+	h = 50
+): SlotLayoutRect {
 	return { slotId, position, offsetLeft: x, offsetTop: y, width: w, height: h }
 }
 
-export function dropZone(containerId: string, position: number, x: number, y: number, w: number, h: number, layout: DndLayout = 'vertical'): DropZone {
+export function dropZone(
+	containerId: string,
+	position: number,
+	x: number,
+	y: number,
+	w: number,
+	h: number,
+	layout: DndLayout = 'vertical'
+): DropZone {
 	return { containerId, position, layout, rect: { x, y, width: w, height: h } }
 }
 
-export function scrollableEl(rect: FakeRect, scroll: { left?: number; top?: number } = {}): HTMLElement {
+export function scrollableEl(
+	rect: FakeRect,
+	scroll: { left?: number; top?: number } = {}
+): HTMLElement {
 	const el = makeElement()
 	setRect(el, rect)
-	Object.defineProperty(el, 'scrollLeft', { configurable: true, writable: true, value: scroll.left ?? 0 })
-	Object.defineProperty(el, 'scrollTop', { configurable: true, writable: true, value: scroll.top ?? 0 })
+	Object.defineProperty(el, 'scrollLeft', {
+		configurable: true,
+		writable: true,
+		value: scroll.left ?? 0
+	})
+	Object.defineProperty(el, 'scrollTop', {
+		configurable: true,
+		writable: true,
+		value: scroll.top ?? 0
+	})
 	return el
 }
 

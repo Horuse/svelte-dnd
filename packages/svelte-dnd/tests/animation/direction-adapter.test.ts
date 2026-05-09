@@ -6,8 +6,16 @@ describe('getDirectionAdapter', () => {
 	it('reads/writes scrollTop and uses rect.top/.height for vertical', () => {
 		const adapter = getDirectionAdapter('vertical')
 		const container = makeElement()
-		Object.defineProperty(container, 'scrollTop', { configurable: true, writable: true, value: 30 })
-		Object.defineProperty(container, 'scrollLeft', { configurable: true, writable: true, value: 0 })
+		Object.defineProperty(container, 'scrollTop', {
+			configurable: true,
+			writable: true,
+			value: 30
+		})
+		Object.defineProperty(container, 'scrollLeft', {
+			configurable: true,
+			writable: true,
+			value: 0
+		})
 
 		expect(adapter.getScroll(container)).toBe(30)
 		adapter.setScroll(container, 100)
@@ -25,8 +33,16 @@ describe('getDirectionAdapter', () => {
 	it('reads/writes scrollLeft and uses rect.left/.width for horizontal', () => {
 		const adapter = getDirectionAdapter('horizontal')
 		const container = makeElement()
-		Object.defineProperty(container, 'scrollTop', { configurable: true, writable: true, value: 0 })
-		Object.defineProperty(container, 'scrollLeft', { configurable: true, writable: true, value: 25 })
+		Object.defineProperty(container, 'scrollTop', {
+			configurable: true,
+			writable: true,
+			value: 0
+		})
+		Object.defineProperty(container, 'scrollLeft', {
+			configurable: true,
+			writable: true,
+			value: 25
+		})
 
 		expect(adapter.getScroll(container)).toBe(25)
 		adapter.setScroll(container, 80)

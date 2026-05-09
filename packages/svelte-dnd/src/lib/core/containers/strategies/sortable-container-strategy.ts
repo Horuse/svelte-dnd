@@ -104,7 +104,13 @@ export class SortableContainerStrategy implements ContainerStrategy {
 			const draggedIndex = isOrigin ? session.originPosition : -1
 			session.setSource(
 				droppable.id,
-				new VirtualSortableSource(droppable.id, draggedIndex, droppable, this.virtual, session.itemId)
+				new VirtualSortableSource(
+					droppable.id,
+					draggedIndex,
+					droppable,
+					this.virtual,
+					session.itemId
+				)
 			)
 			return
 		}
@@ -134,7 +140,10 @@ export class SortableContainerStrategy implements ContainerStrategy {
 		return geometry.buildZones(visible, ctx)
 	}
 
-	getTranslations(droppable: Droppable, session: DragSession): Map<string, { x: number; y: number }> {
+	getTranslations(
+		droppable: Droppable,
+		session: DragSession
+	): Map<string, { x: number; y: number }> {
 		const map = new Map<string, { x: number; y: number }>()
 		const source = session.getSource(droppable.id)
 		if (!source) return map
@@ -149,7 +158,13 @@ export class SortableContainerStrategy implements ContainerStrategy {
 		if (layout === 'grid') {
 			if (!(source instanceof DomSortableSource)) return map
 			const snapshot = source.snapshot
-			return this.getGridTranslations(snapshot.rects, snapshot.draggedIndex, session.dropPreview, containerId, session)
+			return this.getGridTranslations(
+				snapshot.rects,
+				snapshot.draggedIndex,
+				session.dropPreview,
+				containerId,
+				session
+			)
 		}
 
 		// Vertical/horizontal: every displaced item shifts by the dragged slot's own size
@@ -188,10 +203,12 @@ export class SortableContainerStrategy implements ContainerStrategy {
 				const targetIdx = P <= D ? P : P + 1
 				if (targetIdx < D) {
 					// Drag moves earlier — items in [targetIdx..D-1] make room by shifting forward.
-					for (const s of mounted) if (s.position >= targetIdx && s.position < D) applyShift(s.id, step)
+					for (const s of mounted)
+						if (s.position >= targetIdx && s.position < D) applyShift(s.id, step)
 				} else if (targetIdx > D) {
 					// Drag moves later — items in (D..targetIdx) fill the gap by shifting back.
-					for (const s of mounted) if (s.position > D && s.position < targetIdx) applyShift(s.id, -step)
+					for (const s of mounted)
+						if (s.position > D && s.position < targetIdx) applyShift(s.id, -step)
 				}
 			}
 		} else if (containerId === session.originContainerId && D !== -1) {
@@ -262,7 +279,12 @@ export class SortableContainerStrategy implements ContainerStrategy {
 	}
 
 	getReturnAnimation(session: DragSession): AnimationStep {
-		return new GhostReturnStep(this.state, session.originContainerId, session.originPosition, this.droppablesById)
+		return new GhostReturnStep(
+			this.state,
+			session.originContainerId,
+			session.originPosition,
+			this.droppablesById
+		)
 	}
 }
 

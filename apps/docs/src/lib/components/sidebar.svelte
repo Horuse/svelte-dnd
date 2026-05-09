@@ -108,7 +108,7 @@
 				<select onchange={(e) => {
 					if(e.currentTarget.value) window.location.href = e.currentTarget.value
 				}} class="w-full focus:outline-none">
-					<option value="https://v1.svelte-dnd.vercel.app/">v1.0.0-rc.1</option>
+					<option value="https://v1.svelte-dnd.vercel.app/">v1.0.0</option>
 					<option value="https://svelte-dnd.vercel.app/">v0.3.0</option>
 				</select>
 			</label>

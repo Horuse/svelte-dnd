@@ -21,7 +21,10 @@ function fakeSession(init: FakeSessionInit): DragSession {
 	const itemId = init.itemId ?? 'dragged'
 	const source = new DomSortableSource(init.snapshot, itemId)
 	return {
-		getSource: (id: string) => (id === init.originContainerId || init.dropPreview?.containerId === id ? source : undefined),
+		getSource: (id: string) =>
+			id === init.originContainerId || init.dropPreview?.containerId === id
+				? source
+				: undefined,
 		dropPreview: init.dropPreview,
 		slotSize: init.slotSize,
 		originContainerId: init.originContainerId,
@@ -147,7 +150,11 @@ describe('SortableContainerStrategy.getTranslations — horizontal', () => {
 
 	it('shifts later items backward along the x axis', () => {
 		const snapshot: LayoutSnapshot = {
-			rects: [rect('a', 0, 0, 0, 80, 50), rect('b', 1, 90, 0, 80, 50), rect('c', 2, 180, 0, 80, 50)],
+			rects: [
+				rect('a', 0, 0, 0, 80, 50),
+				rect('b', 1, 90, 0, 80, 50),
+				rect('c', 2, 180, 0, 80, 50)
+			],
 			draggedIndex: 0
 		}
 		const session = fakeSession({

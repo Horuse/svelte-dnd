@@ -65,7 +65,14 @@ export class ScrollController {
 
 	private calculateScrollConfig(container: HTMLElement) {
 		const cfg = this.resolveConfig(container)
-		if (!cfg) return { shouldScroll: false, directionY: null, speedY: 0, directionX: null, speedX: 0 } as const
+		if (!cfg)
+			return {
+				shouldScroll: false,
+				directionY: null,
+				speedY: 0,
+				directionX: null,
+				speedX: 0
+			} as const
 
 		const rect = container.getBoundingClientRect()
 		const { x: mouseX, y: mouseY } = this.lastMousePosition
@@ -207,7 +214,11 @@ export class ScrollController {
 		const elementsAtPoint = document.elementsFromPoint(mouseX, mouseY)
 
 		for (const element of elementsAtPoint) {
-			if (element instanceof HTMLElement && (element.hasAttribute('data-dnd-droppable') || element.hasAttribute('data-dnd-scroll'))) {
+			if (
+				element instanceof HTMLElement &&
+				(element.hasAttribute('data-dnd-droppable') ||
+					element.hasAttribute('data-dnd-scroll'))
+			) {
 				const computedStyle = window.getComputedStyle(element)
 				const overflowY = computedStyle.overflowY
 				const overflowX = computedStyle.overflowX
@@ -229,7 +240,9 @@ export class ScrollController {
 		return containers
 	}
 
-	get stopOnDrop() { return this.options.stopOnDrop ?? false }
+	get stopOnDrop() {
+		return this.options.stopOnDrop ?? false
+	}
 
 	/** Replace runtime callbacks/options. Used by `setBehaviors`. */
 	updateOptions(options: Partial<ScrollControllerOptions>) {

@@ -24,7 +24,10 @@ export interface ContainerStrategy {
 	 */
 	readonly behaviors?: Behavior[]
 	calculateDropZones(droppable: Droppable, session: DragSession | null): DropZone[]
-	getTranslations(droppable: Droppable, session: DragSession): Map<string, { x: number; y: number }>
+	getTranslations(
+		droppable: Droppable,
+		session: DragSession
+	): Map<string, { x: number; y: number }>
 	getDropAnimation(session: DragSession, targetZone: DropZone): AnimationStep
 	getReturnAnimation(session: DragSession): AnimationStep
 	/**

@@ -100,8 +100,12 @@ export class GhostToTargetStep implements AnimationStep {
 
 	private fallbackPosition(): { x: number; y: number } {
 		return {
-			x: this.targetZone.rect.x + (this.targetZone.rect.width - (this.state.ghostSize?.width ?? 0)) / 2,
-			y: this.targetZone.rect.y + (this.targetZone.rect.height - (this.state.ghostSize?.height ?? 0)) / 2
+			x:
+				this.targetZone.rect.x +
+				(this.targetZone.rect.width - (this.state.ghostSize?.width ?? 0)) / 2,
+			y:
+				this.targetZone.rect.y +
+				(this.targetZone.rect.height - (this.state.ghostSize?.height ?? 0)) / 2
 		}
 	}
 }

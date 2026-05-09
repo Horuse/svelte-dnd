@@ -12,7 +12,9 @@ function mountContainer(id = 'list'): HTMLElement {
 describe('DOMHelper.findContainer', () => {
 	let container: HTMLElement
 
-	beforeEach(() => { container = mountContainer() })
+	beforeEach(() => {
+		container = mountContainer()
+	})
 	afterEach(() => container.remove())
 
 	it('locates a container by its data-dnd-drop-id', () => {
@@ -92,7 +94,9 @@ describe('DOMHelper.isElementVisibleInContainer', () => {
 describe('DOMHelper.findPreview / findPreviewSlot', () => {
 	let container: HTMLElement
 
-	beforeEach(() => { container = mountContainer() })
+	beforeEach(() => {
+		container = mountContainer()
+	})
 	afterEach(() => container.remove())
 
 	it('finds a preview owned by the given container', () => {

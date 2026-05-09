@@ -49,11 +49,25 @@ export class DragSession {
 
 	// --- Derived accessors ---
 
-	get itemId() { return this.source.id }
-	get element() { return this.source.element }
-	get itemData() { return this.source.data }
-	get draggedItemType() { return this.source.type ?? null }
-	get originContainerId() { return this.sourceContainer.id }
-	get originPosition() { return this.source.slot?.position ?? 0 }
-	get originalPosition() { return { x: this.startRect.left, y: this.startRect.top } }
+	get itemId() {
+		return this.source.id
+	}
+	get element() {
+		return this.source.element
+	}
+	get itemData() {
+		return this.source.data
+	}
+	get draggedItemType() {
+		return this.source.type ?? null
+	}
+	get originContainerId() {
+		return this.sourceContainer.id
+	}
+	get originPosition() {
+		return this.source.slot?.position ?? 0
+	}
+	get originalPosition() {
+		return { x: this.startRect.left, y: this.startRect.top }
+	}
 }

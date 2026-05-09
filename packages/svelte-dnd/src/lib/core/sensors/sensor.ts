@@ -33,9 +33,7 @@ export interface StartCondition {
 	getRequiredDuration?(): number | null
 }
 
-export type StartConditionInput =
-	| StartCondition[]
-	| ((event: PointerEvent) => StartCondition[])
+export type StartConditionInput = StartCondition[] | ((event: PointerEvent) => StartCondition[])
 
 export interface SensorDescriptor {
 	activate(

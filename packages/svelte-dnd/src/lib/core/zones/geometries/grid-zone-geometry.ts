@@ -34,10 +34,14 @@ export class GridZoneGeometry implements ZoneGeometry {
 			const nextGroup = groups[gi + 1]
 
 			const trackStart = Math.min(...group.map((r) => ax.secondaryOf(r)))
-			const trackEnd = Math.max(...group.map((r) => ax.secondaryOf(r) + ax.secondarySizeOf(r)))
+			const trackEnd = Math.max(
+				...group.map((r) => ax.secondaryOf(r) + ax.secondarySizeOf(r))
+			)
 
 			const secStart = prevGroup
-				? (Math.max(...prevGroup.map((r) => ax.secondaryOf(r) + ax.secondarySizeOf(r))) + trackStart) / 2
+				? (Math.max(...prevGroup.map((r) => ax.secondaryOf(r) + ax.secondarySizeOf(r))) +
+						trackStart) /
+					2
 				: Math.min(0, trackStart)
 			const secEnd = nextGroup
 				? (trackEnd + Math.min(...nextGroup.map((r) => ax.secondaryOf(r)))) / 2
@@ -60,7 +64,10 @@ export class GridZoneGeometry implements ZoneGeometry {
 
 				const afterEnd = next
 					? (primaryStart + primarySize + ax.primaryOf(next)) / 2
-					: Math.max(ax.containerPrimaryLength(ctx) + ax.scrollPrimary(ctx), primaryStart + primarySize)
+					: Math.max(
+							ax.containerPrimaryLength(ctx) + ax.scrollPrimary(ctx),
+							primaryStart + primarySize
+						)
 				zones.push(ax.toZone(ctx, before + 1, primaryMid, afterEnd, secStart, secEnd))
 			}
 		}

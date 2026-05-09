@@ -33,15 +33,21 @@ export function planScrollSync(args: {
 	/** When `true` (default), `finalize()` also re-reads the target rect and snaps the ghost there. */
 	snapToTargetOnFinalize?: boolean
 }): ScrollSyncPlan {
-	const { state, container, targetEl, direction, padding = 0, snapToTargetOnFinalize = true } = args
+	const {
+		state,
+		container,
+		targetEl,
+		direction,
+		padding = 0,
+		snapToTargetOnFinalize = true
+	} = args
 	const adapter = getDirectionAdapter(direction)
 	const startScroll = adapter.getScroll(container)
 	const startGhostPos = { ...(state.transform ?? { x: 0, y: 0 }) }
 	const previewRect = targetEl.getBoundingClientRect()
 
-	const expectedSize = direction === 'horizontal'
-		? state.ghostSize?.width ?? 0
-		: state.ghostSize?.height ?? 0
+	const expectedSize =
+		direction === 'horizontal' ? (state.ghostSize?.width ?? 0) : (state.ghostSize?.height ?? 0)
 
 	const { targetScroll, scrollDelta } = calc.calculateScrollTarget({
 		preview: targetEl,

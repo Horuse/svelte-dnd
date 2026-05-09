@@ -44,8 +44,12 @@
 		}
 	})
 
-	const showT = $derived(dndController?.animation.preview.show ?? { duration: 200, easing: 'ease' })
-	const hideT = $derived(dndController?.animation.preview.hide ?? { duration: 200, easing: 'ease' })
+	const showT = $derived(
+		dndController?.animation.preview.show ?? { duration: 200, easing: 'ease' }
+	)
+	const hideT = $derived(
+		dndController?.animation.preview.hide ?? { duration: 200, easing: 'ease' }
+	)
 </script>
 
 <div
@@ -64,8 +68,7 @@
 	style:--dnd-preview-easing-in={showT.easing}
 	style:--dnd-preview-easing-out={hideT.easing}
 	{@attach preview.attach()}
->
-</div>
+></div>
 
 <style>
 	.dnd-preview {

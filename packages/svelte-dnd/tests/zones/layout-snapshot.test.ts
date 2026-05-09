@@ -12,7 +12,11 @@ interface SlotInit {
 	rect: FakeRect
 }
 
-function buildDroppable(containerRect: FakeRect, slotInits: SlotInit[], scroll = { left: 0, top: 0 }): Droppable {
+function buildDroppable(
+	containerRect: FakeRect,
+	slotInits: SlotInit[],
+	scroll = { left: 0, top: 0 }
+): Droppable {
 	const droppable = new Droppable({ id: 'list', strategy: sortable() }, noopController())
 	droppable.element = scrollableEl(containerRect, scroll)
 
