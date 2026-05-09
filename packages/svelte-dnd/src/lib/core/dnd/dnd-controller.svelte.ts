@@ -1,3 +1,4 @@
+import { SvelteMap } from 'svelte/reactivity'
 import { DndState } from './dnd-state.svelte.js'
 import { ScrollController } from '../scroll/scroll-controller.js'
 import { DndEventEmitter } from './dnd-event-emitter.js'
@@ -85,8 +86,10 @@ export class DndController {
 	private modifiers: Modifier[]
 
 	// --- Entity maps ---
-	private droppables = new Map<HTMLElement, Droppable>()
-	private droppablesById = new Map<string, Droppable>()
+	// Reactive maps so $derived computations (TranslationEngine, dropPreviewSize)
+	// re-run when droppables mount/unmount mid-drag (lazy routes, virtualized parents).
+	private droppables = new SvelteMap<HTMLElement, Droppable>()
+	private droppablesById = new SvelteMap<string, Droppable>()
 	/**
 	 * Global element→Slot lookup used by sensors and attachSlot.
 	 * @internal
@@ -241,6 +244,13 @@ export class DndController {
 		return this.state.dropPreview
 	}
 
+	// Cache for first-slot rects keyed by containerId. Avoids `getBoundingClientRect`
+	// on every pointermove (the $derived below otherwise re-runs at 60fps and forces a
+	// synchronous layout each tick). The slotId is stored alongside so we re-measure if
+	// the first non-dragged slot identity changes (e.g. virtualizer remounts).
+	// Cleared at session start so a stale rect from the previous drag never leaks in.
+	private firstSlotRectCache = new Map<string, { slotId: string; width: number; height: number }>()
+
 	/**
 	 * Reactive size for sizing ghost/preview to match the destination layout.
 	 * Returns `null` when no drop preview is active, the target is empty, no
@@ -269,16 +279,23 @@ export class DndController {
 		const firstSlot = droppable.getSortedSlots().find((s) => s.draggable?.id !== draggedId)
 		if (!firstSlot?.draggable?.element) return null
 
-		const rect = firstSlot.draggable.element.getBoundingClientRect()
+		const slotId = firstSlot.draggable.id
+		let cached = this.firstSlotRectCache.get(preview.containerId)
+		if (!cached || cached.slotId !== slotId) {
+			const r = firstSlot.draggable.element.getBoundingClientRect()
+			cached = { slotId, width: r.width, height: r.height }
+			this.firstSlotRectCache.set(preview.containerId, cached)
+		}
+
 		const ghost = this.state.ghostSize
-		const ghostW = ghost?.width ?? rect.width
-		const ghostH = ghost?.height ?? rect.height
+		const ghostW = ghost?.width ?? cached.width
+		const ghostH = ghost?.height ?? cached.height
 
 		const layout = droppable.layout
-		if (layout === 'horizontal') return { width: ghostW, height: rect.height }
-		if (layout === 'grid') return { width: rect.width, height: rect.height }
+		if (layout === 'horizontal') return { width: ghostW, height: cached.height }
+		if (layout === 'grid') return { width: cached.width, height: cached.height }
 		// vertical (default)
-		return { width: rect.width, height: ghostH }
+		return { width: cached.width, height: ghostH }
 	})
 
 	/** All registered drop zones across every `DndDroppable`. */
@@ -597,6 +614,11 @@ export class DndController {
 		for (const droppable of this.droppablesById.values()) {
 			droppable.strategy.onSessionStart?.(droppable, newSession)
 		}
+
+		// Drop the per-session geometry cache so a fresh first-slot rect is taken on
+		// the next dropPreviewSize read. Without this, a previous drag's measurement
+		// would size the new session's preview/ghost.
+		this.firstSlotRectCache.clear()
 
 		this.state.startSession(newSession)
 		this.state.setSkipDropPreviewAnimation(true)
