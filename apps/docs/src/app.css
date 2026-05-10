@@ -49,6 +49,9 @@
     --opacity-2: 2%;
     --opacity-1_5: 1.5%;
     --opacity-1: 1%;
+
+    --font-sans: "Inter", sans-serif;
+    --font-mono:  "Roboto Mono", monospace;
 }
 
 .dark {

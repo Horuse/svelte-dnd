@@ -93,7 +93,7 @@
 	<aside transition:slide|local={{ duration: 300, easing: quintInOut, axis: 'x' }} class="flex absolute lg:relative h-screen flex-col whitespace-nowrap w-64 divide-y-2 divide-primary shrink-0 bg-foreground text-white border-r-2 border-primary overflow-y-auto">
 		<div class="p-3 flex flex-col gap-3">
 			<div class="flex items-center justify-between">
-				<a href="/" class="text-theme font-bold">@horuse/svelte-dnd</a>
+				<a href="/" class="text-theme ml-1 font-mono font-bold">@horuse/svelte-dnd</a>
 				<button
 					onclick={() => ($sidebarOpen = false)}
 					class="black-button size-9"
@@ -115,23 +115,6 @@
 		</div>
 
 		<nav class="flex flex-col gap-6 p-2 py-3">
-			<div>
-				<h3 class="text-sm font-semibold ml-3 uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-2">Examples</h3>
-				<ul class="flex flex-col gap-1">
-					{#each exampleLinks as link}
-						<li>
-							<a
-							href={link.href}
-							class:active={isActive(link.href)}
-							class="sidebar-item"
-							>
-							{link.label}
-							</a>
-						</li>
-					{/each}
-				</ul>
-			</div>
-
 			<div>
 				<h3 class="text-sm font-semibold ml-3 uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-2">Docs</h3>
 				<ul class="flex flex-col gap-1">
@@ -178,6 +161,22 @@
 								{link.label}
 								</a>
 							{/if}
+						</li>
+					{/each}
+				</ul>
+			</div>
+			<div>
+				<h3 class="text-sm font-semibold ml-3 uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-2">Examples</h3>
+				<ul class="flex flex-col gap-1">
+					{#each exampleLinks as link}
+						<li>
+							<a
+									href={link.href}
+									class:active={isActive(link.href)}
+									class="sidebar-item"
+							>
+								{link.label}
+							</a>
 						</li>
 					{/each}
 				</ul>
