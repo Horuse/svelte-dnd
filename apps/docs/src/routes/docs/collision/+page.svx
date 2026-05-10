@@ -1,6 +1,7 @@
 ---
 title: Collision Detection
 description: Pluggable collision algorithms — centerPoint, cursorOver, overlap, closestCenter, or custom.
+modified: 2026-05-11
 ---
 
 # Collision Detection

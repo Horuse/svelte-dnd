@@ -27,6 +27,7 @@ export type ManifestEntry = {
 	description: string
 	section: ManifestSection
 	source: string
+	modified?: string
 }
 
 function parseFrontmatter(raw: string): Record<string, string> {
@@ -63,7 +64,8 @@ function buildEntry(filePath: string, raw: string): ManifestEntry {
 		title: fm.title || fallbackTitle,
 		description: fm.description || '',
 		section: classify(href, fm.category),
-		source: filePath
+		source: filePath,
+		modified: fm.modified || undefined
 	}
 }
 

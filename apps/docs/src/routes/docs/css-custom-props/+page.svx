@@ -1,6 +1,7 @@
 ---
 title: CSS Custom Properties & Classes
 description: Reference for all --dnd-* CSS custom properties and CSS classes used by the library.
+modified: 2026-05-11
 ---
 
 # CSS Custom Properties & Classes

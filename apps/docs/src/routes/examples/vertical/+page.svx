@@ -1,6 +1,7 @@
 ---
 title: Vertical List
 description: Simple vertical sortable list demonstrating auto-scroll with 50 items.
+modified: 2026-05-11
 ---
 
 # Vertical List

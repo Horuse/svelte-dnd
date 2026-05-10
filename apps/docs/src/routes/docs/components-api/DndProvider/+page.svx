@@ -1,6 +1,7 @@
 ---
 title: DndProvider
 description: API reference for the DndProvider component — props, ghost snippet, and CSS variables.
+modified: 2026-05-11
 ---
 
 # DndProvider

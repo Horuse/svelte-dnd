@@ -1,6 +1,7 @@
 ---
 title: Accessibility
 description: Keyboard navigation, ARIA attributes, and screen-reader announcements.
+modified: 2026-05-11
 ---
 
 # Accessibility

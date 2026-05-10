@@ -1,6 +1,7 @@
 ---
 title: Custom Strategies
 description: Write or extend container strategies and pass them directly to DndDroppable.
+modified: 2026-05-11
 ---
 
 # Custom Strategies

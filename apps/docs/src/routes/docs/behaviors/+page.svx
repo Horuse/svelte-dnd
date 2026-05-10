@@ -1,6 +1,7 @@
 ---
 title: Behaviors
 description: Pluggable drop-side hooks — auto-scroll under drag, scroll-sync during drop animations, and any future plugins. Composable per controller and per strategy.
+modified: 2026-05-11
 ---
 
 <script lang="ts">

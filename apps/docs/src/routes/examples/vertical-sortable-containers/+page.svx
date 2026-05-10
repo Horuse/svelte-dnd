@@ -1,6 +1,7 @@
 ---
 title: Vertical Sortable Containers
 description: Example with vertically stacked DndDroppable containers where items can be dragged between them.
+modified: 2026-05-11
 ---
 
 # Vertical Sortable Containers

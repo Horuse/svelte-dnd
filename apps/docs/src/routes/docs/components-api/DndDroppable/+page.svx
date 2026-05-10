@@ -1,6 +1,7 @@
 ---
 title: DndDroppable
 description: API reference for the DndDroppable and DndPreview components — props, strategy, and type filtering.
+modified: 2026-05-11
 ---
 
 # DndDroppable

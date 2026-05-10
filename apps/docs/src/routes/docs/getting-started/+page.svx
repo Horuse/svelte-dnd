@@ -1,6 +1,7 @@
 ---
 title: Getting Started
 description: Installation and basic setup of @horuse/svelte-dnd
+modified: 2026-05-11
 ---
 
 <script>

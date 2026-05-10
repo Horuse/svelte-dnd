@@ -1,6 +1,7 @@
 ---
 title: Horizontal List
 description: Horizontal sortable list using sortable({ layout: 'horizontal' }) on DndDroppable.
+modified: 2026-05-11
 ---
 
 # Horizontal List

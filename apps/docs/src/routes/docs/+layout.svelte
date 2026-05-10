@@ -14,6 +14,11 @@
 	const description = $derived(entry?.description || siteConfig.description);
 	const canonical = $derived(new URL(page.url.pathname, origin).href);
 	const ogImage = $derived(new URL(siteConfig.ogImage, origin).href);
+
+	const dateFormatter = new Intl.DateTimeFormat('en', { dateStyle: 'long' });
+	const modifiedLabel = $derived(
+		entry?.modified ? dateFormatter.format(new Date(entry.modified)) : null
+	);
 </script>
 
 <svelte:head>
@@ -36,9 +41,14 @@
 
 
 <div class="flex mb-32 justify-center gap-8 max-w-7xl mx-auto px-4 py-8">
-	<article class="prose max-w-4xl min-w-0 flex-1">
+	<div class="prose max-w-4xl min-w-0 flex-1">
 		{@render props.children?.()}
-	</article>
+		{#if modifiedLabel}
+			<p class="not-prose text-xs text-theme/40 mt-5">
+				Updated <time datetime={entry?.modified}>{modifiedLabel}</time>
+			</p>
+		{/if}
+	</div>
 
 	<aside class="hidden xl:block w-56 shrink-0">
 		<ContentsList contentSelector=".prose" scrollSelector="main" />

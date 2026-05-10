@@ -1,6 +1,7 @@
 ---
 title: Sensors
 description: Pluggable input sensors — configure PointerSensor and KeyboardSensor or write your own.
+modified: 2026-05-11
 ---
 
 # Sensors

@@ -1,6 +1,7 @@
 ---
 title: Target Zones
 description: Mixing sortable() and target() — a horizontal pool plus three single-item drop slots, with a round → square morph and a FLIP-animated swap when a slot is already occupied.
+modified: 2026-05-11
 ---
 
 # Target Zones

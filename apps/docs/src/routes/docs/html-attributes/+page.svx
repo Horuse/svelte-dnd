@@ -1,6 +1,7 @@
 ---
 title: HTML Attributes
 description: Reference for all data-dnd-* HTML attributes set and consumed by the library.
+modified: 2026-05-11
 ---
 
 # HTML Attributes

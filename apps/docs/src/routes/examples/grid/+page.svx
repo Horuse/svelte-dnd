@@ -1,6 +1,7 @@
 ---
 title: Grid
 description: Grid sortable example using sortable({ layout: 'grid' }) with CSS Grid layout.
+modified: 2026-05-11
 ---
 
 # Grid

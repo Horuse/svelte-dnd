@@ -1,6 +1,7 @@
 ---
 title: Migrating from v0.3.0
 description: How to migrate to @horuse/svelte-dnd v1 from v0.3.0
+modified: 2026-05-11
 ---
 
 <script>

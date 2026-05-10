@@ -6,24 +6,32 @@ export const prerender = true
 
 type SitemapEntry = {
 	path: string
+	lastmod?: string
 	changefreq?: string
 	priority?: string
 }
 
-const staticPages: SitemapEntry[] = [
-	{ path: '/', changefreq: 'weekly', priority: '1.0' },
-	{ path: '/llms.txt', changefreq: 'weekly', priority: '0.4' }
-]
-
 const buildTimestamp = new Date().toISOString()
+
+const staticPages: SitemapEntry[] = [
+	{ path: '/', lastmod: buildTimestamp, changefreq: 'monthly', priority: '1.0' },
+	{ path: '/llms.txt', lastmod: buildTimestamp, changefreq: 'monthly', priority: '0.4' }
+]
 
 const toAbsoluteUrl = (origin: string, path: string) => new URL(path, origin).href
 
+const toLastmodIso = (modified: string | undefined): string => {
+	if (!modified) return buildTimestamp
+	const d = new Date(modified)
+	return Number.isNaN(d.valueOf()) ? buildTimestamp : d.toISOString()
+}
+
 const createUrlEntry = (origin: string, entry: SitemapEntry) => {
 	const loc = toAbsoluteUrl(origin, entry.path)
+	const lastmod = entry.lastmod ?? buildTimestamp
 	const changefreqTag = entry.changefreq ? `<changefreq>${entry.changefreq}</changefreq>` : ''
 	const priorityTag = entry.priority ? `<priority>${entry.priority}</priority>` : ''
-	return `<url><loc>${loc}</loc><lastmod>${buildTimestamp}</lastmod>${changefreqTag}${priorityTag}</url>`
+	return `<url><loc>${loc}</loc><lastmod>${lastmod}</lastmod>${changefreqTag}${priorityTag}</url>`
 }
 
 const dedupeEntries = (entries: SitemapEntry[]) => {
@@ -39,12 +47,14 @@ export const GET: RequestHandler = () => {
 
 	const docEntries: SitemapEntry[] = docsManifest.map((doc) => ({
 		path: doc.href,
-		changefreq: 'weekly',
+		lastmod: toLastmodIso(doc.modified),
+		changefreq: 'monthly',
 		priority: '0.8'
 	}))
 
 	const exampleEntries: SitemapEntry[] = examplesManifest.map((ex) => ({
 		path: ex.href,
+		lastmod: toLastmodIso(ex.modified),
 		changefreq: 'monthly',
 		priority: '0.7'
 	}))

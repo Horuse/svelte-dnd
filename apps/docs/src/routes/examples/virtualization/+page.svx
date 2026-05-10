@@ -1,6 +1,7 @@
 ---
 title: Virtualization
 description: Sortable list with 5000 items rendered through virtua's virtualized list.
+modified: 2026-05-11
 ---
 
 # Virtualization

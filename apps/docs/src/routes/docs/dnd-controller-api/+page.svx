@@ -1,6 +1,7 @@
 ---
 title: DndController API
 description: Full API reference for DndController — reactive getters, event callbacks, methods, and types.
+modified: 2026-05-11
 ---
 
 # DndController API

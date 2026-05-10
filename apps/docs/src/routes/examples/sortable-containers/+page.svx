@@ -1,6 +1,7 @@
 ---
 title: Sortable Containers
 description: Advanced example with draggable columns and tasks using nested DndDroppable components.
+modified: 2026-05-11
 ---
 
 # Sortable Containers

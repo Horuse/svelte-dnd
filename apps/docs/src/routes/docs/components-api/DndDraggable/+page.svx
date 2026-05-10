@@ -1,6 +1,7 @@
 ---
 title: DndDraggable
 description: API reference for the DndDraggable component — props, events, CSS variables, and drag handle attributes.
+modified: 2026-05-11
 ---
 
 # DndDraggable

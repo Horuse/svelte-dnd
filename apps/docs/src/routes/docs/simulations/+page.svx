@@ -1,6 +1,7 @@
 ---
 title: Simulations
 description: Programmatically animate items and layout changes through DndController for undo/redo, onboarding, and demo sequences.
+modified: 2026-05-11
 ---
 
 # Simulations

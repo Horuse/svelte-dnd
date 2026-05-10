@@ -1,6 +1,7 @@
 ---
 title: FAQ
 description: Common questions and answers about @horuse/svelte-dnd usage, configuration, and known limitations.
+modified: 2026-05-11
 ---
 
 # FAQ
