@@ -4,66 +4,63 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v1.0.0] - 2026-05-11
+
+First stable release.
 
 ### Breaking Changes
 
-- **Animation config restructured into a single `animation` namespace.**
-  Top-level `preview` option on `DndController` is removed — preview delays
-  and transitions now live under `animation.preview`. Field renames:
-  `dropDuration` → `drop`, `returnDuration` → `return`, `slotCollapseDuration`
-  → `slotCollapse`, `swapDuration` → `layout`. The previous flat
-  `preview.showDelay` / `preview.collapseDelay` are gone — debounce delay is
-  now part of the same object as the transition itself:
-  `preview.show: { delay, duration, easing }` (a `DelayedTransition`).
-  Other CSS-driven entries (`siblingShift`, `ghostResize`) take a
-  `{ duration, easing }` Transition. The four rAF entries (`drop`, `return`,
-  `slotCollapse`, `layout`) accept either a bare number (shorthand for
-  duration) or a full Transition.
-- **`controller.previewConfig` and `setPreviewConfig` removed.** Read live
-  values from `controller.animation` and update partials via
-  `controller.setAnimation({ ... })`.
-- **Ghost rotation is no longer applied by the library.** Removed CSS vars
-  `--dnd-ghost-rotation`, `--dnd-ghost-rotation-duration` and the
-  `.dnd-ghost--returning { transform: rotate(0deg) !important }` rule.
-  Implement rotation yourself in custom CSS if you want a tilt effect.
-- **New CSS vars** `--dnd-preview-easing-in`, `--dnd-preview-easing-out`,
-  `--dnd-ghost-resize-easing` complement the existing `*-duration` vars and
-  are written automatically from `controller.animation` (still overridable
-  via your own CSS).
-- **`PreviewConfig` type is no longer exported.** Use `AnimationConfig`
-  (now also exporting `ResolvedAnimationConfig` and `Transition`).
+- **`scroll` config replaced by `behaviors[]`**. Auto-scroll and scroll-sync are now `Behavior` plugins; built-in factories `autoScroll()` and `scrollSync()`, both included by default. Per-droppable override via `sortable({ behaviors })` / `target({ behaviors })`. `controller.setScrollConfig` removed — use `controller.setBehaviors`. `ScrollConfig` type replaced by `AutoScrollConfig`.
+- **Simulator API consolidated**. `simulateReturn`, `simulateDrop`, `simulateSwap`, `simulateBatchSwap` are replaced by `controller.animateItem` and `controller.animateLayout`. `SimulateOptions` removed; new types `AnimateItemOptions`, `AnimateLayoutOptions`, `ContainerPosition`.
+- **Animation config unified under `animation`**. Top-level `preview` option on `DndController` removed. Renames: `dropDuration` → `drop`, `returnDuration` → `return`, `slotCollapseDuration` → `slotCollapse`, `swapDuration` → `layout`. Preview delays moved into `animation.preview.show` / `animation.preview.hide` as `DelayedTransition` (`{ delay, duration, easing }`). `siblingShift` and `ghostResize` take a `Transition`; `drop`, `return`, `slotCollapse`, `layout`, `keyboardFlight` take a number or `Transition`.
+- **`controller.previewConfig` and `setPreviewConfig` removed**. Read from `controller.animation`, patch via `controller.setAnimation`.
+- **Ghost rotation no longer applied by the library**. Removed CSS vars `--dnd-ghost-rotation`, `--dnd-ghost-rotation-duration` and the `.dnd-ghost--returning` reset rule. Implement rotation in custom CSS if needed.
+- **`PreviewConfig` and `ScrollConfig` types are no longer exported**. Use `AnimationConfig` / `AutoScrollConfig` instead.
 
 ### Features
 
-- **Configurable easing for every animation.** All four rAF-driven entries
-  (`drop`, `return`, `slotCollapse`, `layout`) now accept either a plain
-  number (duration shorthand, default easing kept) or a full
-  `{ duration, easing }` Transition. Easing strings flow through a JS
-  bezier solver (`cubic-bezier(...)`, `ease`/`ease-in`/`ease-out`/
-  `ease-in-out`/`linear`) so animations honour your CSS timing-function
-  even though the engine stays on rAF.
-- **`scrollSync` honours the wrapped step's easing.** When scroll-sync
-  engages, its flight uses the same easing as `drop` / `return`, keeping
-  visual continuity instead of always running out-cubic.
-- **`animateItem` / `animateLayout` accept per-call `easing` override**
-  alongside the existing `duration` option.
-- **`parseEasing(str)` helper exported** for custom AnimationStep
-  implementations — turns any CSS timing-function string into a
-  `(t: number) => number`.
-- **Configurable easing for every CSS-driven animation**: preview reveal /
-  collapse, sibling-shift (intra-container translate + cross-container
-  spacer growth, both unified under one `siblingShift` field), and ghost
-  auto-resize.
-- **Runtime `setAnimation(partial)`** with deep-merge — patch any subset of
-  the animation config without touching unrelated fields.
+- **Sortable virtualization** via `sortable({ virtual })`. New `VirtualSource` and `SortableSource` types let a virtualizer drive zone geometry from live slot rects. Tested with virtua; other virtualizers should work via the same interface but are unverified. Grid layout falls back to DOM mode.
+- **Pluggable `Behavior` plugins**. Custom plugins implement `wrapDropAnimation(next, ctx)` and/or expose `autoScrollConfig`. New exports: `Behavior`, `BehaviorContext`, `AutoScrollConfig`, `autoScroll`, `scrollSync`, `ScrollSyncOptions`.
+- **`scrollSync({ threshold })`** — engagement gated by the destination slot's visible fraction.
+- **Ghost & preview auto-resize to the destination's item size**, mixing target-sibling and dragged-item dimensions per layout. Exposed reactively as `controller.dropPreviewSize`. CSS vars `--dnd-ghost-resize-duration` / `--dnd-ghost-resize-easing` driven by `animation.ghostResize`.
+- **Keyboard navigation expansions**. `Home` / `End`, cross-axis hops between sibling containers, same-row / same-column grid movement, per-keystroke ghost flight to the live slot rect, lockstep scroll-into-view for off-screen targets. Iterates the full position list, so virtualized slots stay reachable. Tunable via `animation.keyboardFlight`.
+- **Configurable easing for every animation**. rAF-driven steps accept a number or `{ duration, easing }`; CSS-driven steps (preview show/hide, `siblingShift`, `ghostResize`) gain matching easing fields. `scrollSync` inherits the wrapped step's easing.
+- **`parseEasing(str)` helper** exported for custom `AnimationStep` implementations.
+- **New CSS vars** `--dnd-preview-easing-in`, `--dnd-preview-easing-out`, `--dnd-ghost-resize-easing` written from `controller.animation`; user CSS still overrides.
+- **Runtime setters**: `setBehaviors`, `setAnimation` (deep-merge), `setSensors`, `setAnnouncements`, `setModifiers`, `setDebug`. No need to recreate the controller.
+- **Default flex direction for sortable `DndDroppable`** via `:where(.dnd-droppable[data-dnd-layout='vertical'|'horizontal'])`. Consumer classes (Tailwind, custom) win without `!important`. Grid sortables get no default.
+- **`Droppable.itemCount` and `Droppable.isVirtualized`** getters expose data length and virtualization mode.
+- **Per-call `behaviors` / `easing` override on `animateItem`**.
+- **`animateLayout({ morph: true })`** copies missing classes from pre- to post-state element so class-driven CSS transitions run in lockstep with the FLIP transform.
+- **New exports**: `GhostSnippet`, `GhostSnippetProps`, `ZonesInvalidatedCallback`.
 
-### Internal
+### Bug Fixes
 
-- New `BehaviorContext.easing` field. Custom behaviors that wrap the inner
-  step can read it (e.g. via `parseEasing(ctx.easing)`) to match the same
-  timing function. Existing custom behaviors that ignore easing keep
-  working unchanged.
+- Honour explicit `spacing={0}` on `DndDraggable`.
+- Clamp sortable drop zones to the container's scroll viewport.
+- Siblings no longer jump during slot collapse in scrollable sources.
+- Drop no longer fights the virtualizer's scroll-jump compensation.
+- Ghost tracks the tail preview correctly when the source slot collapses.
+- Repeated `preview.hide()` calls no longer leak collapse timers.
+- Overlapping `animateLayout` invocations reject with a clear error instead of corrupting state silently.
+- `scrollSync` now engages on tail previews in empty containers (degenerate-rect case).
+- Keyboard ghost flight reads the post-update tail spacing, so the first key after a drop lands at the correct rect.
+- `KeyboardSensor` no longer activates twice when `Enter` / `Space` bubbles from nested draggables.
+- Keyboard navigation no longer triggers auto-scroll (auto-scroll was tied to pointer updates).
+- Reactive prop updates on `DndDraggable` / `DndDroppable` / `DndPreview` propagate from the first read — entities are no longer pinned to the initial snapshot.
+- Post-drop rect reads in `animateLayout` happen against the updated DOM, fixing stale FLIP transforms.
+- `package.json` gains `exports.import` and `exports.default` conditions for correct ESM resolution.
+- Removed `aria-grabbed` from the dragged element (deprecated in ARIA 1.1).
+
+### Performance
+
+- Droppables mounting or unmounting mid-drag update zone derivations reactively instead of going stale until the next pointermove.
+- First-slot rect cached per drag session, avoiding a synchronous layout on every pointermove when computing `dropPreviewSize`.
+
+### Docs
+
+- New examples: virtualization, target-zones, behaviors live demo.
+- New pages: behaviors, `VirtualSource`, SSR FAQ. Examples updated to the consolidated simulator API and runtime setters.
 
 ## [v1.0.0-rc.1] - 2026-04-19
 
@@ -202,6 +199,7 @@ No notable changes.
 
 Initial release.
 
+[v1.0.0]: https://github.com/Horuse/svelte-dnd/compare/v1.0.0-rc.1...v1.0.0
 [v1.0.0-rc.1]: https://github.com/Horuse/svelte-dnd/compare/v1.0.0-beta.1...v1.0.0-rc.1
 [v1.0.0-beta.1]: https://github.com/Horuse/svelte-dnd/compare/v0.3.0...v1.0.0-beta.1
 [v0.3.0]: https://github.com/Horuse/svelte-dnd/compare/v0.2.0...v0.3.0
