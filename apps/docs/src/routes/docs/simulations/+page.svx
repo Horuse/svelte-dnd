@@ -1,0 +1,198 @@
+---
+title: Simulations
+description: Programmatically animate items and layout changes through DndController for undo/redo, onboarding, and demo sequences.
+modified: 2026-05-11
+---
+
+# Simulations
+
+`DndController` exposes two methods for triggering animations programmatically — without any user interaction. Useful for undo/redo flows, onboarding tutorials, or demo sequences.
+
+| Method | Use it for | Mechanism |
+|--------|-----------|-----------|
+| `animateItem` | Flying a single item to a destination — drop, return, undo | Ghost system (real session, optionally fires events) |
+| `animateLayout` | State change where many items reflow — sort, swap, group | FLIP (capture rects → apply state → animate the delta) |
+
+By default neither method fires drop callbacks. `animateItem` accepts `emitEvents: true` if you want a real `onDrop` (style `'drop'`) or `onDropCancelled` (style `'return'`) after the animation. `animateLayout` is a pure visual helper — your `applyState` callback is the single source of truth for data changes.
+
+---
+
+## animateItem
+
+```ts
+controller.animateItem(itemId: string, options: AnimateItemOptions): Promise<void>
+
+interface ContainerPosition {
+    containerId: string;
+    /** Default 0 for `target` containers; required for sortable destinations. */
+    position?: number;
+}
+
+interface AnimateItemOptions {
+    /** Where the item should fly to. */
+    to: ContainerPosition;
+    /** Where it starts. Defaults to its current location in the slot map. */
+    from?: ContainerPosition;
+    /**
+     * 'drop' (default) — uses ghost-to-target step both same- and cross-container.
+     * 'return' — uses scroll-aware return step when destination is the same container.
+     */
+    style?: 'return' | 'drop';
+    /** Fire onDrop ('drop') or onDropCancelled ('return') after the animation. */
+    emitEvents?: boolean;
+    /** Override the configured drop/return duration. */
+    duration?: number;
+    /** Override the configured drop/return easing for this call (any valid CSS timing-function). */
+    easing?: string;
+    /**
+     * Per-call override for the destination droppable's `behaviors`.
+     * Replaces both strategy-level and controller-level defaults for
+     * this animation. See [Behaviors](/docs/behaviors).
+     */
+    behaviors?: Behavior[];
+}
+```
+
+Animates a single item flying to a destination through the ghost system. Returns a promise that resolves when the animation completes.
+
+### Example — auto-sort animation
+
+```ts
+// Animate item '2' flying to position 0 in the same list.
+await controller.animateItem('2', {
+    to: { containerId: 'list', position: 0 }
+});
+
+// Then update your data:
+moveItemToTop('2');
+```
+
+### Example — undo a move
+
+```ts
+// User moved item '3' from list-a to list-b. Undo it (scroll-aware return):
+await controller.animateItem('3', {
+    to: { containerId: 'list-a', position: originalIndex },
+    style: 'return'
+});
+moveItem('3', 'list-b', 'list-a', originalIndex);
+```
+
+### Example — programmatic move with events
+
+```ts
+// Animate AND fire onDrop (your existing handler updates the data model).
+await controller.animateItem('task-3', {
+    to: { containerId: 'in-progress', position: 0 },
+    emitEvents: true
+});
+// onDrop fires automatically — no manual data update needed.
+```
+
+---
+
+## animateLayout
+
+```ts
+controller.animateLayout(
+    applyState: () => void | Promise<void>,
+    options?: AnimateLayoutOptions
+): Promise<void>
+
+interface AnimateLayoutOptions {
+    /**
+     * Items to FLIP. Defaults to every registered draggable except
+     * `state.draggedItem` (whose ghost flight handles its own animation
+     * during a real drag).
+     */
+    items?: string[];
+    /**
+     * When `true`, copies the missing classes from each item's pre-state
+     * classList onto the post-state element so class-driven CSS properties
+     * (border-radius, scale, background, color, …) transition together with
+     * the FLIP transform.
+     */
+    morph?: boolean;
+    /** Override the configured layout duration. */
+    duration?: number;
+    /** Override the configured layout easing (any valid CSS timing-function). */
+    easing?: string;
+}
+```
+
+Animates a state/layout change. Captures item rects before `applyState`, mutates state inside the callback, then FLIPs each item that changed position.
+
+`applyState` is **the single mutation point** — the library reads rects on either side of it. Place all your state changes inside.
+
+### Example — sort all items at once
+
+```ts
+const sorted = [...items].sort((a, b) => a.label.localeCompare(b.label));
+
+await controller.animateLayout(() => {
+    items = sorted;
+});
+// Every item glides to its new position.
+```
+
+### Example — swap two items between containers
+
+```ts
+const oldA = [...teamA];
+const oldB = [...teamB];
+
+await controller.animateLayout(() => {
+    teamA = oldB;
+    teamB = oldA;
+});
+```
+
+### Example — class-driven shape morph
+
+When the destination container styles items differently (rounded vs square, bigger scale, etc.), pass `morph: true` so the class-list diff transitions with the FLIP transform:
+
+```ts
+await controller.animateLayout(applyMove, { morph: true });
+// Items glide to new positions AND morph border-radius / scale / colour.
+```
+
+---
+
+## Constraints
+
+- **Cannot run while a real drag is in progress.** `animateItem` rejects with an error if `controller.dragging` is `true`. `animateLayout` requires no session and is safe to call any time.
+- **Item must exist in the DOM.** For `animateItem`, the item must be rendered in `from?.containerId` (or its current container if `from` is omitted) when the animation starts.
+- **`animateLayout` only animates items it can match in the slot map.** If `items` is omitted it uses every registered draggable except the dragged one; pass an explicit list to restrict the set.
+- **No events by default.** Only `animateItem` can emit events, and only if you opt in with `emitEvents: true`.
+
+---
+
+## Examples
+
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components'
+	import SimulationsExample from '$lib/examples/SimulationsExample.svelte'
+	import SimulationsExampleCode from '$lib/examples/SimulationsExample.svelte?raw'
+	import SimulationsBatchSwapExample from '$lib/examples/SimulationsBatchSwapExample.svelte'
+	import SimulationsBatchSwapExampleCode from '$lib/examples/SimulationsBatchSwapExample.svelte?raw'
+	import SimulationsGroupByColorExample from '$lib/examples/SimulationsGroupByColorExample.svelte'
+	import SimulationsGroupByColorExampleCode from '$lib/examples/SimulationsGroupByColorExample.svelte?raw'
+</script>
+
+### Single list — sort & undo
+
+<ComponentPreview collapsible sources={[{ name: 'SimulationsExample.svelte', code: SimulationsExampleCode, language: 'svelte' }]}>
+	<SimulationsExample />
+</ComponentPreview>
+
+### Two containers — swap
+
+<ComponentPreview collapsible sources={[{ name: 'SimulationsBatchSwapExample.svelte', code: SimulationsBatchSwapExampleCode, language: 'svelte' }]}>
+	<SimulationsBatchSwapExample />
+</ComponentPreview>
+
+### Three containers — group by color
+
+<ComponentPreview collapsible sources={[{ name: 'SimulationsGroupByColorExample.svelte', code: SimulationsGroupByColorExampleCode, language: 'svelte' }]}>
+	<SimulationsGroupByColorExample />
+</ComponentPreview>

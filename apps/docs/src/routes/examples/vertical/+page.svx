@@ -1,0 +1,27 @@
+---
+title: Vertical List
+description: Simple vertical sortable list demonstrating auto-scroll with 50 items.
+modified: 2026-05-11
+---
+
+# Vertical List
+
+The simplest setup — a single `DndDroppable` with `strategy={sortable()}` (vertical is the default layout).
+
+This example uses 50 items to demonstrate **auto-scroll** near the container edges.
+
+The `onDrop` callback receives the drop `position` — splice the source item out and insert it at the new position.
+
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components';
+	import VerticalExampleCode from "$lib/examples/VerticalExample.svelte?raw";
+	import VerticalExample from "$lib/examples/VerticalExample.svelte";
+</script>
+
+<ComponentPreview
+	sources={[
+		{ name: "VerticalExample.svelte", code: VerticalExampleCode, language: "svelte" }
+	]}
+>
+    <VerticalExample/>
+</ComponentPreview>

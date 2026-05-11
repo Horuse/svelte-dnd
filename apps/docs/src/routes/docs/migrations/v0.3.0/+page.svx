@@ -1,0 +1,243 @@
+---
+title: Migrating from v0.3.0
+description: How to migrate to @horuse/svelte-dnd v1 from v0.3.0
+modified: 2026-05-11
+---
+
+<script>
+    import Warning from '$lib/components/markdown/Warning.svelte'
+</script>
+
+# Migrating from v0.3.0
+
+<Warning>
+v1 is a complete rewrite. There is no incremental upgrade path — you will need to rewrite your DnD setup using the new API.
+</Warning>
+
+## The biggest change: no manual boilerplate
+
+In v0.3.0 a basic sortable list required significant boilerplate:
+
+```svelte
+<!-- v0.3.0 -->
+<script>
+    const controller = new DragController();
+    const dropPreview = $derived(controller.dropPreview);
+
+    let hiddenId = $state(null);
+    const visibleItems = $derived(items.filter(i => i.id !== hiddenId));
+
+    const unsubStart = controller.onDragStart((id) => { hiddenId = id });
+    const unsubEnd = controller.onDragEnd(() => { hiddenId = null });
+
+    onDestroy(() => { unsubStart(); unsubEnd(); });
+</script>
+
+<DndProvider {controller}>
+    <DndDroppable id="list" direction="vertical">
+        {#each visibleItems as item, index (item.id)}
+            <DndPreview
+                containerId="list"
+                position={index}
+                show={dropPreview?.containerId === 'list' && dropPreview?.position === index}
+            />
+            <DndDraggable id={item.id}>{item.label}</DndDraggable>
+        {/each}
+        <DndPreview
+            containerId="list"
+            position={visibleItems.length}
+            show={dropPreview?.containerId === 'list' && dropPreview?.position === visibleItems.length}
+        />
+    </DndDroppable>
+</DndProvider>
+```
+
+In v1 all of this is handled automatically:
+
+```svelte
+<!-- v1 -->
+<script>
+    import { DndProvider, DndDroppable, DndDraggable, DndController, sortable } from '@horuse/svelte-dnd';
+    const controller = new DndController();
+    controller.onDrop(({ item, target }) => { /* reorder using item.id, target.id, target.position */ });
+</script>
+
+<DndProvider {controller}>
+    <DndDroppable id="list" strategy={sortable()}>
+        {#each items as item, index (item.id)}
+            <DndDraggable id={item.id} position={index}>{item.label}</DndDraggable>
+        {/each}
+    </DndDroppable>
+</DndProvider>
+```
+
+- `DndPreview` is rendered automatically — remove all manual placements
+- The dragged item is hidden automatically via CSS — remove `hiddenId` / `visibleItems`
+- No `onDestroy` unsubscribe needed — callbacks are cleaned up automatically
+
+## Controller rename
+
+`DragController` → `DndController`.
+
+```ts
+// before
+import { DragController } from '@horuse/svelte-dnd'
+const controller = new DragController()
+
+// after
+import { DndController } from '@horuse/svelte-dnd'
+const controller = new DndController()
+```
+
+v1 also accepts an optional config object:
+
+```ts
+const controller = new DndController({
+    behaviors: [autoScroll({ zoneRatio: 0.3, maxSpeed: 30 }), scrollSync()],
+    animation: {
+        preview: {
+            show: { delay: 300, duration: 200, easing: 'ease' },
+            hide: { delay: 200, duration: 200, easing: 'ease' }
+        }
+    },
+    debug: false
+})
+```
+
+## DndDraggable
+
+`position` is now a **required** prop. Pass the item's index explicitly.
+
+```svelte
+<!-- before -->
+<DndDraggable id={item.id}>
+
+<!-- after -->
+<DndDraggable id={item.id} position={index}>
+```
+
+Component-level `onDragStart` / `onDrag` / `onDragEnd` props are **removed**. Subscribe on the controller instead:
+
+```svelte
+<!-- before -->
+<DndDraggable
+    id={item.id}
+    onDragStart={(e) => {...}}
+    onDrag={(e) => {...}}
+    onDragEnd={(e) => {...}}
+/>
+
+<!-- after -->
+<script>
+    controller.onDragStart(({ item, source }) => {...})
+    controller.onDragEnd(({ item, source, target, cancelled }) => {...})
+</script>
+<DndDraggable id={item.id} position={index} />
+```
+
+There is no replacement for `onDrag` — use `controller.onDragOver` if you need drop-target changes during the drag.
+
+New optional props: `type`, `sensors`.
+
+## DndDroppable
+
+Type filtering moved from `data` to dedicated props:
+
+```svelte
+<!-- before -->
+<DndDraggable id={item.id} data={{ type: 'task' }}>
+<DndDroppable id="list" data={{ accepts: 'task' }}>
+<DndDroppable id="list" data={{ accepts: ['task', 'card'] }}>
+
+<!-- after -->
+<DndDraggable id={item.id} type="task" position={index}>
+<DndDroppable id="list" accepts="task">
+<DndDroppable id="list" accepts={['task', 'card']}>
+```
+
+The old `direction` and `mode` props are replaced by a single required `strategy` prop. Use the built-in factories or your own implementation:
+
+```svelte
+<!-- before -->
+<DndDroppable id="list" direction="vertical">
+<DndDroppable id="row" direction="horizontal">
+<DndDroppable id="board" direction="grid">
+<DndDroppable id="trash" mode="target">
+
+<!-- after -->
+<script lang="ts">
+    import { sortable, target } from '@horuse/svelte-dnd';
+</script>
+
+<DndDroppable id="list"  strategy={sortable()}>
+<DndDroppable id="row"   strategy={sortable({ layout: 'horizontal' })}>
+<DndDroppable id="board" strategy={sortable({ layout: 'grid' })}>
+<DndDroppable id="trash" strategy={target()}>
+```
+
+`sortable({ layout: 'grid' })` is a new v1 mode — pair it with a CSS `display: grid` layout. Grid flow can be flipped to top-to-bottom with `sortable({ layout: 'grid', flow: 'column' })`. See [Custom Strategies](/docs/custom-strategies) for writing your own.
+
+New optional props: `collision`, `spacing`.
+
+## Auto-scroll
+
+In v0.3.0 you had to manually add `data-dnd-scroll` to every scrollable `DndDroppable`. In v1 auto-scroll activates automatically for any `DndDroppable` that overflows — remove `data-dnd-scroll` from all `DndDroppable` elements.
+
+`data-dnd-scroll` is still supported for **non-droppable** outer scroll containers (e.g. a page wrapper or a kanban board `div`). Keep it only on those elements:
+
+## DndPreview
+
+`DndPreview` is now internal — **remove all manual placements** from your templates. Do not import or use it directly.
+
+## Controller callbacks now receive rich objects
+
+The three v0.3.0 callbacks (`onDragStart`, `onDragEnd`, `onDrop`) changed from positional primitives to a single event object:
+
+```ts
+// before
+controller.onDragStart((itemId) => { ... })
+controller.onDragEnd((itemId) => { ... })
+controller.onDrop((sourceId, sourceData, targetContainerId, position) => { ... })
+
+// after
+controller.onDragStart(({ item, source }) => { ... })
+controller.onDragEnd(({ item, source, target, cancelled }) => { ... })
+controller.onDrop(({ item, source, target }) => { ... })
+```
+
+`item.id`, `target.id`, and `target.position` replace the old positional `sourceId`, `targetContainerId`, and `position` respectively. Each event also carries `item.data`, `item.type`, `item.element`, plus full `Droppable` entity references on source/target containers.
+
+Unsubscribe is still returned from each `on*` method, but it is no longer required — callbacks are cleaned up automatically when `controller.destroy()` runs.
+
+## New controller callbacks
+
+Two callbacks did not exist in v0.3.0:
+
+```ts
+controller.onDragOver(({ item, source, current, previous }) => {
+    // fires when the active drop target changes during a drag
+})
+
+controller.onDropCancelled(({ item, source }) => {
+    // drag ended without a drop (Esc, cancelled, invalid target)
+})
+```
+
+## Removed exports
+
+- `createConditionalSlide` / `createConditionalScale` — replaced by per-container `collision` algorithms (`overlap`, `closestCenter`, `centerPoint`, `cursorOver`).
+- `DndDragEvent` / `DndDropEvent` types — replaced by `DragStartEvent`, `DragEndEvent`, `DropEvent`, `DragOverEvent`, `DropCancelledEvent`.
+- `DropPreview.draggedElementHeight` / `draggedElementWidth` — ghost size now lives on `controller.ghostSize`.
+- `DropPreview.visible` — `DropPreview` is `null` when no preview is active.
+
+## Renamed getters
+
+- `controller.size` → `controller.ghostSize`
+
+## TypeScript
+
+`DragController` type is removed — use `DndController`.
+
+`data: Record<string, any>` props are now typed `Record<string, unknown>`.
+
+New type exports: `DndControllerConfig`, `AnimationConfig`, `ResolvedAnimationConfig`, `Transition`, `DelayedTransition`, `DurationOrTransition`, `Behavior`, `BehaviorContext`, `AutoScrollConfig`, `ContainerStrategy`, `StrategyBindContext`, `SortableOptions`, `TargetOptions`, `GridFlow`, `DndMode`, `DndLayout`, `DragSource`, `DragSession`, `DndItemInfo`, `DndContainerInfo`, `DragStartEvent`, `DropEvent`, `DragEndEvent`, `DragOverEvent`, `DropCancelledEvent`, `DragStartCallback`, `DragEndCallback`, `DropCallback`, `DragOverCallback`, `DropCancelledCallback`, `Announcements`, `AnimateItemOptions`, `AnimateLayoutOptions`, `ContainerPosition`, `SensorDescriptor`, `CollisionAlgorithm`, `Modifier`.

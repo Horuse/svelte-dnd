@@ -1,0 +1,272 @@
+---
+title: FAQ
+description: Common questions and answers about @horuse/svelte-dnd usage, configuration, and known limitations.
+modified: 2026-05-11
+---
+
+# FAQ
+
+Common questions
+
+---
+
+## The button doesn't click
+
+Add `data-dnd-no-drag` attribute to the element so that it behaves as usual and does not start dragging the element.
+
+```svelte
+<DndDraggable id={task.id} position={index} type="task">
+    <button data-dnd-no-drag onclick={() => alert("Test")}>Alert</button>
+    {task.label}
+</DndDraggable>
+```
+
+---
+
+## How do I drag only by a handle?
+
+Add `data-dnd-handle` to the element that should act as the drag trigger. Once at least one handle is present, dragging from anywhere else on the item is blocked automatically - no need for `data-dnd-no-drag`.
+
+```svelte
+<DndDraggable id={column.id} position={index} data={{ type: 'column' }}>
+    <h2 data-dnd-handle>&#x2630; {column.title}</h2>
+    <div><!-- clicking here won't drag --></div>
+</DndDraggable>
+```
+
+Multiple handles are supported — just add the attribute to each element:
+
+```svelte
+<DndDraggable id={item.id} position={index}>
+    <header data-dnd-handle>&#x2630; drag</header>
+    <p>content</p>
+    <footer data-dnd-handle>&#x2630; drag</footer>
+</DndDraggable>
+```
+
+---
+
+## How do I enable auto-scroll in a scrollable container?
+
+Auto-scroll activates automatically for any `DndDroppable` element that has `overflow: auto` or `overflow: scroll`. No extra configuration is needed — the scroll controller detects it via the `data-dnd-droppable` marker that `DndDroppable` sets on its root element.
+
+For **non-droppable** scroll containers (e.g. a page wrapper or a kanban board outer `div`), add `data-dnd-scroll` manually:
+
+```svelte
+<div class="board-wrapper" data-dnd-scroll>
+    <!-- kanban columns here -->
+</div>
+```
+
+---
+
+## How do I restrict which items can be dropped into a container?
+
+Set a `type` on each `DndDraggable` and an `accepts` prop on each `DndDroppable`:
+
+```svelte
+<DndDraggable id={item.id} {position} type="task">Task</DndDraggable>
+
+<!-- Only accepts 'task' items -->
+<DndDroppable id="tasks" strategy={sortable()} accepts="task">...</DndDroppable>
+
+<!-- Accepts multiple types -->
+<DndDroppable id="mixed" strategy={sortable()} accepts={['task', 'card']}>...</DndDroppable>
+```
+
+---
+
+## How do I move items between multiple containers?
+
+Use a single `DndController` shared across all containers. Read `target.id` inside `onDrop` to determine where the item landed:
+
+```svelte
+<script>
+    const controller = new DndController();
+
+    controller.onDrop(({ item, target }) => {
+        // item.id — dragged item ID
+        // target.id — container where item was dropped
+        // target.position — index within the target container
+    });
+</script>
+
+<DndProvider {controller}>
+    <DndDroppable id="list-a" strategy={sortable()}>...</DndDroppable>
+    <DndDroppable id="list-b" strategy={sortable()}>...</DndDroppable>
+</DndProvider>
+```
+
+---
+
+## How do I create a custom ghost element?
+
+Pass a `ghost` snippet to `DndProvider`. The snippet receives `{ element, data, itemId }`:
+
+```svelte
+<DndProvider {controller}>
+  {#snippet ghost({ data, itemId })}
+    <div class="my-ghost">
+      {data?.label ?? itemId}
+    </div>
+  {/snippet}
+
+  <!-- your droppables here -->
+</DndProvider>
+```
+
+---
+
+## My ghost / preview size doesn't match the target's item size
+
+Both the built-in ghost (`.dnd-ghost`) and insert previews (`.dnd-preview`) resize themselves to fit the current drop target as the pointer crosses containers. They read `controller.dropPreviewSize`, which mixes target-sibling and dragged-item dimensions per layout axis:
+
+| Target layout | Width | Height |
+|---------------|-------|--------|
+| `sortable({ layout: 'vertical' })` | target's first item | dragged item |
+| `sortable({ layout: 'horizontal' })` | dragged item | target's first item |
+| `sortable({ layout: 'grid' })` | target's first item | target's first item |
+| `target()` | dragged item | dragged item |
+
+The dragged item keeps its main-axis dimension when it lands; only the cross-axis is borrowed from the target — that's the axis where layout shrinkage actually shows up (e.g. a scrollbar narrowing items in a vertical list, or a horizontal scrollbar shortening items in a row).
+
+Tune the morph duration with `--dnd-ghost-resize-duration` (default `150ms`):
+
+```css
+:root {
+    --dnd-ghost-resize-duration: 250ms;
+}
+```
+
+If you supply a custom `ghost` snippet, the wrapper size still applies — your snippet content lives inside a `.dnd-ghost` div whose width/height already track the target. To opt out, set explicit dimensions on your top-level snippet element:
+
+```svelte
+{#snippet ghost({ element })}
+    <div style:width="{element.offsetWidth}px" style:height="{element.offsetHeight}px">…</div>
+{/snippet}
+```
+
+---
+
+## Items aren't draggable on touch / mobile devices
+
+Make sure `touch-action: none` is set on draggable elements. The library sets this via `.dnd-draggable` — do not override it in your own CSS:
+
+```css
+/* ✗ don't do this */
+.my-item {
+  touch-action: auto;
+}
+```
+
+If you apply `touch-action` somewhere in your layout that affects draggable children, remove it or scope it away from `.dnd-draggable`.
+
+---
+
+## The drop preview doesn't appear
+
+Previews are rendered automatically — you usually don't need to place `DndPreview` manually. Check that:
+
+1. Every `DndDraggable` receives a valid `position` (unique integer within its container, starting at `0`).
+2. The dragged item's `type` is accepted by the target `DndDroppable` (`accepts` prop allows it, or is omitted).
+
+See the **Sortable Containers** example for a working implementation.
+
+---
+
+## Ghost returns to the wrong position after a cancelled drag
+
+The library animates the ghost back to the position of the placeholder element rendered by `DndDraggable`. Make sure the item is still in the DOM at the correct index when the animation starts — since the dragging item is hidden via `opacity: 0` (not removed from the DOM), this should work automatically without any extra handling.
+
+---
+
+## How do I debug drop zones?
+
+Call `controller.toggleDebugZones()` — blue overlays will appear on all drop zones so you can verify their boundaries:
+
+```svelte
+<button onclick={() => controller.toggleDebugZones()}>
+  Toggle debug zones
+</button>
+```
+
+See the [CSS Custom Properties & Classes](/docs/css-custom-props) page for the classes used by the overlay elements.
+
+---
+
+## How do I tune auto-scroll speed or zone size?
+
+Auto-scroll lives in the `autoScroll()` behavior — see [Behaviors](/docs/behaviors). Pass tuning to the controller-level default, or override per-droppable on a strategy:
+
+```ts
+import { autoScroll, scrollSync } from '@horuse/svelte-dnd'
+
+// Controller-level default (also applies to data-dnd-scroll wrappers)
+const controller = new DndController({
+    behaviors: [
+        autoScroll({ zoneRatio: 0.2, maxSpeed: 15 }),
+        scrollSync()
+    ]
+});
+
+// Per-droppable override
+sortable({
+    layout: 'vertical',
+    behaviors: [autoScroll({ maxSpeed: 60 })]
+});
+
+// Replace at runtime
+controller.setBehaviors([autoScroll({ maxSpeed: 50 }), scrollSync()]);
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `zoneRatio` | `0.3` | Fraction of container size that triggers scroll |
+| `maxSpeed` | `30` | Max scroll speed in px/frame at 60fps |
+| `stopOnDrop` | `false` | Halt scroll the moment the user releases (controller-level only) |
+
+---
+
+## Does it work with SvelteKit SSR?
+
+Yes. The library is SSR-safe — `DndController`, sensors, and the scroll controller all skip browser-only work (event listeners, `window`/`document` lookups) when running on the server. The components render markup on the server and fully activate on hydration. No `onMount`/`browser` guards are needed in your code.
+
+If you instantiate a `DndController` in module scope of a `.ts` file imported by a `+page.server.ts`, move it inside the component (or behind a `browser` check) — the rest of the library handles SSR transparently.
+
+---
+
+## How do I make a sortable list of thousands of items?
+
+Wrap [`virtua`](https://github.com/inokawa/virtua) (the tested adapter) with `DndDroppable` and pass a `VirtualSource` so the strategy knows the full list length even when only a window of slots is mounted:
+
+```svelte
+<script lang="ts">
+    import { DndDroppable, sortable, type VirtualSource } from '@horuse/svelte-dnd';
+    import { VList } from 'virtua/svelte';
+    const virtual: VirtualSource = { itemCount: () => items.length };
+</script>
+
+<DndDroppable strategy={sortable({ virtual })}>
+    <VList data={items}>
+        {#snippet children(item, index)}
+            <DndDraggable id={item.id} position={index}>{item.label}</DndDraggable>
+        {/snippet}
+    </VList>
+</DndDroppable>
+```
+
+See the [Virtualization example](/examples/virtualization) for the complete setup including drop-time scroll-jump compensation.
+
+---
+
+## How do I disable dragging conditionally?
+
+Pass the `disabled` prop to `DndDraggable`:
+
+```svelte
+<DndDraggable disabled={!isEditing} id={item.id} position={index}>
+  {item.label}
+</DndDraggable>
+```
+
+A disabled item is not draggable and receives the `.dnd-draggable--disabled` CSS class.

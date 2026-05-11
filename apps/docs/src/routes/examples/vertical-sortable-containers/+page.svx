@@ -1,0 +1,25 @@
+---
+title: Vertical Sortable Containers
+description: Example with vertically stacked DndDroppable containers where items can be dragged between them.
+modified: 2026-05-11
+---
+
+# Vertical Sortable Containers
+
+Three vertically stacked containers where items can be dragged within and between them.
+
+When an item is dragged into a container, the items inside shift to make room. Containers below the drop target automatically translate down to prevent visual overlap — this is handled transparently by the library.
+
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components';
+	import VerticalSortableContainersExampleCode from "$lib/examples/VerticalSortableContainersExample/index.svelte?raw";
+	import VerticalSortableContainersExample from "$lib/examples/VerticalSortableContainersExample/index.svelte";
+</script>
+
+<ComponentPreview
+	sources={[
+		{ name: "VerticalSortableContainersExample.svelte", code: VerticalSortableContainersExampleCode, language: "svelte" }
+	]}
+>
+	<VerticalSortableContainersExample/>
+</ComponentPreview>

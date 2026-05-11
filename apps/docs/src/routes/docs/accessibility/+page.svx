@@ -1,0 +1,101 @@
+---
+title: Accessibility
+description: Keyboard navigation, ARIA attributes, and screen-reader announcements.
+modified: 2026-05-11
+---
+
+# Accessibility
+
+## Keyboard navigation
+
+Keyboard drag-and-drop is powered by `KeyboardSensor` and is active by default. Focusable items have `role="button"` and `tabindex="0"` automatically set.
+
+| Key | Action |
+|-----|--------|
+| `Tab` | Move focus between draggable items |
+| `Enter` / `Space` | Pick up the focused item and start drag |
+| Main-axis arrows | Move within the current container by one position |
+| Cross-axis arrows | Switch to the visually adjacent container (any time, not just at the edge) |
+| `Home` / `End` | Jump to the first / last position of the current container |
+| `Enter` / `Space` | Drop at the current preview position |
+| `Escape` | Cancel drag, ghost returns to origin |
+
+Main and cross axes are derived from the source droppable's `layout`:
+
+- `vertical`: `↑` / `↓` move within, `←` / `→` switch container.
+- `horizontal`: `←` / `→` move within, `↑` / `↓` switch container.
+- `grid`: all four arrows move within (next column / next row).
+
+The adjacent container is picked by visual position (sorted by `getBoundingClientRect()`), and inside it the landing position is the one whose slot center is closest to the slot you came from on the cross axis — so a Kanban move from "To Do · pos 2" to the column on the right lands near the same vertical level rather than at the top.
+
+The ghost smoothly flies to the live slot rect on each keypress (`animation.keyboardFlight`, default 150 ms), and the target slot is auto-scrolled into view when it sits past the visible edge of any scrollable ancestor.
+
+## Screen-reader announcements
+
+`DndProvider` renders a visually-hidden ARIA live region (`aria-live="assertive"`) that announces drag events to screen readers. The default announcements are:
+
+| Event | Default message |
+|-------|----------------|
+| Drag start | `Started dragging item {item.id}.` |
+| Drag over new position | `Item {item.id} is over {current.id} at position {current.position}.` |
+| Drop | `Dropped item {item.id} into {target.id} at position {target.position}.` |
+| Cancel | `Dragging {item.id} was cancelled.` |
+
+### Custom announcements
+
+Pass `announcements` in the `DndController` constructor to customise the messages:
+
+```ts
+import { DndController, defaultAnnouncements } from '@horuse/svelte-dnd';
+
+const controller = new DndController({
+    announcements: {
+        ...defaultAnnouncements,
+        onDragStart: ({ item }) => `Picked up ${item.id}. Use arrow keys to move it.`,
+        onDragOver: ({ item, current }) =>
+            `Moving ${item.id} to column ${current.id}, position ${current.position + 1}.`,
+        onDrop: ({ item, target }) => `Dropped ${item.id} into ${target.id}.`,
+        onCancel: ({ item }) => `Cancelled moving ${item.id}.`,
+    },
+});
+```
+
+Each callback receives a rich event object. All event types are exported from `@horuse/svelte-dnd`.
+
+### Announcements type
+
+```ts
+import type { DragStartEvent, DragOverEvent, DropEvent, DropCancelledEvent } from '@horuse/svelte-dnd';
+
+interface Announcements {
+    onDragStart?: (event: DragStartEvent) => string;
+    onDragOver?: (event: DragOverEvent) => string;
+    onDrop?: (event: DropEvent) => string;
+    onCancel?: (event: DropCancelledEvent) => string;
+}
+```
+
+## ARIA attributes
+
+The library sets these attributes automatically:
+
+| Element | Attributes |
+|---------|-----------|
+| `DndDraggable` inner div | `role="button"`, `tabindex="0"`, `aria-roledescription="draggable item"` |
+| `DndDroppable` | `aria-dropeffect="move"` (or `"none"` when `disabled`) |
+
+`aria-grabbed` is intentionally not set — it was deprecated in WAI-ARIA 1.1 and has poor screen-reader support. Pickup state is communicated through the live-region announcer instead.
+
+---
+
+## Example
+
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components'
+	import AccessibilityExample from '$lib/examples/AccessibilityExample.svelte'
+	import AccessibilityExampleCode from '$lib/examples/AccessibilityExample.svelte?raw'
+</script>
+
+<ComponentPreview collapsible sources={[{ name: 'AccessibilityExample.svelte', code: AccessibilityExampleCode, language: 'svelte' }]}>
+	<AccessibilityExample />
+</ComponentPreview>

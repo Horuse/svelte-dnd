@@ -1,0 +1,111 @@
+<script lang="ts">
+	import {
+		DndProvider, DndDroppable, DndDraggable, DndController, sortable,
+		PointerSensor, KeyboardSensor, Distance, Delay
+	} from '@horuse/svelte-dnd'
+
+	let distanceValue = $state(5)
+	let delayValue = $state(300)
+	let delayTolerance = $state(8)
+
+	let items = $state(
+		Array.from({ length: 6 }, (_, i) => ({ id: String(i), label: `Item ${i + 1}` }))
+	)
+
+	const controller = new DndController()
+	controller.onDrop(({ item: { id: sourceId }, target: { position } }) => {
+		const from = items.findIndex((i) => i.id === sourceId)
+		if (from === -1) return
+		const updated = [...items]
+		const [moved] = updated.splice(from, 1)
+		updated.splice(position, 0, moved)
+		items = updated
+	})
+
+	$effect(() => {
+		controller.setSensors([
+			new PointerSensor({
+				startConditions: [
+					new Distance({ value: distanceValue }),
+					new Delay({ value: delayValue, tolerance: delayTolerance })
+				]
+			}),
+			new KeyboardSensor()
+		])
+	})
+</script>
+
+<div class="flex flex-col gap-4 max-w-sm">
+	<div class="flex flex-col gap-3 p-3 bg-foreground rounded-xl border border-second">
+		<label class="flex flex-col gap-1">
+			<span class="text-sm font-medium text-theme">
+				Distance: <span class="text-neutral-500 font-bold">{distanceValue}px</span>
+			</span>
+			<input
+				type="range"
+				min="1"
+				max="50"
+				bind:value={distanceValue}
+				class="w-full"
+			/>
+			<span class="text-xs text-neutral-500">Min movement to start drag immediately</span>
+		</label>
+
+		<label class="flex flex-col gap-1">
+			<span class="text-sm font-medium text-theme">
+				Delay: <span class="text-neutral-500 font-bold">{delayValue}ms</span>
+			</span>
+			<input
+				type="range"
+				min="0"
+				max="1000"
+				step="50"
+				bind:value={delayValue}
+				class="w-full"
+			/>
+			<span class="text-xs text-neutral-500">Hold time before drag starts (touch)</span>
+		</label>
+
+		<label class="flex flex-col gap-1">
+			<span class="text-sm font-medium text-theme">
+				Tolerance: <span class="text-neutral-500 font-bold">{delayTolerance}px</span>
+			</span>
+			<input
+				type="range"
+				min="0"
+				max="30"
+				bind:value={delayTolerance}
+				class="w-full"
+			/>
+			<span class="text-xs text-neutral-500">Max movement during delay before cancel</span>
+		</label>
+	</div>
+
+	<p class="text-sm text-neutral-500">
+		Tab to focus, Enter/Space to pick up, arrow keys to move, Enter to drop
+	</p>
+
+	<DndProvider {controller}>
+		<DndDroppable
+			spacing={12} class="flex flex-col max-w-sm p-3 bg-foreground border-2 border-second rounded-xl"
+			id="list"
+			strategy={sortable()}
+		>
+			{#each items as item, index (item.id)}
+				<DndDraggable id={item.id} position={index}>
+					<div class="drag-item">
+						<span class="text-lg">{item.label}</span>
+					</div>
+				</DndDraggable>
+			{/each}
+		</DndDroppable>
+	</DndProvider>
+</div>
+
+<style>
+	:root {
+		--dnd-preview-bg: var(--color-third);
+		--dnd-preview-border: 2px dashed var(--color-second-active);
+		--dnd-preview-border-radius: 12px;
+	}
+</style>

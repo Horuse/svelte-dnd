@@ -2,7 +2,13 @@
 <module type="WEB_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/packages/svelte-dnd/tests" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/.svelte-kit" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/svelte-dnd/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/apps/docs/.svelte-kit" />
+      <excludeFolder url="file://$MODULE_DIR$/apps/docs/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/apps/docs/.vercel" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/svelte-dnd/.svelte-kit" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

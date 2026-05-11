@@ -1,0 +1,27 @@
+---
+title: Grid
+description: Grid sortable example using sortable({ layout: 'grid' }) with CSS Grid layout.
+modified: 2026-05-11
+---
+
+# Grid
+
+A sortable grid — drag tiles to reorder within a responsive CSS Grid layout.
+
+Pass `strategy={sortable({ layout: 'grid' })}` to `DndDroppable` and lay the container out with `display: grid`. Drop zones are computed row-by-row from the actual item rects. Use `flow: 'column'` to make the grid fill top-to-bottom instead of left-to-right.
+
+Grid translation math assumes uniform cell sizes — if you mix items with different widths and heights, prefer `display: grid` with equal tracks (for example `grid-template-columns: repeat(auto-fill, minmax(110px, 1fr))`) rather than per-item dimensions.
+
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components';
+	import GridExampleCode from "$lib/examples/GridExample.svelte?raw";
+	import GridExample from "$lib/examples/GridExample.svelte";
+</script>
+
+<ComponentPreview
+	sources={[
+		{ name: "GridExample.svelte", code: GridExampleCode, language: "svelte" }
+	]}
+>
+	<GridExample/>
+</ComponentPreview>

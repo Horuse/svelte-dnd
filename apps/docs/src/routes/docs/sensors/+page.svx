@@ -1,0 +1,262 @@
+---
+title: Sensors
+description: Pluggable input sensors — configure PointerSensor and KeyboardSensor or write your own.
+modified: 2026-05-11
+---
+
+# Sensors
+
+Sensors are the layer that translates raw input events (pointer, keyboard, touch) into drag lifecycle calls. The library ships with two built-in sensors and exposes the `SensorDescriptor` interface so you can write your own.
+
+## Built-in sensors
+
+| Sensor | Activates on | Notes |
+|--------|-------------|-------|
+| `PointerSensor` | `pointerdown` | Handles mouse, touch, and stylus. Configurable via `startConditions` |
+| `KeyboardSensor` | `Enter` / `Space` | Navigate zones with arrow keys, confirm with Enter, cancel with Escape |
+
+Both are exported from `@horuse/svelte-dnd`.
+
+## Default behaviour
+
+If you do not configure `sensors` explicitly, the controller uses `[PointerSensor, KeyboardSensor]`.
+
+Default activation rules:
+- **Mouse:** drag starts after moving 5px (`Distance({ value: 5 })`)
+- **Touch/Pen:** drag starts after holding 300ms with less than 8px movement (`Delay({ value: 300, tolerance: 8 })`)
+
+## Configuring sensors
+
+Pass configured sensors to `DndController`:
+
+```ts
+import {
+    DndController,
+    PointerSensor,
+    KeyboardSensor,
+    Distance,
+    Delay,
+} from '@horuse/svelte-dnd';
+
+const controller = new DndController({
+    sensors: [
+        new PointerSensor({
+            startConditions: [
+                new Distance({ value: 10 }),
+                new Delay({ value: 200, tolerance: 5 }),
+            ],
+        }),
+        new KeyboardSensor(),
+    ],
+});
+```
+
+> **Note:** `KeyboardSensor` is now self-contained — no controller reference needed.
+
+## Start conditions
+
+`startConditions` is an array of `StartCondition` objects. The drag starts when **any** condition is `satisfied`. If **all** conditions are `aborted` (e.g. user scrolled), the activation is cancelled.
+
+### Distance
+
+Activates after the pointer moves a certain number of pixels:
+
+```ts
+new Distance({ value: 5 })
+// With tolerance — aborts if movement exceeds this threshold
+new Distance({ value: 5, tolerance: 50 })
+```
+
+### Delay
+
+Activates after holding the pointer for a duration (useful for touch to distinguish from scroll):
+
+```ts
+new Delay({ value: 300, tolerance: 8 })
+// value: hold duration in ms
+// tolerance: max movement in px during delay before aborting
+```
+
+### Combining conditions
+
+```ts
+// Drag starts after 5px movement OR after 300ms hold
+new PointerSensor({
+    startConditions: [
+        new Distance({ value: 5 }),
+        new Delay({ value: 300, tolerance: 8 }),
+    ],
+})
+```
+
+### Per-pointer-type logic
+
+`startConditions` can be a function that receives the `PointerEvent` and returns conditions based on pointer type:
+
+```ts
+new PointerSensor({
+    startConditions(event) {
+        switch (event.pointerType) {
+            case 'mouse':
+                return [new Distance({ value: 5 })];
+            case 'touch':
+                return [new Delay({ value: 250, tolerance: 5 })];
+            default:
+                return [
+                    new Distance({ value: 5 }),
+                    new Delay({ value: 200, tolerance: 10 }),
+                ];
+        }
+    },
+})
+```
+
+## Pointer-only (disable keyboard)
+
+```ts
+const controller = new DndController({
+    sensors: [new PointerSensor()],
+});
+```
+
+## Per-item sensor override
+
+You can override sensors on individual draggable items using the `sensors` prop on `DndDraggable`:
+
+```svelte
+<DndDraggable id={item.id} {position} sensors={[new PointerSensor({ startConditions: [new Distance({ value: 10 })] })]}>
+    {item.label}
+</DndDraggable>
+```
+
+The per-item sensors take precedence over controller-level sensors for that element.
+
+## Custom start condition
+
+Implement `StartCondition` to create your own activation rule:
+
+```ts
+import type { StartCondition, ActivationState, ConditionResult } from '@horuse/svelte-dnd';
+
+const doubleTap: StartCondition = {
+    evaluate(state: ActivationState): ConditionResult {
+        // Custom logic — activate on specific condition
+        if (state.elapsedMs > 500) return 'aborted';
+        // ... your check here
+        return 'pending';
+    },
+    // Optional: tell the sensor to re-evaluate after this duration
+    getRequiredDuration() {
+        return 500;
+    },
+};
+
+new PointerSensor({ startConditions: [doubleTap] })
+```
+
+## Custom sensor
+
+Implement `SensorDescriptor` to create your own input sensor:
+
+```ts
+import type { SensorDescriptor, SensorActivation, SensorCallbacks } from '@horuse/svelte-dnd';
+
+const mySensor: SensorDescriptor = {
+    activate(event, element, callbacks): SensorActivation | null {
+        // Return null if this sensor doesn't handle the event
+        if (!(event instanceof CustomEvent)) return null;
+
+        // Start drag immediately
+        callbacks.onStart({ x: 0, y: 0 });
+
+        return {
+            initialTransform: { x: 0, y: 0 },
+            offset: { x: 0, y: 0 },
+            destroy() {
+                // Clean up any listeners added here
+            },
+        };
+    },
+};
+
+const controller = new DndController({ sensors: [mySensor] });
+```
+
+## KeyboardSensor navigation
+
+Once activated (Enter or Space on a focused draggable), keyboard navigation works as follows:
+
+| Key | Action |
+|-----|--------|
+| `ArrowDown` / `ArrowRight` | Move to next position in current container |
+| `ArrowUp` / `ArrowLeft` | Move to previous position in current container |
+| `ArrowRight` (at last item) | Jump to first position in next container |
+| `ArrowLeft` (at first item) | Jump to last position in previous container |
+| `Enter` | Confirm drop at current preview position |
+| `Escape` | Cancel drag, ghost returns to origin |
+
+## Types
+
+```ts
+interface SensorDescriptor {
+    activate(
+        event: Event,
+        element: HTMLElement,
+        callbacks: SensorCallbacks
+    ): SensorActivation | null;
+}
+
+interface StartCondition {
+    evaluate(state: ActivationState): ConditionResult;
+    getRequiredDuration?(): number | null;
+}
+
+type StartConditionInput =
+    | StartCondition[]
+    | ((event: PointerEvent) => StartCondition[]);
+
+interface PointerSensorOptions {
+    startConditions?: StartConditionInput;
+}
+
+interface ActivationState {
+    startX: number;
+    startY: number;
+    currentX: number;
+    currentY: number;
+    elapsedMs: number;
+    pointerType: 'mouse' | 'touch' | 'pen';
+}
+
+type ConditionResult = 'satisfied' | 'pending' | 'aborted';
+
+type NavigationDirection = 'up' | 'down' | 'left' | 'right';
+
+interface SensorCallbacks {
+    onStart(initialTransform: { x: number; y: number }): void;
+    onMove(transform: { x: number; y: number }, mouseX: number, mouseY: number): void;
+    onEnd(): void;
+    onCancel(): void;
+    onNavigate?(direction: NavigationDirection): void;
+}
+
+interface SensorActivation {
+    initialTransform: { x: number; y: number };
+    offset: { x: number; y: number };
+    destroy(): void;
+}
+```
+
+---
+
+## Example
+
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components'
+	import SensorsExample from '$lib/examples/SensorsExample.svelte'
+	import SensorsExampleCode from '$lib/examples/SensorsExample.svelte?raw'
+</script>
+
+<ComponentPreview collapsible sources={[{ name: 'SensorsExample.svelte', code: SensorsExampleCode, language: 'svelte' }]}>
+	<SensorsExample />
+</ComponentPreview>

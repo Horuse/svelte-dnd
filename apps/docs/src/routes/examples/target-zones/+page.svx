@@ -1,0 +1,25 @@
+---
+title: Target Zones
+description: Mixing sortable() and target() — a horizontal pool plus three single-item drop slots, with a round → square morph and a FLIP-animated swap when a slot is already occupied.
+modified: 2026-05-11
+---
+
+# Target Zones
+
+A horizontal `sortable()` pool feeds three `target()` slots that each hold at most one item. Drop a square onto an occupied slot and the previous occupant FLIPs back into the pool — the drop handler does the swap, `controller.animateLayout` animates every displaced neighbour to its new layout position.
+
+The ghost morphs round → square as it crosses into a slot via a custom `ghost` snippet that toggles a class based on `controller.dropPreview`.
+
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components';
+	import TargetZonesExampleCode from "$lib/examples/TargetZonesExample.svelte?raw";
+	import TargetZonesExample from "$lib/examples/TargetZonesExample.svelte";
+</script>
+
+<ComponentPreview
+	sources={[
+		{ name: "TargetZonesExample.svelte", code: TargetZonesExampleCode, language: "svelte" }
+	]}
+>
+	<TargetZonesExample/>
+</ComponentPreview>

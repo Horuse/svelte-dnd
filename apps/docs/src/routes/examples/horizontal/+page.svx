@@ -1,0 +1,23 @@
+---
+title: Horizontal List
+description: Horizontal sortable list using sortable({ layout: 'horizontal' }) on DndDroppable.
+modified: 2026-05-11
+---
+
+# Horizontal List
+
+Pass `strategy={sortable({ layout: 'horizontal' })}` to `DndDroppable` — previews are rendered automatically with the container's layout. The reorder logic is the same as the vertical example — only the layout changes.
+
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components';
+	import HorizontalExampleCode from "$lib/examples/HorizontalExample.svelte?raw";
+	import HorizontalExample from "$lib/examples/HorizontalExample.svelte";
+</script>
+
+<ComponentPreview
+	sources={[
+		{ name: "HorizontalExample.svelte", code: HorizontalExampleCode, language: "svelte" }
+	]}
+>
+    <HorizontalExample/>
+</ComponentPreview>

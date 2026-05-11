@@ -1,0 +1,166 @@
+---
+title: Custom Strategies
+description: Write or extend container strategies and pass them directly to DndDroppable.
+modified: 2026-05-11
+---
+
+# Custom Strategies
+
+A `ContainerStrategy` owns everything layout-specific for a droppable — drop-zone calculation, sibling translations during drag, and drop/return animations. You pass an instance straight to `<DndDroppable strategy={...} />`, so strategies compose per-container: different containers in the same app can use different strategies without any global registration.
+
+## Built-in strategies
+
+| Factory | Class | Description |
+|---------|-------|-------------|
+| `sortable(options?)` | `SortableContainerStrategy` | Position-based drop zones with insert previews. Options: `layout: 'vertical' \| 'horizontal' \| 'grid'` (default `'vertical'`), `flow: 'row' \| 'column'` for grid (default `'row'`) |
+| `target(options?)` | `TargetContainerStrategy` | Single drop zone covering the whole container, no previews. Good for trash zones, inboxes, unique drop targets |
+
+```svelte
+<script lang="ts">
+    import { DndDroppable, sortable, target } from '@horuse/svelte-dnd';
+</script>
+
+<DndDroppable id="list"  strategy={sortable()} />
+<DndDroppable id="row"   strategy={sortable({ layout: 'horizontal' })} />
+<DndDroppable id="grid"  strategy={sortable({ layout: 'grid' })} />
+<DndDroppable id="trash" strategy={target()} />
+```
+
+## Writing a custom strategy
+
+Implement the `ContainerStrategy` interface and pass an instance to the droppable. If your strategy needs controller-level state (the shared `DndState` and droppable registry), implement `bindContext()` — it is called once, the first time the droppable mounts.
+
+```ts
+import type {
+    ContainerStrategy,
+    StrategyBindContext,
+    DropZone,
+    DndMode,
+    DndLayout,
+    Droppable,
+    DragSession,
+    AnimationStep,
+} from '@horuse/svelte-dnd';
+import {
+    SortableContainerStrategy,
+    GhostToTargetStep,
+    GhostReturnStep,
+} from '@horuse/svelte-dnd';
+
+export class MasonryStrategy implements ContainerStrategy {
+    readonly mode: DndMode = 'masonry'
+    readonly layout: DndLayout = 'grid'
+
+    private state!: StrategyBindContext['state']
+    private droppablesById!: StrategyBindContext['droppablesById']
+
+    bindContext(ctx: StrategyBindContext): void {
+        this.state = ctx.state
+        this.droppablesById = ctx.droppablesById
+    }
+
+    calculateDropZones(droppable: Droppable, session: DragSession | null): DropZone[] {
+        // your masonry-specific zone calculation
+        return []
+    }
+
+    getTranslations(droppable: Droppable, session: DragSession): Map<string, { x: number; y: number }> {
+        return new Map()
+    }
+
+    getDropAnimation(session: DragSession, targetZone: DropZone): AnimationStep {
+        return new GhostToTargetStep(this.state, targetZone, this.droppablesById)
+    }
+
+    getReturnAnimation(session: DragSession): AnimationStep {
+        return new GhostReturnStep(this.state, session.originContainerId, session.originPosition, this.droppablesById)
+    }
+}
+```
+
+Use it on the droppable:
+
+```svelte
+<script lang="ts">
+    import { DndDroppable } from '@horuse/svelte-dnd';
+    import { MasonryStrategy } from './masonry-strategy';
+
+    const masonry = new MasonryStrategy();
+</script>
+
+<DndDroppable id="board" strategy={masonry}>
+    ...
+</DndDroppable>
+```
+
+### Extending a built-in strategy
+
+The simplest path: extend `SortableContainerStrategy` and override just the pieces you need. The base class already implements `bindContext`, drop/return animations, and translations for `vertical` / `horizontal` / `grid`.
+
+```ts
+import { SortableContainerStrategy, type DropZone, type Droppable, type DragSession } from '@horuse/svelte-dnd';
+
+export class StickyFirstSortable extends SortableContainerStrategy {
+    override calculateDropZones(droppable: Droppable, session: DragSession | null): DropZone[] {
+        const zones = super.calculateDropZones(droppable, session)
+        // remove the zone that would insert before position 0 so the first item can't be displaced
+        return zones.filter((z) => z.position !== 0)
+    }
+}
+```
+
+Pass an instance to the droppable the same way: `<DndDroppable strategy={new StickyFirstSortable()} />`.
+
+### Reusing a strategy instance
+
+Strategy instances are stateless across drags — the same instance can be shared between multiple droppables. Instantiate once in your setup and reuse:
+
+```ts
+const listStrategy = sortable()
+
+<DndDroppable id="list-a" strategy={listStrategy} />
+<DndDroppable id="list-b" strategy={listStrategy} />
+```
+
+If you keep per-container state inside the strategy, create a fresh instance per droppable instead.
+
+## Interface
+
+```ts
+import type { Droppable, DndState, DragSession, AnimationStep, DropZone, DndMode, DndLayout } from '@horuse/svelte-dnd';
+
+interface ContainerStrategy {
+    readonly mode: DndMode;
+    /** Layout hint for strategies with a layout concept (sortable). Target-like strategies may omit it. */
+    readonly layout?: DndLayout;
+
+    calculateDropZones(droppable: Droppable, session: DragSession | null): DropZone[];
+    getTranslations(droppable: Droppable, session: DragSession): Map<string, { x: number; y: number }>;
+    getDropAnimation(session: DragSession, targetZone: DropZone): AnimationStep;
+    getReturnAnimation(session: DragSession): AnimationStep;
+
+    /** Called once when the owning droppable first attaches — receives controller-level state. */
+    bindContext?(ctx: StrategyBindContext): void;
+    /** Called on every drag start, before any reactive cycle runs. Use it to capture layout snapshots. */
+    onSessionStart?(droppable: Droppable, session: DragSession): void;
+}
+
+interface StrategyBindContext {
+    state: DndState;
+    droppablesById: Map<string, Droppable>;
+}
+```
+
+---
+
+## Example
+
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components'
+	import StrategiesExample from '$lib/examples/StrategiesExample.svelte'
+	import StrategiesExampleCode from '$lib/examples/StrategiesExample.svelte?raw'
+</script>
+
+<ComponentPreview collapsible sources={[{ name: 'StrategiesExample.svelte', code: StrategiesExampleCode, language: 'svelte' }]}>
+	<StrategiesExample />
+</ComponentPreview>

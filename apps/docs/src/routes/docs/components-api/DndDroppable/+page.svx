@@ -1,0 +1,128 @@
+---
+title: DndDroppable
+description: API reference for the DndDroppable and DndPreview components — props, strategy, and type filtering.
+modified: 2026-05-11
+---
+
+# DndDroppable
+
+Defines a container that accepts draggable items. Automatically registers drop zones and renders a tail preview (drop after the last item) when using the `sortable()` strategy.
+
+### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `id` | `string` | **required** | Unique container identifier |
+| `strategy` | `ContainerStrategy` | **required** | Strategy instance that owns zone calculation, translations, and drop/return animations. Use the built-in factories `sortable()` / `target()` or your own class. See [Strategies](#strategies) |
+| `data` | `Record<string, unknown>` | `{}` | Arbitrary container metadata passed to drop callbacks |
+| `accepts` | `string \| string[]` | `undefined` | Item type(s) this container accepts. If omitted, accepts everything. See [Type filtering](#type-filtering) |
+| `disabled` | `boolean` | `false` | Disables dropping when `true`. Also sets `opacity: 0.5; pointer-events: none` |
+| `collision` | `CollisionAlgorithm` | `undefined` | Per-container collision algorithm. Overrides the global algorithm set on `DndController`. `undefined` falls back to the global, or `centerPoint` if none. See [Collision Detection](/docs/collision) |
+| `spacing` | `number` | `undefined` | Gap between items in pixels. Applied as margin between adjacent slots (not after the last one). Useful as a drop-in for `space-y-*` / `space-x-*` |
+| `class` | `string` | — | Additional CSS class names |
+
+### Strategies
+
+The `strategy` prop decides how a container behaves. Two built-in factories cover the common cases:
+
+```svelte
+<script lang="ts">
+    import { DndDroppable, sortable, target } from '@horuse/svelte-dnd';
+</script>
+
+<!-- Vertical list (default) -->
+<DndDroppable id="list" strategy={sortable()} />
+
+<!-- Horizontal row -->
+<DndDroppable id="row" strategy={sortable({ layout: 'horizontal' })} />
+
+<!-- Grid — pair with a CSS `display: grid` layout -->
+<DndDroppable id="grid" strategy={sortable({ layout: 'grid' })} />
+
+<!-- Grid that fills top-to-bottom instead of left-to-right -->
+<DndDroppable id="grid-col" strategy={sortable({ layout: 'grid', flow: 'column' })} />
+
+<!-- Single drop zone, no previews — trash, inbox, drop target -->
+<DndDroppable id="trash" strategy={target()} />
+```
+
+`sortable()` renders position-based drop zones with insert previews between items. `target()` covers the whole container with a single zone and emits no previews — useful for trash zones or anywhere a target isn't a list.
+
+For writing your own strategy see [Custom Strategies](/docs/custom-strategies).
+
+#### sortable options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `layout` | `'vertical' \| 'horizontal' \| 'grid'` | `'vertical'` | Container layout |
+| `flow` | `'row' \| 'column'` | `'row'` | For `layout: 'grid'`, which axis items fill first. `'row'` = left-to-right wrapping; `'column'` = top-to-bottom wrapping |
+| `behaviors` | `Behavior[]` | inherited | Per-container behavior list (e.g. `[autoScroll(), scrollSync()]`). Replaces the controller-level defaults for this droppable only. See [Behaviors](/docs/behaviors) |
+| `virtual` | `VirtualSource` | `undefined` | Virtualization adapter — set when items are rendered through a virtualizer. The bundled integration is tested with [`virtua`](https://github.com/inokawa/virtua); see [Virtualization example](/examples/virtualization) |
+
+### Snippets
+
+| Snippet | Description |
+|---------|-------------|
+| `children` | **Required.** Content of the droppable container |
+
+### CSS Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `--dnd-droppable-min-height` | `20px` | Minimum height of the container |
+
+### Auto-scroll
+
+`DndDroppable` automatically receives a `data-dnd-scroll` attribute. Auto-scroll only activates on elements with this attribute, so only droppable containers (not arbitrary scrollable ancestors) will be scrolled during a drag.
+
+### Type filtering
+
+Use the `accepts` prop to control which item types can be dropped into this container. Item types come from the `type` prop of `DndDraggable`.
+
+```svelte
+<!-- Only accepts items with data.type === 'task' -->
+<DndDroppable id="tasks" accepts="task">
+
+<!-- Accepts multiple types -->
+<DndDroppable id="mixed" accepts={['task', 'card']}>
+```
+
+On the draggable side, set the `type` prop:
+
+```svelte
+<DndDraggable id={item.id} {position} type="task">
+  {item.label}
+</DndDraggable>
+```
+
+---
+
+## DndPreview
+
+Renders a placeholder at a specific position within a container to indicate where a dragged item will be dropped.
+
+> **Note:** `DndPreview` is rendered automatically by `DndDraggable` (per-slot preview) and `DndDroppable` (tail preview). You should not place it manually — it requires internal `Slot`/`Droppable` entity references and is not intended for direct consumer use. Style it via the CSS variables below.
+
+### CSS Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `--dnd-preview-bg` | `rgba(99, 102, 241, 0.15)` | Background color of the preview |
+| `--dnd-preview-border` | `2px dashed rgba(99, 102, 241, 0.4)` | Border of the preview |
+| `--dnd-preview-border-radius` | `1rem` | Border radius of the preview |
+| `--dnd-preview-duration-in` | `200ms` | Transition duration when preview appears. Also tunable via `controller.animation.preview.show.duration`. |
+| `--dnd-preview-duration-out` | `200ms` | Transition duration when preview disappears. Also tunable via `controller.animation.preview.hide.duration`. |
+| `--dnd-preview-easing-in` | `ease` | Easing for the reveal transition. Also tunable via `controller.animation.preview.show.easing`. |
+| `--dnd-preview-easing-out` | `ease` | Easing for the collapse transition. Also tunable via `controller.animation.preview.hide.easing`. |
+
+---
+
+## Types
+#### DndLayout
+```ts
+export type DndLayout = 'vertical' | 'horizontal' | 'grid'
+```
+#### DndMode
+```ts
+export type DndMode = 'sortable' | 'target'
+```

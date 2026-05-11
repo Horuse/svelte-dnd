@@ -1,0 +1,34 @@
+---
+title: Sortable Containers
+description: Advanced example with draggable columns and tasks using nested DndDroppable components.
+modified: 2026-05-11
+---
+
+# Sortable Containers
+
+A horizontal board where both **containers** and **tasks** within them can be dragged.
+
+Drag a container by its header to reorder columns horizontally. Drag tasks within or between containers to move them. This is achieved with a single `DndController` and nested `DndDroppable` components:
+
+- The **board** droppable uses `strategy={sortable({ layout: 'horizontal' })}` and accepts `'column'` type items
+- Each **column** droppable uses `strategy={sortable()}` (vertical default) and accepts `'task'` type items
+- The column's `DndDraggable` has a `data-dnd-handle` on its header — dragging is only possible from the header, so dragging from the task area moves a task instead of the column
+
+Each slot is tracked via `[data-dnd-slot]` and scoped to its nearest `[data-dnd-drop-id]` parent, so nested droppables work correctly without extra configuration.
+
+<script lang="ts">
+	import { ComponentPreview } from '$lib/components';
+	import SortableContainersExampleCode from "$lib/examples/SortableContainersExample/index.svelte?raw";
+	import SortableContainersExample from "$lib/examples/SortableContainersExample/index.svelte";
+
+    import TrashZoneCode from "$lib/examples/SortableContainersExample/TrashZone.svelte?raw";
+</script>
+
+<ComponentPreview
+	sources={[
+		{ name: "SortableContainersExample.svelte", code: SortableContainersExampleCode, language: "svelte" },
+		{ name: "TrashZone.svelte", code: TrashZoneCode, language: "svelte" }
+	]}
+>
+    <SortableContainersExample/>
+</ComponentPreview>

@@ -1,0 +1,55 @@
+---
+title: DndProvider
+description: API reference for the DndProvider component — props, ghost snippet, and CSS variables.
+modified: 2026-05-11
+---
+
+# DndProvider
+
+Wraps your drag-and-drop area and provides the `DndController` context to all child components.
+
+### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `controller` | `DndController` | auto-created | Optional pre-created controller instance. Configure it via its constructor — see [DndController API](/docs/dnd-controller-api) |
+
+### Snippets
+
+| Snippet | Props | Description |
+|---------|-------|-------------|
+| `ghost` | `GhostSnippetProps` | Custom ghost element renderer during drag. If omitted, the dragged element's `innerHTML` is cloned as the ghost |
+
+### GhostSnippetProps
+
+```ts
+interface GhostSnippetProps {
+    element: HTMLElement;
+    data?: Record<string, unknown>;
+    itemId: string;
+}
+```
+
+### Drag cursor
+
+While a drag is in progress the provider injects a `<style>` tag into `<head>` that forces `cursor: grabbing !important` on every element. This stops the cursor from flickering when the pointer hovers over children with their own cursor styles. The tag is removed automatically when the drag ends.
+
+### CSS Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `--dnd-ghost-z-index` | `9999` | Z-index of the ghost element |
+| `--dnd-ghost-opacity` | `0.8` | Opacity of the ghost element |
+| `--dnd-ghost-scale` | `1` | Scale of the ghost element |
+| `--dnd-ghost-resize-duration` | `150ms` | Duration of the ghost width/height transition when adapting to the target's item size |
+| `--dnd-ghost-resize-easing` | `ease` | Easing of the ghost width/height transition |
+
+```svelte
+<DndProvider {controller}>
+  {#snippet ghost({ element, data, itemId })}
+    <div class="custom-ghost">{data?.label}</div>
+  {/snippet}
+
+  <!-- your content -->
+</DndProvider>
+```

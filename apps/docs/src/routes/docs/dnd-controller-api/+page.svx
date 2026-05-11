@@ -1,0 +1,455 @@
+---
+title: DndController API
+description: Full API reference for DndController — reactive getters, event callbacks, methods, and types.
+modified: 2026-05-11
+---
+
+# DndController API
+
+The `DndController` is the core engine that manages all drag-and-drop state and logic. You can create one explicitly or let `DndProvider` create one automatically.
+
+## Constructor
+
+```ts
+import {
+    DndController,
+    PointerSensor,
+    KeyboardSensor,
+    centerPoint,
+    overlap,
+    restrictToVerticalAxis,
+    defaultAnnouncements,
+} from '@horuse/svelte-dnd';
+
+// Minimal — all options have sensible defaults
+const controller = new DndController();
+
+// Full config:
+const controller = new DndController({
+    behaviors: [                                // see /docs/behaviors
+        autoScroll({ zoneRatio: 0.2, maxSpeed: 20, stopOnDrop: true }),
+        scrollSync({ threshold: 0.5 }),
+    ],
+    animation: {
+        preview: {
+            show: { delay: 150, duration: 250, easing: 'ease-out' },                  // delay = debounce; duration+easing = CSS reveal
+            hide: { delay: 400, duration: 200, easing: 'ease-in' },                   // delay before collapse, then transition
+        },
+        siblingShift: { duration: 220, easing: 'ease' },                              // sibling translate + cross-container spacer
+        ghostResize: { duration: 180, easing: 'ease-out' },                           // ghost auto-resize on cross-container moves
+        drop: { duration: 200, easing: 'cubic-bezier(0.5, 1, 0.89, 1)' },             // ghost flight on successful drop
+        return: { duration: 250, easing: 'ease-out' },                                // ghost return on cancelled drag
+        slotCollapse: 200,                                                            // shorthand: number = duration only, easing keeps default
+        layout: { duration: 280, easing: 'ease-in-out' },                             // animateLayout default
+    },
+    debug: true,                             // position validation warnings in console
+    sensors: [new PointerSensor(), new KeyboardSensor()], // see /docs/sensors
+    collision: overlap('25%'),               // see /docs/collision
+    modifiers: [restrictToVerticalAxis],      // see /docs/modifiers
+    announcements: {                          // see /docs/accessibility
+        ...defaultAnnouncements,
+        onDragStart: ({ item }) => `Picked up ${item.id}.`,
+    },
+});
+
+// Default values (what you get when omitting each option):
+const controller = new DndController({
+    behaviors: [autoScroll(), scrollSync()], // controller-level defaults; see /docs/behaviors
+    animation: {
+        preview: {
+            show: { delay: 300, duration: 200, easing: 'ease' },
+            hide: { delay: 200, duration: 200, easing: 'ease' },
+        },
+        siblingShift: { duration: 200, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' },
+        ghostResize: { duration: 150, easing: 'ease' },
+        drop: { duration: 250, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' },
+        return: { duration: 300, easing: 'cubic-bezier(0.33, 1, 0.68, 1)' },
+        slotCollapse: { duration: 250, easing: 'cubic-bezier(0.45, 0, 0.55, 1)' },
+        layout: { duration: 300, easing: 'ease' },
+    },
+    debug: false,
+    sensors: [new PointerSensor(), new KeyboardSensor()],
+    collision: centerPoint,  // ghost center must be inside zone rect (default)
+    modifiers: [],
+    announcements: {
+        onDragStart: ({ item }) => `Started dragging item ${item.id}.`,
+        onDragOver: ({ item, current }) => `Item ${item.id} is over ${current.id} at position ${current.position}.`,
+        onDrop: ({ item, target }) => `Dropped item ${item.id} into ${target.id} at position ${target.position}.`,
+        onCancel: ({ item }) => `Dragging ${item.id} was cancelled.`,
+    },
+});
+```
+
+Pass it to the provider via the `controller` prop:
+
+```svelte
+<DndProvider {controller}>
+    <!-- your DnD content -->
+</DndProvider>
+```
+
+This gives you direct access to the controller's methods and reactive getters.
+
+## Reactive Getters
+
+All getters are Svelte 5 reactive (`$state` / `$derived` internally).
+
+| Getter | Type | Description |
+|--------|------|-------------|
+| `dragging` | `boolean` | Whether a drag is currently in progress |
+| `element` | `HTMLElement \| null` | The DOM element being dragged |
+| `transform` | `{ x: number; y: number } \| null` | Current ghost position |
+| `draggedItem` | `string \| null` | ID of the item being dragged |
+| `draggedType` | `string \| null` | Type of the dragged item (from the `type` prop on `DndDraggable`) |
+| `draggedItemData` | `Record<string, unknown> \| undefined` | Data attached to the dragged item |
+| `ghostSize` | `{ width: number; height: number } \| null` | Size of the dragged element |
+| `animatingReturn` | `boolean` | Whether the ghost is animating back to origin |
+| `dropPreview` | `DropPreview \| null` | Current drop preview state |
+| `dropPreviewSize` | `{ width, height } \| null` | Reactive size for matching the drop target's layout. Cross-axis is taken from the target's first non-dragged item (where layout shrinkage shows up — e.g. a scrollbar narrowing items); main-axis stays from the dragged item. Vertical sortable → target width / dragged height; horizontal sortable → dragged width / target height; grid sortable → both from target; target() containers → `null`. The built-in ghost and preview already use it. |
+| `dropZones` | `DropZone[]` | All registered drop zones |
+| `performingDrop` | `boolean` | Whether a drop animation is in progress |
+| `dragSource` | `DragSource` | `'user'` during a real drag, `'programmatic'` during a simulation |
+
+## Event Callbacks
+
+All event methods return an unsubscribe function.
+
+### onDragStart
+
+```ts
+const unsubscribe = controller.onDragStart(({ item, source }) => {
+    console.log('Started dragging:', item.id, 'from', source.id, 'at position', source.position);
+});
+
+// Later: unsubscribe()
+```
+
+### onDragEnd
+
+Fired when a drag ends — regardless of whether it was dropped or cancelled.
+
+```ts
+controller.onDragEnd(({ item, source, target, cancelled }) => {
+    if (cancelled) {
+        console.log(item.id, 'returned to', source.id);
+    } else {
+        console.log(item.id, 'moved to', target?.id);
+    }
+});
+```
+
+### onDropCancelled
+
+Fired when a drag is cancelled — the ghost returns to origin and no drop occurred. Use this to distinguish a cancel from a successful drop.
+
+```ts
+controller.onDropCancelled(({ item, source }) => {
+    console.log('Drag cancelled:', item.id, 'back to', source.id);
+});
+```
+
+### onDrop
+
+The main callback for handling item reordering or moving between containers.
+
+```ts
+controller.onDrop(({ item, source, target }) => {
+    // item.id:          ID of the dragged item
+    // item.data:        Record<string, unknown> | undefined — cast to your type as needed
+    // source.id:        container the item came from
+    // source.position:  original position in source container
+    // target.id:        container where item was dropped
+    // target.position:  insertion index in target container
+});
+```
+
+> **`position` semantics** — `position` is an **insertion index**, not an index into your data array. `0` means before all items, `items.length` means after all items. For a `target`/`current` position, it's the slot between items where the dragged item would be inserted.
+
+### onDragOver
+
+Fired each time the drag-over target (container + position) changes. Useful for highlighting the active drop zone in custom UIs.
+
+```ts
+controller.onDragOver(({ item, current, previous }) => {
+    console.log(item.id, 'moved to', current.id, 'position', current.position);
+    if (previous) console.log('was over', previous.id);
+});
+```
+
+### onZonesInvalidated
+
+```ts
+controller.onZonesInvalidated(() => {
+    // fired after auto-scroll moves a container,
+    // invalidating existing drop zone coordinates
+});
+```
+
+Subscribe to recalculate zones if you manage them manually.
+
+## Methods
+
+### updateTransform
+
+```ts
+controller.updateTransform(transform: { x: number; y: number }): void
+```
+
+Updates the ghost element position during drag.
+
+### updateMousePosition
+
+```ts
+controller.updateMousePosition(mouseX: number, mouseY: number): void
+```
+
+Updates the mouse position for drop zone detection and auto-scroll.
+
+### performDrop
+
+```ts
+controller.performDrop(
+    sourceId: string,
+    sourceData: Record<string, unknown> | undefined,
+    targetContainerId: string,
+    position: number
+): void
+```
+
+Performs a drop with animation to the target zone.
+
+### endDrag
+
+```ts
+controller.endDrag(shouldAnimate?: boolean): void
+```
+
+Ends the drag. When `shouldAnimate` is `true` (default), the ghost animates back to its origin.
+
+### setBehaviors
+
+```ts
+controller.setBehaviors(behaviors: Behavior[]): void
+```
+
+Replaces the controller-level default `behaviors` at runtime (see [Behaviors](/docs/behaviors)). Per-strategy `behaviors` set on a `sortable()` / `target()` instance are unaffected. Changes take effect on the next scroll tick / drop animation.
+
+```ts
+controller.setBehaviors([
+    autoScroll({ maxSpeed: 60 }),
+    scrollSync({ threshold: 0.5 })
+]);
+```
+
+### setAnimation
+
+```ts
+controller.setAnimation(config?: AnimationConfig): void
+```
+
+Updates the controller's animation config at runtime. Accepts a partial — provided fields override, omitted fields keep their current value. Changes propagate reactively to every live `DndPreview`, `DndDraggable`, `DndDroppable`, and apply to the next drop / return / FLIP animation.
+
+```ts
+// tweak only the preview hide delay; everything else keeps its current value
+controller.setAnimation({ preview: { hide: { delay: 500 } } });
+
+// switch the sibling-shift to a different easing without changing duration
+controller.setAnimation({ siblingShift: { easing: 'ease-out' } });
+```
+
+### setDebug
+
+```ts
+controller.setDebug(value: boolean): void
+```
+
+Toggles dev warnings (duplicate positions, etc.) at runtime.
+
+### setSensors
+
+```ts
+controller.setSensors(sensors: SensorDescriptor[] | undefined): void
+```
+
+Replaces the active sensors at runtime. Pass `undefined` to fall back to the default `[PointerSensor, KeyboardSensor]` set.
+
+### setAnnouncements
+
+```ts
+controller.setAnnouncements(announcements: Announcements | undefined): void
+```
+
+Replaces the screen-reader announcement strings at runtime. Pass `undefined` to restore the defaults.
+
+### setModifiers
+
+```ts
+controller.setModifiers(modifiers: Modifier[]): void
+```
+
+Replaces the active transform modifier pipeline. Pass an empty array to disable all modifiers.
+
+### toggleDebugZones
+
+```ts
+controller.toggleDebugZones(): void
+```
+
+Toggles visual overlay of all drop zones. Useful for development and debugging.
+
+### destroy
+
+```ts
+controller.destroy(): void
+```
+
+Cleans up all internal state, listeners, and registries. Called automatically when `DndProvider` unmounts (if it created the controller).
+
+## Programmatic Animations
+
+For running animations without user interaction see the [Simulations](/docs/simulations) page.
+
+| Method | Purpose |
+|--------|---------|
+| `animateItem(itemId, options)` | Fly one item to a destination through the ghost system. Pass `style: 'return'` for scroll-aware undo, `emitEvents: true` to fire `onDrop`/`onDropCancelled`. |
+| `animateLayout(applyState, options?)` | Mutate state inside `applyState`; the library FLIPs every item whose rect changed. Pass `morph: true` to also transition class-driven properties. |
+
+## Types
+
+All types below are exported from `@horuse/svelte-dnd`.
+
+```ts
+interface DropZone {
+    containerId: string;
+    position: number;
+    layout: DndLayout;
+    itemId?: string;
+    rect: { x: number; y: number; width: number; height: number };
+}
+
+interface AutoScrollConfig {
+    /** Fraction of container size that triggers auto-scroll. Default: 0.3 */
+    zoneRatio?: number;
+    /** Maximum scroll speed in px/frame at 60fps. Default: 30 */
+    maxSpeed?: number;
+    /** Stop auto-scroll immediately when drop is committed. Default: false. */
+    stopOnDrop?: boolean;
+}
+
+interface ScrollSyncOptions {
+    /**
+     * Visibility ratio (0..1) below which the drop / return animation scrolls
+     * the destination container in lockstep with the ghost flight. Default: 1
+     * (any hidden pixel triggers scroll). Set 0 to disable.
+     */
+    threshold?: number;
+}
+
+// Built-in behavior factories — see /docs/behaviors
+declare function autoScroll(opts?: AutoScrollConfig): Behavior;
+declare function scrollSync(opts?: ScrollSyncOptions): Behavior;
+
+type Transition = {
+    /** Duration in milliseconds. */
+    duration: number;
+    /** Any valid CSS timing-function: 'ease', 'cubic-bezier(...)', 'linear', etc. */
+    easing?: string;
+}
+
+/** Transition with an optional debounce delay before it starts. */
+type DelayedTransition = Transition & {
+    /** Milliseconds to wait before the transition begins. Default: 0. */
+    delay?: number;
+}
+
+/** Shorthand: a bare `number` is treated as `{ duration: <n> }` and keeps the default easing. */
+type DurationOrTransition = number | Transition;
+
+interface AnimationConfig {
+    preview?: {
+        /**
+         * Reveal animation. `delay` debounces against quick fly-bys before
+         * the CSS `duration` + `easing` reveal kicks in.
+         * Default: { delay: 300, duration: 200, easing: 'ease' }
+         */
+        show?: DelayedTransition;
+        /**
+         * Collapse animation. `delay` keeps the slot open for a beat after
+         * the pointer leaves before the CSS `duration` + `easing` collapse runs.
+         * Default: { delay: 200, duration: 200, easing: 'ease' }
+         */
+        hide?: DelayedTransition;
+    };
+    /**
+     * Items repositioning to make room for the ghost — covers BOTH intra-container
+     * sibling translate AND cross-container spacer growth. One field, both effects.
+     * Default: 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)
+     */
+    siblingShift?: Transition;
+    /**
+     * Ghost auto-resize transition when crossing containers with different item
+     * dimensions. Default: 150ms ease
+     */
+    ghostResize?: Transition;
+    /** Ghost flight to a destination on successful drop. Default: 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94) */
+    drop?: DurationOrTransition;
+    /** Ghost return flight on cancelled drop. Default: 300ms cubic-bezier(0.33, 1, 0.68, 1) */
+    return?: DurationOrTransition;
+    /** Source slot collapse on cross-container drop. Default: 250ms cubic-bezier(0.45, 0, 0.55, 1) */
+    slotCollapse?: DurationOrTransition;
+    /** Default for `animateLayout()` FLIP transitions. Default: 300ms ease */
+    layout?: DurationOrTransition;
+}
+
+interface DndControllerConfig {
+    /** Drop-side plugins (auto-scroll, scroll-sync, future hooks). Default: `[autoScroll(), scrollSync()]`. See [Behaviors](/docs/behaviors). */
+    behaviors?: Behavior[];
+    animation?: AnimationConfig;
+    /** Enable dev warnings (duplicate positions, etc.). Default: false */
+    debug?: boolean;
+    /** Active input sensors. Defaults to [PointerSensor, KeyboardSensor]. See [Sensors](/docs/sensors) */
+    sensors?: SensorDescriptor[];
+    /** Global collision algorithm. Per-container `collision` prop takes priority. See [Collision Detection](/docs/collision) */
+    collision?: CollisionAlgorithm;
+    /** Transform modifiers applied to ghost position on every move. See [Modifiers](/docs/modifiers) */
+    modifiers?: Modifier[];
+    /** Screen-reader announcement strings. See [Accessibility](/docs/accessibility) */
+    announcements?: Announcements;
+}
+
+// Per-container strategies are now passed to `<DndDroppable strategy={...} />`
+// rather than to the controller. See [Custom Strategies](/docs/custom-strategies).
+
+// Rich event objects passed to all callbacks:
+interface DndItemInfo {
+    id: string;
+    data: Record<string, unknown> | undefined;
+    type: string | undefined;
+    element: HTMLElement;
+}
+interface DndContainerInfo {
+    id: string;
+    data: Record<string, unknown> | undefined;
+    layout: DndLayout;
+    mode: DndMode;
+    disabled: boolean;
+    accepts: string | string[] | undefined;
+    position: number;
+}
+interface DragStartEvent     { item: DndItemInfo; source: DndContainerInfo }
+interface DragEndEvent       { item: DndItemInfo; source: DndContainerInfo; target: DndContainerInfo | null; cancelled: boolean }
+interface DropEvent          { item: DndItemInfo; source: DndContainerInfo; target: DndContainerInfo }
+interface DragOverEvent      { item: DndItemInfo; source: DndContainerInfo; current: DndContainerInfo; previous: DndContainerInfo | null }
+interface DropCancelledEvent { item: DndItemInfo; source: DndContainerInfo }
+
+type DragStartCallback    = (event: DragStartEvent) => void;
+type DragEndCallback      = (event: DragEndEvent) => void;
+type DropCancelledCallback = (event: DropCancelledEvent) => void;
+type DropCallback         = (event: DropEvent) => void;
+type DragOverCallback     = (event: DragOverEvent) => void;
+type DndLayout = 'vertical' | 'horizontal' | 'grid';
+type DndMode = 'sortable' | 'target' | (string & {}); // custom modes allowed
+type DragSource = 'user' | 'programmatic';
+```
+
+For custom drop zone strategies see [Custom Strategies](/docs/custom-strategies).

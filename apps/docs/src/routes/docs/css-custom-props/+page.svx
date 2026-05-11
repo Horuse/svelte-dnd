@@ -1,0 +1,167 @@
+---
+title: CSS Custom Properties & Classes
+description: Reference for all --dnd-* CSS custom properties and CSS classes used by the library.
+modified: 2026-05-11
+---
+
+# CSS Custom Properties & Classes
+
+All `--dnd-*` CSS custom properties can be set on any ancestor element to customize the look and feel of the drag-and-drop components.
+
+## Ghost Element
+
+These properties control the floating ghost element that follows the cursor during drag.
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `--dnd-ghost-z-index` | `9999` | Stacking order of the ghost element |
+| `--dnd-ghost-opacity` | `0.8` | Opacity of the ghost element |
+| `--dnd-ghost-scale` | `1` | Scale factor of the ghost element |
+| `--dnd-ghost-resize-duration` | `150ms` | Transition speed when the ghost resizes to match a target's item size (see [`dropPreviewSize`](/docs/dnd-controller-api#reactive-getters)). Also tunable via `controller.animation.ghostResize.duration`. |
+| `--dnd-ghost-resize-easing` | `ease` | Easing for the ghost resize transition. Also tunable via `controller.animation.ghostResize.easing`. |
+
+> **Want a tilt effect?** Rotation is no longer applied by the library — add it yourself in custom CSS, e.g. `.dnd-ghost { transform: rotate(5deg); transition: transform 200ms ease; }`.
+
+## Draggable Element
+
+These properties control the appearance and cursor of draggable items.
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `--dnd-draggable-cursor` | `grab` | Cursor when hovering over a draggable item |
+| `--dnd-draggable-cursor-active` | `grabbing` | Cursor while actively dragging |
+| `--dnd-draggable-cursor-disabled` | `default` | Cursor when the item is disabled |
+| `--dnd-draggable-opacity-dragging` | `0` | Opacity of the source element while being dragged (hidden by default — only the ghost is visible) |
+| `--dnd-draggable-opacity-disabled` | `0.5` | Opacity when the item is disabled |
+
+## Droppable Container
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `--dnd-droppable-min-height` | `20px` | Minimum height of an empty droppable container |
+
+## Drop Preview
+
+These properties control the placeholder that appears at potential drop positions.
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `--dnd-preview-duration-in` | `200ms` | Transition duration when preview appears. Also tunable via `controller.animation.preview.show.duration`. |
+| `--dnd-preview-duration-out` | `200ms` | Transition duration when preview disappears. Also tunable via `controller.animation.preview.hide.duration`. |
+| `--dnd-preview-easing-in` | `ease` | Easing for the reveal transition. Also tunable via `controller.animation.preview.show.easing`. |
+| `--dnd-preview-easing-out` | `ease` | Easing for the collapse transition. Also tunable via `controller.animation.preview.hide.easing`. |
+| `--dnd-preview-bg` | `rgba(99, 102, 241, 0.15)` | Background color of the preview indicator |
+| `--dnd-preview-border` | `2px dashed rgba(99, 102, 241, 0.4)` | Border style of the preview indicator |
+| `--dnd-preview-border-radius` | `1rem` | Border radius of the preview indicator |
+
+## Customization Examples
+
+### Subtle ghost
+
+```css
+:root {
+  --dnd-ghost-opacity: 0.6;
+  --dnd-ghost-scale: 0.95;
+}
+```
+
+### Show the original item while dragging
+
+```css
+:root {
+  --dnd-draggable-opacity-dragging: 0.3;
+}
+```
+
+### Custom preview colors
+
+```css
+:root {
+  --dnd-preview-bg: rgba(59, 130, 246, 0.1);
+  --dnd-preview-border: 2px dashed rgba(59, 130, 246, 0.4);
+  --dnd-preview-border-radius: 4px;
+}
+```
+
+### Scoped per container
+
+```svelte
+<div style="--dnd-draggable-cursor: move; --dnd-draggable-opacity-dragging: 0.3;">
+  <DndDroppable id="custom-container">
+    <!-- items with custom cursor and drag opacity -->
+  </DndDroppable>
+</div>
+```
+
+---
+
+## CSS Classes
+
+### DndDraggable
+
+| Class | Applied when |
+|-------|-------------|
+| `.dnd-slot` | Always — wrapper element around each draggable; carries the spacing margin and contains the preview placeholder |
+| `.dnd-draggable` | Always — base class on every draggable item |
+| `.dnd-draggable--dragging` | The item is currently being dragged |
+| `.dnd-draggable--disabled` | The `disabled` prop is `true` |
+
+Example — dim disabled items:
+
+```css
+.dnd-draggable--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+```
+
+### DndDroppable
+
+| Class | Applied when |
+|-------|-------------|
+| `.dnd-droppable` | Always — base class on every droppable container |
+| `.dnd-droppable--disabled` | The `disabled` prop is `true` |
+
+### DndProvider — ghost element
+
+The ghost is a detached `div` that follows the pointer during drag.
+
+| Class | Applied when |
+|-------|-------------|
+| `.dnd-ghost` | Always present on the ghost element |
+| `.dnd-ghost--returning` | Ghost is animating back after a cancelled drag |
+
+Example — style the ghost:
+
+```css
+.dnd-ghost {
+  opacity: 0.85;
+  transform-origin: top left;
+}
+
+.dnd-ghost--returning {
+  transition: none; /* library controls the animation */
+}
+```
+
+### DndPreview
+
+Previews are placeholder elements rendered inside containers to show the future drop position.
+
+| Class | Applied when |
+|-------|-------------|
+| `.dnd-preview` | Always — base class on every preview slot |
+| `.dnd-preview--revealed` | Preview is visible (after `preview.show.delay` elapses) |
+| `.dnd-preview--instant` | Preview is shown/hidden without transition (used during programmatic drops) |
+| `.dnd-preview--align-bottom` | Preview anchors to the bottom of its slot (vertical containers) |
+| `.dnd-preview--align-right` | Preview anchors to the right of its slot (horizontal containers) |
+
+### Debug zones
+
+When `controller.toggleDebugZones()` is called, the library overlays coloured rectangles on all drop zones.
+
+| Class | Purpose |
+|-------|---------|
+| `.dnd-debug-zone` | Each individual drop zone overlay |
+| `.dnd-debug-zone--first` | Highlights the first zone in a container |
+| `.dnd-debug-zone__label` | Text label showing zone index |
