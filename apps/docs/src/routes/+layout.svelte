@@ -24,7 +24,7 @@
 	<div class="flex flex-col w-full overflow-hidden">
 		<Header/>
 
-		<main class="overflow-y-auto w-full p-6">
+		<main class="overflow-y-auto w-full p-3 lg:p-6">
 			{@render children()}
 		</main>
 	</div>

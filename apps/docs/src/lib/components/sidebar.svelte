@@ -90,8 +90,8 @@
 </script>
 
 {#if $sidebarOpen}
-	<aside transition:slide|local={{ duration: 300, easing: quintInOut, axis: 'x' }} class="flex absolute lg:relative h-screen flex-col whitespace-nowrap w-64 divide-y-2 divide-primary shrink-0 bg-foreground text-white border-r-2 border-primary overflow-y-auto">
-		<div class="p-3 flex flex-col gap-3">
+	<aside transition:slide|local={{ duration: 300, easing: quintInOut, axis: 'x' }} class="flex absolute z-100 lg:relative h-screen flex-col whitespace-nowrap sm:w-64 max-w-124 w-full divide-y-2 divide-primary shrink-0 bg-foreground text-white border-r-2 border-primary overflow-y-auto">
+		<div class="p-3 sticky bg-foreground z-110 top-0 flex flex-col gap-3">
 			<div class="flex items-center justify-between">
 				<a href="/" class="text-theme ml-1 font-mono font-bold">@horuse/svelte-dnd</a>
 				<button

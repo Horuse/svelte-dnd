@@ -102,7 +102,7 @@
 
 	<section class="flex h-full relative flex-col">
 		{#if showPreview}
-			<div class="flex w-full flex-1 flex-col p-8 border rounded-2xl">
+			<div class="flex w-full flex-1 flex-col p-4 lg:p-8 border rounded-2xl">
 				{#key previewKey}
 					{@render children?.()}
 				{/key}
