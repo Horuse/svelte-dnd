@@ -83,61 +83,10 @@ export class DropAnimationCoordinator {
 		const targetZone = this.dropResolver.findZoneAt(pointer)
 
 		if (targetZone) {
-			const preview: DropPreview = {
+			this.notifyPreviewChange({
 				containerId: targetZone.containerId,
 				position: targetZone.position
-			}
-			this.state.setDropPreview(preview)
-
-			const previewKey = `${targetZone.containerId}:${targetZone.position}`
-			if (previewKey !== this.lastPreviewKey) {
-				const prevKey = this.lastPreviewKey
-				this.lastPreviewKey = previewKey
-
-				const sourceId = this.state.draggedItem
-				const element = this.state.element
-				if (sourceId && element) {
-					const itemInfo: DndItemInfo = {
-						id: sourceId,
-						data: this.state.draggedItemData,
-						type: this.state.draggedType ?? undefined,
-						element
-					}
-					const originContainerId = this.state.originContainerId
-					const sourceDroppable = originContainerId
-						? this.droppablesById.get(originContainerId)
-						: null
-					const targetDroppable = this.droppablesById.get(targetZone.containerId)
-
-					if (sourceDroppable && targetDroppable) {
-						const sourceInfo: DndContainerInfo = sourceDroppable.toContainerInfo(
-							this.state.originPosition
-						)
-						const currentInfo: DndContainerInfo = targetDroppable.toContainerInfo(
-							targetZone.position
-						)
-
-						let previousInfo: DndContainerInfo | null = null
-						if (prevKey) {
-							const sepIdx = prevKey.lastIndexOf(':')
-							const prevContainerId = prevKey.slice(0, sepIdx)
-							const prevPosition = parseInt(prevKey.slice(sepIdx + 1))
-							const prevDroppable = this.droppablesById.get(prevContainerId)
-							if (prevDroppable) {
-								previousInfo = prevDroppable.toContainerInfo(prevPosition)
-							}
-						}
-
-						const event: DragOverEvent = {
-							item: itemInfo,
-							source: sourceInfo,
-							current: currentInfo,
-							previous: previousInfo
-						}
-						this.eventEmitter.notifyDragOver(event)
-					}
-				}
-			}
+			})
 
 			if (this.state.skipDropPreviewAnimation) {
 				requestAnimationFrame(() => {
@@ -150,6 +99,68 @@ export class DropAnimationCoordinator {
 			this.state.setDropPreview(null)
 			this.lastPreviewKey = null
 		}
+	}
+
+	/** Set the active drop preview from outside the pointer path (e.g. keyboard navigation). Fires `onDragOver` like `updateDropPreview`. */
+	setActivePreview(preview: DropPreview) {
+		if (!this.state.dragging) return
+		this.notifyPreviewChange(preview)
+		if (this.state.skipDropPreviewAnimation) {
+			requestAnimationFrame(() => {
+				this.state.setSkipDropPreviewAnimation(false)
+			})
+		}
+	}
+
+	private notifyPreviewChange(preview: DropPreview) {
+		this.state.setDropPreview(preview)
+
+		const previewKey = `${preview.containerId}:${preview.position}`
+		if (previewKey === this.lastPreviewKey) return
+
+		const prevKey = this.lastPreviewKey
+		this.lastPreviewKey = previewKey
+
+		const sourceId = this.state.draggedItem
+		const element = this.state.element
+		if (!sourceId || !element) return
+
+		const originContainerId = this.state.originContainerId
+		const sourceDroppable = originContainerId
+			? this.droppablesById.get(originContainerId)
+			: null
+		const targetDroppable = this.droppablesById.get(preview.containerId)
+		if (!sourceDroppable || !targetDroppable) return
+
+		const itemInfo: DndItemInfo = {
+			id: sourceId,
+			data: this.state.draggedItemData,
+			type: this.state.draggedType ?? undefined,
+			element
+		}
+		const sourceInfo: DndContainerInfo = sourceDroppable.toContainerInfo(
+			this.state.originPosition
+		)
+		const currentInfo: DndContainerInfo = targetDroppable.toContainerInfo(preview.position)
+
+		let previousInfo: DndContainerInfo | null = null
+		if (prevKey) {
+			const sepIdx = prevKey.lastIndexOf(':')
+			const prevContainerId = prevKey.slice(0, sepIdx)
+			const prevPosition = parseInt(prevKey.slice(sepIdx + 1))
+			const prevDroppable = this.droppablesById.get(prevContainerId)
+			if (prevDroppable) {
+				previousInfo = prevDroppable.toContainerInfo(prevPosition)
+			}
+		}
+
+		const event: DragOverEvent = {
+			item: itemInfo,
+			source: sourceInfo,
+			current: currentInfo,
+			previous: previousInfo
+		}
+		this.eventEmitter.notifyDragOver(event)
 	}
 
 	performDrop(

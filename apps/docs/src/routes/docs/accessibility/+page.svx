@@ -14,12 +14,21 @@ Keyboard drag-and-drop is powered by `KeyboardSensor` and is active by default. 
 |-----|--------|
 | `Tab` | Move focus between draggable items |
 | `Enter` / `Space` | Pick up the focused item and start drag |
-| `ArrowDown` / `ArrowRight` | Move preview to next position |
-| `ArrowUp` / `ArrowLeft` | Move preview to previous position |
-| `Enter` | Drop at current preview position |
+| Main-axis arrows | Move within the current container by one position |
+| Cross-axis arrows | Switch to the visually adjacent container (any time, not just at the edge) |
+| `Home` / `End` | Jump to the first / last position of the current container |
+| `Enter` / `Space` | Drop at the current preview position |
 | `Escape` | Cancel drag, ghost returns to origin |
 
-Arrow keys navigate both within and across containers. When the end of a container is reached, focus jumps to the first position of the next container (and vice-versa at the start).
+Main and cross axes are derived from the source droppable's `layout`:
+
+- `vertical`: `↑` / `↓` move within, `←` / `→` switch container.
+- `horizontal`: `←` / `→` move within, `↑` / `↓` switch container.
+- `grid`: all four arrows move within (next column / next row).
+
+The adjacent container is picked by visual position (sorted by `getBoundingClientRect()`), and inside it the landing position is the one whose slot center is closest to the slot you came from on the cross axis — so a Kanban move from "To Do · pos 2" to the column on the right lands near the same vertical level rather than at the top.
+
+The ghost smoothly flies to the live slot rect on each keypress (`animation.keyboardFlight`, default 150 ms), and the target slot is auto-scrolled into view when it sits past the visible edge of any scrollable ancestor.
 
 ## Screen-reader announcements
 
@@ -72,8 +81,10 @@ The library sets these attributes automatically:
 
 | Element | Attributes |
 |---------|-----------|
-| `DndDraggable` inner div | `role="button"`, `tabindex="0"`, `aria-grabbed`, `aria-roledescription="draggable item"` |
+| `DndDraggable` inner div | `role="button"`, `tabindex="0"`, `aria-roledescription="draggable item"` |
 | `DndDroppable` | `aria-dropeffect="move"` (or `"none"` when `disabled`) |
+
+`aria-grabbed` is intentionally not set — it was deprecated in WAI-ARIA 1.1 and has poor screen-reader support. Pickup state is communicated through the live-region announcer instead.
 
 ---
 

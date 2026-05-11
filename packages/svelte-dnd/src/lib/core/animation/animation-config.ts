@@ -106,6 +106,12 @@ export interface AnimationConfig {
 	 * `{ duration: 300, easing: 'ease' }`.
 	 */
 	layout?: DurationOrTransition
+
+	/**
+	 * Ghost flight per keyboard navigation keystroke (cancelled on each new key).
+	 * Default: `{ duration: 150, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' }`.
+	 */
+	keyboardFlight?: DurationOrTransition
 }
 
 export interface ResolvedAnimationConfig {
@@ -119,6 +125,7 @@ export interface ResolvedAnimationConfig {
 	return: ResolvedTransition
 	slotCollapse: ResolvedTransition
 	layout: ResolvedTransition
+	keyboardFlight: ResolvedTransition
 }
 
 export const DEFAULT_ANIMATION_CONFIG: ResolvedAnimationConfig = {
@@ -131,7 +138,8 @@ export const DEFAULT_ANIMATION_CONFIG: ResolvedAnimationConfig = {
 	drop: { duration: 250, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' },
 	return: { duration: 300, easing: 'cubic-bezier(0.33, 1, 0.68, 1)' },
 	slotCollapse: { duration: 250, easing: 'cubic-bezier(0.45, 0, 0.55, 1)' },
-	layout: { duration: 300, easing: 'ease' }
+	layout: { duration: 300, easing: 'ease' },
+	keyboardFlight: { duration: 150, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' }
 }
 
 function resolveTransition(
@@ -183,6 +191,7 @@ export function resolveAnimationConfig(
 		drop: resolveDurationOrTransition(config?.drop, base.drop),
 		return: resolveDurationOrTransition(config?.return, base.return),
 		slotCollapse: resolveDurationOrTransition(config?.slotCollapse, base.slotCollapse),
-		layout: resolveDurationOrTransition(config?.layout, base.layout)
+		layout: resolveDurationOrTransition(config?.layout, base.layout),
+		keyboardFlight: resolveDurationOrTransition(config?.keyboardFlight, base.keyboardFlight)
 	}
 }

@@ -23,14 +23,18 @@ import type {
 	DndItemInfo,
 	DndContainerInfo,
 	DragStartEvent,
-	Announcements
+	Announcements,
+	DndLayout
 } from '../../types.js'
 import type { AnimationConfig, ResolvedAnimationConfig } from '../animation/animation-config.js'
 import { resolveAnimationConfig, DEFAULT_ANIMATION_CONFIG } from '../animation/animation-config.js'
 import type { Behavior, AutoScrollConfig } from '../animation/behavior.js'
 import { autoScroll } from '../animation/behaviors/auto-scroll.js'
 import { scrollSync } from '../animation/behaviors/scroll-sync.js'
-import { resolveBehaviors } from '../animation/apply-behaviors.js'
+import { resolveBehaviors, findTargetSlotWrapper } from '../animation/apply-behaviors.js'
+import { computePreviewSlotTarget } from '../animation/preview-slot-rect.js'
+import { KeyboardFlight } from '../animation/keyboard-flight.js'
+import { scrollSlotIntoView } from '../scroll/scroll-into-view.js'
 import { DragSession } from './drag-session.svelte.js'
 import type { Draggable } from '../entities/draggable.svelte.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
@@ -84,6 +88,7 @@ export class DndController {
 	private animationCoordinator: DropAnimationCoordinator
 	private simulator: DndSimulator
 	private modifiers: Modifier[]
+	private keyboardFlight: KeyboardFlight | null = null
 
 	// --- Entity maps ---
 	// Reactive maps so $derived computations (TranslationEngine, dropPreviewSize)
@@ -403,68 +408,208 @@ export class DndController {
 	/** @internal */
 	navigate(direction: NavigationDirection) {
 		if (!this.state.dragging) return
+		const session = this.state.session
+		if (!session) return
 
-		const filteredZones = this.dropResolver.filteredZones
-		const containerZones = new Map<string, DropZone[]>()
-		for (const zone of filteredZones) {
-			if (!containerZones.has(zone.containerId)) containerZones.set(zone.containerId, [])
-			containerZones.get(zone.containerId)!.push(zone)
+		const current = this.state.dropPreview ?? {
+			containerId: session.originContainerId,
+			position: session.originPosition
 		}
-		for (const [, zones] of containerZones) zones.sort((a, b) => a.position - b.position)
+		const currentDroppable = this.droppablesById.get(current.containerId)
+		if (!currentDroppable) return
 
-		const containerIds = [...containerZones.keys()]
-		const preview = this.state.dropPreview
-		const ghostSize = this.state.ghostSize
+		const target = this.isMainAxisDirection(currentDroppable.layout, direction)
+			? this.navigateWithinContainer(currentDroppable, current.position, direction)
+			: this.navigateAcrossContainers(currentDroppable, current.position, direction)
 
-		let targetZone: DropZone | null = null
-		let targetZones: DropZone[] = []
+		if (target) this.applyKeyboardTarget(target)
+	}
 
-		if (!preview) {
-			const firstZones = containerZones.get(containerIds[0]) ?? []
-			targetZone = firstZones[0] ?? null
-			targetZones = firstZones
-		} else {
-			const currentZones = containerZones.get(preview.containerId) ?? []
-			const currentIdx = currentZones.findIndex((z) => z.position === preview.position)
-			const currentContainerIdx = containerIds.indexOf(preview.containerId)
+	private isMainAxisDirection(layout: DndLayout, direction: NavigationDirection): boolean {
+		if (direction === 'home' || direction === 'end') return true
+		if (layout === 'grid') return true
+		if (layout === 'horizontal') return direction === 'left' || direction === 'right'
+		return direction === 'up' || direction === 'down'
+	}
 
-			if (direction === 'down' || direction === 'right') {
-				if (currentIdx < currentZones.length - 1) {
-					targetZone = currentZones[currentIdx + 1]
-					targetZones = currentZones
-				} else if (direction === 'right' && currentContainerIdx < containerIds.length - 1) {
-					const nextId = containerIds[currentContainerIdx + 1]
-					targetZones = containerZones.get(nextId) ?? []
-					targetZone = targetZones[0] ?? null
-				}
-			} else {
-				if (currentIdx > 0) {
-					targetZone = currentZones[currentIdx - 1]
-					targetZones = currentZones
-				} else if (direction === 'left' && currentContainerIdx > 0) {
-					const prevId = containerIds[currentContainerIdx - 1]
-					targetZones = containerZones.get(prevId) ?? []
-					targetZone = targetZones[targetZones.length - 1] ?? null
-				}
+	private zonesIn(containerId: string): DropZone[] {
+		return this.dropResolver.filteredZones
+			.filter((z) => z.containerId === containerId)
+			.sort((a, b) => a.position - b.position)
+	}
+
+	private navigateWithinContainer(
+		droppable: Droppable,
+		currentPosition: number,
+		direction: NavigationDirection
+	): { containerId: string; position: number } | null {
+		const zones = this.zonesIn(droppable.id)
+		if (zones.length === 0) return null
+
+		if (direction === 'home') return { containerId: droppable.id, position: zones[0].position }
+		if (direction === 'end')
+			return { containerId: droppable.id, position: zones[zones.length - 1].position }
+
+		const currentIdx = zones.findIndex((z) => z.position === currentPosition)
+		const safeIdx = currentIdx === -1 ? 0 : currentIdx
+
+		if (droppable.layout === 'grid') {
+			return this.navigateWithinGrid(droppable, zones, safeIdx, direction)
+		}
+
+		const isForward = direction === 'down' || direction === 'right'
+		const nextZone = zones[isForward ? safeIdx + 1 : safeIdx - 1]
+		if (!nextZone) return null
+		return { containerId: droppable.id, position: nextZone.position }
+	}
+
+	private navigateWithinGrid(
+		droppable: Droppable,
+		zones: DropZone[],
+		currentIdx: number,
+		direction: NavigationDirection
+	): { containerId: string; position: number } | null {
+		if (direction === 'left' || direction === 'right') {
+			const isForward = direction === 'right'
+			const nextZone = zones[isForward ? currentIdx + 1 : currentIdx - 1]
+			if (!nextZone) return null
+			return { containerId: droppable.id, position: nextZone.position }
+		}
+
+		const currentZone = zones[currentIdx]
+		const currentRect = droppable
+			.getSlotAt(currentZone.position)
+			?.element.getBoundingClientRect()
+		if (!currentRect) {
+			const isForward = direction === 'down'
+			const nextZone = zones[isForward ? currentIdx + 1 : currentIdx - 1]
+			if (!nextZone) return null
+			return { containerId: droppable.id, position: nextZone.position }
+		}
+
+		const isDown = direction === 'down'
+		const currentXCenter = currentRect.left + currentRect.width / 2
+		const rowGap = currentRect.height / 2
+
+		let best: DropZone | null = null
+		let bestScore = Infinity
+		for (const zone of zones) {
+			if (zone.position === currentZone.position) continue
+			const rect = droppable.getSlotAt(zone.position)?.element.getBoundingClientRect()
+			if (!rect) continue
+			const dy = rect.top - currentRect.top
+			if (isDown ? dy <= rowGap : dy >= -rowGap) continue
+			const xCenter = rect.left + rect.width / 2
+			const score = Math.abs(dy) * 2 + Math.abs(xCenter - currentXCenter)
+			if (score < bestScore) {
+				bestScore = score
+				best = zone
 			}
 		}
 
-		if (!targetZone) return
+		if (!best) return null
+		return { containerId: droppable.id, position: best.position }
+	}
 
-		const zoneIdx = targetZones.findIndex((z) => z.position === targetZone!.position)
-		const nextZone = targetZones[zoneIdx + 1]
-		const centerX = targetZone.rect.x + targetZone.rect.width / 2
-		const centerY = nextZone ? nextZone.rect.y : targetZone.rect.y
-		const offsetX = ghostSize ? ghostSize.width / 2 : 0
-		const offsetY = ghostSize ? ghostSize.height / 2 : 0
+	private navigateAcrossContainers(
+		currentDroppable: Droppable,
+		currentPosition: number,
+		direction: NavigationDirection
+	): { containerId: string; position: number } | null {
+		const isHorizontal = direction === 'left' || direction === 'right'
+		const draggedType = this.state.draggedType ?? undefined
 
-		const ghostTransform = { x: centerX - offsetX, y: centerY - offsetY }
+		const candidates: Array<{ droppable: Droppable; rect: DOMRect }> = []
+		for (const droppable of this.droppablesById.values()) {
+			if (droppable.disabled) continue
+			if (droppable.mode !== 'sortable') continue
+			if (!droppable.acceptsType(draggedType)) continue
+			candidates.push({ droppable, rect: droppable.element.getBoundingClientRect() })
+		}
+		candidates.sort((a, b) =>
+			isHorizontal ? a.rect.left - b.rect.left : a.rect.top - b.rect.top
+		)
 
-		this.updateTransform(ghostTransform)
-		this.state.setDropPreview({
-			containerId: targetZone.containerId,
-			position: targetZone.position
+		const currentIdx = candidates.findIndex((c) => c.droppable.id === currentDroppable.id)
+		if (currentIdx === -1) return null
+
+		const isForward = direction === 'down' || direction === 'right'
+		const next = candidates[isForward ? currentIdx + 1 : currentIdx - 1]
+		if (!next) return null
+
+		const nextZones = this.zonesIn(next.droppable.id)
+		if (nextZones.length === 0) return null
+
+		const refRect = currentDroppable.getSlotAt(currentPosition)?.element.getBoundingClientRect()
+		if (!refRect) return { containerId: next.droppable.id, position: nextZones[0].position }
+
+		const refCoord = isHorizontal
+			? refRect.top + refRect.height / 2
+			: refRect.left + refRect.width / 2
+
+		let best: DropZone | null = nextZones[0]
+		let bestDist = Infinity
+		for (const zone of nextZones) {
+			const slotRect = next.droppable
+				.getSlotAt(zone.position)
+				?.element.getBoundingClientRect()
+			if (!slotRect) continue
+			const center = isHorizontal
+				? slotRect.top + slotRect.height / 2
+				: slotRect.left + slotRect.width / 2
+			const dist = Math.abs(center - refCoord)
+			if (dist < bestDist) {
+				bestDist = dist
+				best = zone
+			}
+		}
+
+		return { containerId: next.droppable.id, position: best!.position }
+	}
+
+	private applyKeyboardTarget(target: { containerId: string; position: number }) {
+		const targetDroppable = this.droppablesById.get(target.containerId)
+		if (!targetDroppable) return
+
+		this.animationCoordinator.setActivePreview({
+			containerId: target.containerId,
+			position: target.position
 		})
+
+		const ghostTarget = computePreviewSlotTarget(
+			targetDroppable,
+			target.position,
+			this.state.ghostSize
+		)
+
+		const flight = this.getKeyboardFlight()
+		if (ghostTarget) {
+			flight.animateTo(ghostTarget, this.animation.keyboardFlight)
+		} else {
+			const fallback = this.state.zones.find(
+				(z) => z.containerId === target.containerId && z.position === target.position
+			)
+			if (fallback) {
+				const ghostSize = this.state.ghostSize
+				flight.animateTo(
+					{
+						x: fallback.rect.x + (fallback.rect.width - (ghostSize?.width ?? 0)) / 2,
+						y: fallback.rect.y
+					},
+					this.animation.keyboardFlight
+				)
+			}
+		}
+
+		const slotEl = findTargetSlotWrapper(targetDroppable, target.position)
+		if (slotEl) {
+			scrollSlotIntoView(slotEl, { padding: targetDroppable.spacing ?? 8 })
+		}
+	}
+
+	private getKeyboardFlight(): KeyboardFlight {
+		if (!this.keyboardFlight) this.keyboardFlight = new KeyboardFlight(this.state)
+		return this.keyboardFlight
 	}
 
 	performDrop(
@@ -478,6 +623,7 @@ export class DndController {
 
 	/** Cancel the current drag and animate the ghost back to its origin. */
 	endDrag(shouldAnimate = true) {
+		this.keyboardFlight?.cancel()
 		this.animationCoordinator.endDrag(shouldAnimate)
 	}
 
@@ -644,7 +790,7 @@ export class DndController {
 	 * @internal
 	 */
 	cancelSession() {
-		this.animationCoordinator.endDrag(false)
+		this.endDrag(false)
 	}
 
 	/**
@@ -653,6 +799,7 @@ export class DndController {
 	 * @internal
 	 */
 	commitSession() {
+		this.keyboardFlight?.cancel()
 		const dropPreview = this.state.dropPreview
 		const session = this.state.session
 		const srcId = session?.source.id ?? this.state.draggedItem
@@ -667,12 +814,13 @@ export class DndController {
 				dropPreview.position
 			)
 		} else {
-			this.animationCoordinator.endDrag(true)
+			this.endDrag(true)
 		}
 	}
 
 	/** Release all resources. Call when the `DndProvider` is destroyed. */
 	destroy() {
+		this.keyboardFlight?.cancel()
 		this.animationCoordinator.destroy()
 		this.scrollController.destroy()
 		this.eventEmitter.destroy()

@@ -4,6 +4,7 @@ import type { DropZone } from '../../../types.js'
 import type { Droppable } from '../../entities/droppable.svelte.js'
 import { DEFAULT_ANIMATION_CONFIG } from '../animation-config.js'
 import { parseEasing } from '../easing.js'
+import { computePreviewSlotTarget } from '../preview-slot-rect.js'
 
 export class GhostToTargetStep implements AnimationStep {
 	private cancelled = false
@@ -73,9 +74,9 @@ export class GhostToTargetStep implements AnimationStep {
 	private calculateTargetPosition(): { x: number; y: number } {
 		const droppable = this.droppablesById.get(this.targetZone.containerId)
 		const container = droppable?.element ?? null
-		if (!container) return this.fallbackPosition()
+		if (!container || !droppable) return this.fallbackPosition()
 
-		if (droppable?.mode === 'target') {
+		if (droppable.mode === 'target') {
 			const rect = container.getBoundingClientRect()
 			const width = this.state.ghostSize?.width ?? 0
 			const height = this.state.ghostSize?.height ?? 0
@@ -85,23 +86,12 @@ export class GhostToTargetStep implements AnimationStep {
 			}
 		}
 
-		const previewEntity =
-			droppable?.getSlotAt(this.targetZone.position)?.preview ?? droppable?.tailPreview
-		const previewEl = previewEntity?.element
-		if (previewEl && previewEntity) {
-			const slotWrapper = (previewEl.parentElement ?? previewEl) as HTMLElement
-			const wrapperRect = slotWrapper.getBoundingClientRect()
-			const isHorizontal = previewEntity.isHorizontal
-			const alignEndY = previewEntity.align === 'end' && !isHorizontal
-			const alignEndX = previewEntity.align === 'end' && isHorizontal
-			const y = alignEndY
-				? wrapperRect.bottom - (this.state.ghostSize?.height ?? 0)
-				: wrapperRect.top
-			const x = alignEndX
-				? wrapperRect.right - (this.state.ghostSize?.width ?? 0)
-				: wrapperRect.left
-			return { x, y }
-		}
+		const slotTarget = computePreviewSlotTarget(
+			droppable,
+			this.targetZone.position,
+			this.state.ghostSize
+		)
+		if (slotTarget) return slotTarget
 
 		const containerRect = container.getBoundingClientRect()
 		return { x: containerRect.left, y: this.targetZone.rect.y }

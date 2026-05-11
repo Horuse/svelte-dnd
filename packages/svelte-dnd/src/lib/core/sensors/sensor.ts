@@ -1,4 +1,4 @@
-export type NavigationDirection = 'up' | 'down' | 'left' | 'right'
+export type NavigationDirection = 'up' | 'down' | 'left' | 'right' | 'home' | 'end'
 
 export interface SensorCallbacks {
 	onStart: (transform: { x: number; y: number }) => void

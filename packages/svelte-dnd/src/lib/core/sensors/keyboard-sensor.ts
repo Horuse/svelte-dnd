@@ -27,7 +27,9 @@ export class KeyboardSensor implements SensorDescriptor {
 			ArrowUp: 'up',
 			ArrowDown: 'down',
 			ArrowLeft: 'left',
-			ArrowRight: 'right'
+			ArrowRight: 'right',
+			Home: 'home',
+			End: 'end'
 		}
 
 		const onWindowKeyDown = (e: KeyboardEvent) => {
