@@ -6,6 +6,7 @@ export const siteConfig = {
 	tagline:
 		'A drag-and-drop library for Svelte 5 with animated drop previews, auto-scroll, pointer & touch support, keyboard navigation, and multi-container layouts.',
 	url: 'https://svelte-dnd.vercel.app',
+	version: 'v1.0.0',
 	ogImage: '/preview.gif',
 	keywords: [
 		'svelte',

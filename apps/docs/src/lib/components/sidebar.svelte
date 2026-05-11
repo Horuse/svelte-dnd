@@ -3,6 +3,7 @@
 	import { sidebarOpen } from "$lib/stores.js";
 	import {slide} from "svelte/transition";
 	import {quintInOut} from "svelte/easing";
+	import VersionSelector from './VersionSelector.svelte';
 
 	const exampleLinks = [
 		{ href: '/examples/vertical', label: 'Vertical List' },
@@ -104,14 +105,8 @@
 					</svg>
 				</button>
 			</div>
-			<label class="shrink-0 bg-primary hover:bg-primary-hover p-2 px-3 rounded-xl text-neutral-500 w-full">
-				<select onchange={(e) => {
-					if(e.currentTarget.value) window.location.href = e.currentTarget.value
-				}} class="w-full focus:outline-none">
-					<option value="https://v1.svelte-dnd.vercel.app/">v1.0.0</option>
-					<option value="https://svelte-dnd.vercel.app/">v0.3.0</option>
-				</select>
-			</label>
+			<VersionSelector />
+
 		</div>
 
 		<nav class="flex flex-col gap-6 p-2 py-3">
