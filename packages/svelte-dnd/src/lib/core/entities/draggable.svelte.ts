@@ -1,16 +1,17 @@
-import type { SensorDescriptor, SensorActivation } from '../sensors/sensor.js'
+import type { SensorDescriptor, SensorActivation, NavigationDirection } from '../sensors/sensor.js'
 import { PointerSensor } from '../sensors/pointer-sensor.js'
+import type { DropPreview } from '../../types.js'
 import type { Slot } from './slot.js'
 
-// Forward declaration — resolved at runtime to avoid circular imports
 export type DraggableControllerRef = {
 	session: { source: Draggable } | null
 	sensors: SensorDescriptor[] | undefined
 	startSession(draggable: Draggable, initialTransform: { x: number; y: number }): void
 	updateTransform(transform: { x: number; y: number }): void
 	updateMousePosition?(mouseX: number, mouseY: number): void
-	navigate(direction: import('../sensors/sensor.js').NavigationDirection): void
-	dropPreview: import('../../types.js').DropPreview | null
+	handleAutoScroll?(mouseX: number, mouseY: number): void
+	navigate(direction: NavigationDirection): void
+	dropPreview: DropPreview | null
 	setSkipDropPreviewAnimation(value: boolean): void
 	performDrop(
 		sourceId: string,
@@ -182,6 +183,7 @@ export class Draggable {
 
 		this.controller.updateTransform(transform)
 		this.controller.updateMousePosition?.(mouseX, mouseY)
+		this.controller.handleAutoScroll?.(mouseX, mouseY)
 	}
 
 	private handleDragEnd() {

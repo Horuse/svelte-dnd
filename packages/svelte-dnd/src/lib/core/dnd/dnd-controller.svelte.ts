@@ -13,7 +13,6 @@ import type { Modifier } from '../modifiers/modifier.js'
 import { DndSimulator } from './dnd-simulator.js'
 import type { AnimateItemOptions, AnimateLayoutOptions } from './dnd-simulator.js'
 import type {
-	DropZone,
 	DragStartCallback,
 	DragEndCallback,
 	DropCallback,
@@ -401,6 +400,11 @@ export class DndController {
 	updateMousePosition(mouseX: number, mouseY: number) {
 		if (this.state.dragging && !this.state.performingDrop) {
 			this.animationCoordinator.updateDropPreview({ x: mouseX, y: mouseY })
+		}
+	}
+
+	handleAutoScroll(mouseX: number, mouseY: number) {
+		if (this.state.dragging && !this.state.performingDrop) {
 			this.scrollController.handleAutoScroll(mouseX, mouseY)
 		}
 	}
@@ -432,10 +436,27 @@ export class DndController {
 		return direction === 'up' || direction === 'down'
 	}
 
-	private zonesIn(containerId: string): DropZone[] {
-		return this.dropResolver.filteredZones
-			.filter((z) => z.containerId === containerId)
-			.sort((a, b) => a.position - b.position)
+	// Full position list for keyboard navigation — independent of viewport
+	// (unlike `dropResolver.filteredZones`, which filters by viewport visibility
+	// for pointer-collision purposes). Same-container: 0..itemCount-1, tail not
+	// reachable. Cross-container: 0..itemCount inclusive (tail allowed).
+	private validPositions(droppable: Droppable): number[] {
+		const itemCount = droppable.itemCount
+		const isSource = this.state.session?.originContainerId === droppable.id
+		const max = isSource ? itemCount - 1 : itemCount
+		const out: number[] = []
+		for (let i = 0; i <= max; i++) out.push(i)
+		return out
+	}
+
+	private slotOrTailRect(droppable: Droppable, position: number): DOMRect | null {
+		const slotEl = droppable.getSlotAt(position)?.element
+		if (slotEl) return slotEl.getBoundingClientRect()
+		if (position === droppable.itemCount) {
+			const tailEl = droppable.tailPreview?.element?.parentElement
+			if (tailEl) return tailEl.getBoundingClientRect()
+		}
+		return null
 	}
 
 	private navigateWithinContainer(
@@ -443,72 +464,82 @@ export class DndController {
 		currentPosition: number,
 		direction: NavigationDirection
 	): { containerId: string; position: number } | null {
-		const zones = this.zonesIn(droppable.id)
-		if (zones.length === 0) return null
+		const positions = this.validPositions(droppable)
+		if (positions.length === 0) return null
 
-		if (direction === 'home') return { containerId: droppable.id, position: zones[0].position }
+		if (direction === 'home') return { containerId: droppable.id, position: positions[0] }
 		if (direction === 'end')
-			return { containerId: droppable.id, position: zones[zones.length - 1].position }
+			return { containerId: droppable.id, position: positions[positions.length - 1] }
 
-		const currentIdx = zones.findIndex((z) => z.position === currentPosition)
+		const currentIdx = positions.indexOf(currentPosition)
 		const safeIdx = currentIdx === -1 ? 0 : currentIdx
 
 		if (droppable.layout === 'grid') {
-			return this.navigateWithinGrid(droppable, zones, safeIdx, direction)
+			return this.navigateWithinGrid(droppable, positions, safeIdx, direction)
 		}
 
 		const isForward = direction === 'down' || direction === 'right'
-		const nextZone = zones[isForward ? safeIdx + 1 : safeIdx - 1]
-		if (!nextZone) return null
-		return { containerId: droppable.id, position: nextZone.position }
+		const next = positions[isForward ? safeIdx + 1 : safeIdx - 1]
+		if (next === undefined) return null
+		return { containerId: droppable.id, position: next }
 	}
 
 	private navigateWithinGrid(
 		droppable: Droppable,
-		zones: DropZone[],
+		positions: number[],
 		currentIdx: number,
 		direction: NavigationDirection
 	): { containerId: string; position: number } | null {
-		if (direction === 'left' || direction === 'right') {
-			const isForward = direction === 'right'
-			const nextZone = zones[isForward ? currentIdx + 1 : currentIdx - 1]
-			if (!nextZone) return null
-			return { containerId: droppable.id, position: nextZone.position }
-		}
+		const currentPos = positions[currentIdx]
+		const currentRect = this.slotOrTailRect(droppable, currentPos)
 
-		const currentZone = zones[currentIdx]
-		const currentRect = droppable
-			.getSlotAt(currentZone.position)
-			?.element.getBoundingClientRect()
 		if (!currentRect) {
-			const isForward = direction === 'down'
-			const nextZone = zones[isForward ? currentIdx + 1 : currentIdx - 1]
-			if (!nextZone) return null
-			return { containerId: droppable.id, position: nextZone.position }
+			const isForward = direction === 'down' || direction === 'right'
+			const next = positions[isForward ? currentIdx + 1 : currentIdx - 1]
+			if (next === undefined) return null
+			return { containerId: droppable.id, position: next }
 		}
 
-		const isDown = direction === 'down'
-		const currentXCenter = currentRect.left + currentRect.width / 2
-		const rowGap = currentRect.height / 2
+		const isHorizontal = direction === 'left' || direction === 'right'
+		const isForward = direction === 'down' || direction === 'right'
+		const bandHalf = isHorizontal ? currentRect.height / 2 : currentRect.width / 2
+		const currentMain = isHorizontal
+			? currentRect.left + currentRect.width / 2
+			: currentRect.top + currentRect.height / 2
+		const currentCross = isHorizontal
+			? currentRect.top + currentRect.height / 2
+			: currentRect.left + currentRect.width / 2
 
-		let best: DropZone | null = null
+		let best: number | null = null
 		let bestScore = Infinity
-		for (const zone of zones) {
-			if (zone.position === currentZone.position) continue
-			const rect = droppable.getSlotAt(zone.position)?.element.getBoundingClientRect()
+		for (const position of positions) {
+			if (position === currentPos) continue
+			const rect = this.slotOrTailRect(droppable, position)
 			if (!rect) continue
-			const dy = rect.top - currentRect.top
-			if (isDown ? dy <= rowGap : dy >= -rowGap) continue
-			const xCenter = rect.left + rect.width / 2
-			const score = Math.abs(dy) * 2 + Math.abs(xCenter - currentXCenter)
-			if (score < bestScore) {
-				bestScore = score
-				best = zone
+			const main = isHorizontal ? rect.left + rect.width / 2 : rect.top + rect.height / 2
+			const cross = isHorizontal ? rect.top + rect.height / 2 : rect.left + rect.width / 2
+			const dMain = main - currentMain
+			if (isForward ? dMain <= 0 : dMain >= 0) continue
+
+			if (isHorizontal) {
+				const sameLine = Math.abs(cross - currentCross) < bandHalf
+				if (!sameLine) continue
+				const score = Math.abs(dMain)
+				if (score < bestScore) {
+					bestScore = score
+					best = position
+				}
+			} else {
+				const score = Math.abs(dMain) * 2 + Math.abs(cross - currentCross)
+				if (score < bestScore) {
+					bestScore = score
+					best = position
+				}
 			}
 		}
 
-		if (!best) return null
-		return { containerId: droppable.id, position: best.position }
+		if (best === null) return null
+		return { containerId: droppable.id, position: best }
 	}
 
 	private navigateAcrossContainers(
@@ -537,22 +568,20 @@ export class DndController {
 		const next = candidates[isForward ? currentIdx + 1 : currentIdx - 1]
 		if (!next) return null
 
-		const nextZones = this.zonesIn(next.droppable.id)
-		if (nextZones.length === 0) return null
+		const nextPositions = this.validPositions(next.droppable)
+		if (nextPositions.length === 0) return null
 
-		const refRect = currentDroppable.getSlotAt(currentPosition)?.element.getBoundingClientRect()
-		if (!refRect) return { containerId: next.droppable.id, position: nextZones[0].position }
+		const refRect = this.slotOrTailRect(currentDroppable, currentPosition)
+		if (!refRect) return { containerId: next.droppable.id, position: nextPositions[0] }
 
 		const refCoord = isHorizontal
 			? refRect.top + refRect.height / 2
 			: refRect.left + refRect.width / 2
 
-		let best: DropZone | null = nextZones[0]
+		let best: number = nextPositions[0]
 		let bestDist = Infinity
-		for (const zone of nextZones) {
-			const slotRect = next.droppable
-				.getSlotAt(zone.position)
-				?.element.getBoundingClientRect()
+		for (const position of nextPositions) {
+			const slotRect = this.slotOrTailRect(next.droppable, position)
 			if (!slotRect) continue
 			const center = isHorizontal
 				? slotRect.top + slotRect.height / 2
@@ -560,11 +589,11 @@ export class DndController {
 			const dist = Math.abs(center - refCoord)
 			if (dist < bestDist) {
 				bestDist = dist
-				best = zone
+				best = position
 			}
 		}
 
-		return { containerId: next.droppable.id, position: best!.position }
+		return { containerId: next.droppable.id, position: best }
 	}
 
 	private applyKeyboardTarget(target: { containerId: string; position: number }) {
@@ -576,15 +605,22 @@ export class DndController {
 			position: target.position
 		})
 
-		// Defer the rect-dependent work one frame so reactive style updates
-		// (last-slot margin toggle on tail activation, sibling slot translations)
-		// have flushed to the DOM before we measure. Rapid keypresses are coalesced
-		// by the dropPreview match check below — only the latest target fires a flight.
+		// Defer one frame so reactive style updates (last-slot margin toggle on
+		// tail activation, sibling translations) flush before we measure. Rapid
+		// keypresses coalesce via the dropPreview match check.
 		requestAnimationFrame(() => {
 			if (!this.state.dragging) return
 			const preview = this.state.dropPreview
 			if (preview?.containerId !== target.containerId) return
 			if (preview?.position !== target.position) return
+
+			// Scroll first so the target is fully inside the viewport, THEN read
+			// the slot rect and start the flight. If we flew first the container
+			// would scroll out from under the ghost mid-animation.
+			const slotEl = findTargetSlotWrapper(targetDroppable, target.position)
+			if (slotEl) {
+				scrollSlotIntoView(slotEl, { padding: targetDroppable.spacing ?? 0 })
+			}
 
 			const ghostSize = this.state.ghostSize
 			const ghostTarget = computePreviewSlotTarget(
@@ -611,14 +647,6 @@ export class DndController {
 						this.animation.keyboardFlight
 					)
 				}
-			}
-
-			const slotEl = findTargetSlotWrapper(targetDroppable, target.position)
-			if (slotEl) {
-				scrollSlotIntoView(slotEl, {
-					padding: targetDroppable.spacing ?? 0,
-					fallbackSize: ghostSize ?? undefined
-				})
 			}
 		})
 	}
