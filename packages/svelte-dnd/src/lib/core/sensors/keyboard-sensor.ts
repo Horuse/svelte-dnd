@@ -13,10 +13,8 @@ export class KeyboardSensor implements SensorDescriptor {
 	): SensorActivation | null {
 		if (!(event instanceof KeyboardEvent)) return null
 		if (event.key !== 'Enter' && event.key !== ' ') return null
-		// Only activate when the focused element is this draggable itself.
-		// Without this, an Enter bubbling up from a nested draggable would also
-		// pick up the outer one.
-		if (event.target !== element) return null
+		// Skip bubbled events from nested draggables.
+		if (event.target && event.target !== element) return null
 
 		event.preventDefault()
 		event.stopPropagation()
