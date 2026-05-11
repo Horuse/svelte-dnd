@@ -576,35 +576,51 @@ export class DndController {
 			position: target.position
 		})
 
-		const ghostTarget = computePreviewSlotTarget(
-			targetDroppable,
-			target.position,
-			this.state.ghostSize
-		)
+		// Defer the rect-dependent work one frame so reactive style updates
+		// (last-slot margin toggle on tail activation, sibling slot translations)
+		// have flushed to the DOM before we measure. Rapid keypresses are coalesced
+		// by the dropPreview match check below — only the latest target fires a flight.
+		requestAnimationFrame(() => {
+			if (!this.state.dragging) return
+			const preview = this.state.dropPreview
+			if (preview?.containerId !== target.containerId) return
+			if (preview?.position !== target.position) return
 
-		const flight = this.getKeyboardFlight()
-		if (ghostTarget) {
-			flight.animateTo(ghostTarget, this.animation.keyboardFlight)
-		} else {
-			const fallback = this.state.zones.find(
-				(z) => z.containerId === target.containerId && z.position === target.position
+			const ghostSize = this.state.ghostSize
+			const ghostTarget = computePreviewSlotTarget(
+				targetDroppable,
+				target.position,
+				ghostSize
 			)
-			if (fallback) {
-				const ghostSize = this.state.ghostSize
-				flight.animateTo(
-					{
-						x: fallback.rect.x + (fallback.rect.width - (ghostSize?.width ?? 0)) / 2,
-						y: fallback.rect.y
-					},
-					this.animation.keyboardFlight
-				)
-			}
-		}
 
-		const slotEl = findTargetSlotWrapper(targetDroppable, target.position)
-		if (slotEl) {
-			scrollSlotIntoView(slotEl, { padding: targetDroppable.spacing ?? 8 })
-		}
+			const flight = this.getKeyboardFlight()
+			if (ghostTarget) {
+				flight.animateTo(ghostTarget, this.animation.keyboardFlight)
+			} else {
+				const fallback = this.state.zones.find(
+					(z) => z.containerId === target.containerId && z.position === target.position
+				)
+				if (fallback) {
+					flight.animateTo(
+						{
+							x:
+								fallback.rect.x +
+								(fallback.rect.width - (ghostSize?.width ?? 0)) / 2,
+							y: fallback.rect.y
+						},
+						this.animation.keyboardFlight
+					)
+				}
+			}
+
+			const slotEl = findTargetSlotWrapper(targetDroppable, target.position)
+			if (slotEl) {
+				scrollSlotIntoView(slotEl, {
+					padding: targetDroppable.spacing ?? 0,
+					fallbackSize: ghostSize ?? undefined
+				})
+			}
+		})
 	}
 
 	private getKeyboardFlight(): KeyboardFlight {
