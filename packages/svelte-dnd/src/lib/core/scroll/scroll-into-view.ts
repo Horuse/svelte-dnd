@@ -1,8 +1,8 @@
 import { isBrowser } from '../utils/dom-helper.js'
 
-export interface ScrollSlotIntoViewOptions {
-	/** Pixel buffer kept between the slot and each scrollable edge after scrolling. */
-	padding?: number
+export interface ScrollTarget {
+	container: HTMLElement
+	direction: 'vertical' | 'horizontal'
 }
 
 const SCROLL_OVERFLOW_VALUES = new Set(['auto', 'scroll', 'overlay'])
@@ -26,44 +26,38 @@ function* scrollableAncestors(start: HTMLElement): Generator<HTMLElement> {
 	}
 }
 
-function applyScrollDelta(container: HTMLElement, dx: number, dy: number) {
-	if (dx === 0 && dy === 0) return
-	container.scrollBy({ left: dx, top: dy, behavior: 'instant' as ScrollBehavior })
-}
-
-/** Instantly scrolls every scrollable ancestor of `slotEl` by the minimum delta needed to keep it inside the container minus `padding`. */
-export function scrollSlotIntoView(slotEl: HTMLElement, options: ScrollSlotIntoViewOptions = {}) {
-	if (!isBrowser) return
-	const padding = options.padding ?? 0
+/**
+ * Find the nearest scrollable ancestor of `slotEl` where the slot sits outside
+ * the visible band (container rect minus `padding` on each edge), and return
+ * the axis that needs to scroll. Returns `null` when the slot is already fully
+ * inside every scrollable ancestor.
+ */
+export function findScrollTarget(slotEl: HTMLElement, padding = 0): ScrollTarget | null {
+	if (!isBrowser) return null
 
 	for (const container of scrollableAncestors(slotEl)) {
 		const slotRect = slotEl.getBoundingClientRect()
 		const containerRect = container.getBoundingClientRect()
 		const style = window.getComputedStyle(container)
 
-		let dx = 0
-		let dy = 0
-
 		if (isScrollableY(container, style)) {
-			const visibleTop = containerRect.top + padding
-			const visibleBottom = containerRect.bottom - padding
-			if (slotRect.top < visibleTop) {
-				dy = slotRect.top - visibleTop
-			} else if (slotRect.bottom > visibleBottom) {
-				dy = slotRect.bottom - visibleBottom
+			if (
+				slotRect.top < containerRect.top + padding ||
+				slotRect.bottom > containerRect.bottom - padding
+			) {
+				return { container, direction: 'vertical' }
 			}
 		}
 
 		if (isScrollableX(container, style)) {
-			const visibleLeft = containerRect.left + padding
-			const visibleRight = containerRect.right - padding
-			if (slotRect.left < visibleLeft) {
-				dx = slotRect.left - visibleLeft
-			} else if (slotRect.right > visibleRight) {
-				dx = slotRect.right - visibleRight
+			if (
+				slotRect.left < containerRect.left + padding ||
+				slotRect.right > containerRect.right - padding
+			) {
+				return { container, direction: 'horizontal' }
 			}
 		}
-
-		applyScrollDelta(container, dx, dy)
 	}
+
+	return null
 }

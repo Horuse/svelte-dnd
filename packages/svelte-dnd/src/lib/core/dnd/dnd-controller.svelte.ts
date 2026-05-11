@@ -33,7 +33,8 @@ import { scrollSync } from '../animation/behaviors/scroll-sync.js'
 import { resolveBehaviors, findTargetSlotWrapper } from '../animation/apply-behaviors.js'
 import { computePreviewSlotTarget } from '../animation/preview-slot-rect.js'
 import { KeyboardFlight } from '../animation/keyboard-flight.js'
-import { scrollSlotIntoView } from '../scroll/scroll-into-view.js'
+import { getDirectionAdapter } from '../animation/direction-adapter.js'
+import { findScrollTarget } from '../scroll/scroll-into-view.js'
 import { DragSession } from './drag-session.svelte.js'
 import type { Draggable } from '../entities/draggable.svelte.js'
 import type { Droppable } from '../entities/droppable.svelte.js'
@@ -614,41 +615,142 @@ export class DndController {
 			if (preview?.containerId !== target.containerId) return
 			if (preview?.position !== target.position) return
 
-			// Scroll first so the target is fully inside the viewport, THEN read
-			// the slot rect and start the flight. If we flew first the container
-			// would scroll out from under the ghost mid-animation.
 			const slotEl = findTargetSlotWrapper(targetDroppable, target.position)
-			if (slotEl) {
-				scrollSlotIntoView(slotEl, { padding: targetDroppable.spacing ?? 0 })
+			const padding = targetDroppable.spacing ?? 0
+			const flightCfg = this.animation.keyboardFlight
+			const flight = this.getKeyboardFlight()
+			const ghostSize = this.state.ghostSize
+
+			// Target off-screen — animate scroll + ghost transform in lockstep.
+			const scrollTarget = slotEl ? findScrollTarget(slotEl, padding) : null
+			if (slotEl && scrollTarget) {
+				this.runScrollSyncFlight(
+					flight,
+					flightCfg,
+					targetDroppable,
+					target.position,
+					slotEl,
+					scrollTarget.container,
+					scrollTarget.direction,
+					padding,
+					ghostSize
+				)
+				return
 			}
 
-			const ghostSize = this.state.ghostSize
+			// Target already visible — fly straight to its live slot rect.
 			const ghostTarget = computePreviewSlotTarget(
 				targetDroppable,
 				target.position,
 				ghostSize
 			)
-
-			const flight = this.getKeyboardFlight()
 			if (ghostTarget) {
-				flight.animateTo(ghostTarget, this.animation.keyboardFlight)
-			} else {
-				const fallback = this.state.zones.find(
-					(z) => z.containerId === target.containerId && z.position === target.position
+				flight.animateTo(ghostTarget, flightCfg)
+				return
+			}
+
+			// Slot not mounted (e.g. virtualized) — fall back to zone rect.
+			const fallback = this.state.zones.find(
+				(z) => z.containerId === target.containerId && z.position === target.position
+			)
+			if (fallback) {
+				flight.animateTo(
+					{
+						x: fallback.rect.x + (fallback.rect.width - (ghostSize?.width ?? 0)) / 2,
+						y: fallback.rect.y
+					},
+					flightCfg
 				)
-				if (fallback) {
-					flight.animateTo(
-						{
-							x:
-								fallback.rect.x +
-								(fallback.rect.width - (ghostSize?.width ?? 0)) / 2,
-							y: fallback.rect.y
-						},
-						this.animation.keyboardFlight
-					)
-				}
 			}
 		})
+	}
+
+	// Scroll + ghost flight in lockstep. Anchors the GHOST rect (not the slot
+	// wrapper) to the visible band — so ghost.top sits at visibleStart on Up
+	// and ghost.bottom sits at visibleEnd on Down, independent of slot height.
+	private runScrollSyncFlight(
+		flight: KeyboardFlight,
+		flightCfg: { duration: number; easing: string },
+		droppable: Droppable,
+		position: number,
+		slotEl: HTMLElement,
+		container: HTMLElement,
+		direction: 'vertical' | 'horizontal',
+		padding: number,
+		ghostSize: { width: number; height: number } | null
+	) {
+		const adapter = getDirectionAdapter(direction)
+		const ghostW = ghostSize?.width ?? 0
+		const ghostH = ghostSize?.height ?? 0
+
+		// Live wrapper rect → align-aware ghost rect in current viewport space.
+		const previewRect = slotEl.getBoundingClientRect()
+		const previewEntity = droppable.getSlotAt(position)?.preview ?? droppable.tailPreview
+		const previewHorizontal = previewEntity?.isHorizontal ?? false
+		const alignEnd = previewEntity?.align === 'end'
+		const currentGhostX =
+			alignEnd && previewHorizontal ? previewRect.right - ghostW : previewRect.left
+		const currentGhostY =
+			alignEnd && !previewHorizontal ? previewRect.bottom - ghostH : previewRect.top
+
+		const containerRect = container.getBoundingClientRect()
+		const startScroll = adapter.getScroll(container)
+
+		let scrollDelta = 0
+		let ghostFinalX = currentGhostX
+		let ghostFinalY = currentGhostY
+
+		if (direction === 'vertical') {
+			const visibleTop = containerRect.top + padding
+			const visibleBottom = containerRect.bottom - padding
+			if (currentGhostY < visibleTop) {
+				ghostFinalY = visibleTop
+				scrollDelta = currentGhostY - visibleTop
+			} else if (currentGhostY + ghostH > visibleBottom) {
+				ghostFinalY = visibleBottom - ghostH
+				scrollDelta = currentGhostY + ghostH - visibleBottom
+			}
+		} else {
+			const visibleLeft = containerRect.left + padding
+			const visibleRight = containerRect.right - padding
+			if (currentGhostX < visibleLeft) {
+				ghostFinalX = visibleLeft
+				scrollDelta = currentGhostX - visibleLeft
+			} else if (currentGhostX + ghostW > visibleRight) {
+				ghostFinalX = visibleRight - ghostW
+				scrollDelta = currentGhostX + ghostW - visibleRight
+			}
+		}
+
+		if (scrollDelta === 0) {
+			flight.animateTo({ x: currentGhostX, y: currentGhostY }, flightCfg)
+			return
+		}
+
+		const targetScroll = startScroll + scrollDelta
+		const startGhost = { ...(this.state.transform ?? { x: 0, y: 0 }) }
+		const state = this.state
+
+		flight.run(
+			{
+				duration: flightCfg.duration,
+				update(eased) {
+					adapter.setScroll(container, startScroll + scrollDelta * eased)
+					state.setTransform({
+						x: startGhost.x + (ghostFinalX - startGhost.x) * eased,
+						y: startGhost.y + (ghostFinalY - startGhost.y) * eased
+					})
+				},
+				finalize: () => {
+					adapter.setScroll(container, targetScroll)
+					// Snap to live align-aware target — corrects for any drift
+					// from translation updates that landed during the flight.
+					const snap = computePreviewSlotTarget(droppable, position, ghostSize)
+					if (snap) state.setTransform(snap)
+				}
+			},
+			flightCfg.easing
+		)
 	}
 
 	private getKeyboardFlight(): KeyboardFlight {
