@@ -16,6 +16,7 @@ export function noopController(): DroppableControllerRef {
 		onZonesInvalidated: () => () => {},
 		onDragEnd: () => () => {},
 		refreshDroppableZones: () => {},
+		recomputeDropPreview: () => {},
 		dragging: false
 	}
 }

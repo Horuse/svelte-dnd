@@ -24,6 +24,7 @@ export type DroppableControllerRef = {
 	onZonesInvalidated(cb: () => void): () => void
 	onDragEnd(cb: DragEndCallback): () => void
 	refreshDroppableZones(droppable: Droppable): void
+	recomputeDropPreview(): void
 	dragging: boolean
 }
 
@@ -197,6 +198,7 @@ export class Droppable {
 			if (this.scrollTimeout) clearTimeout(this.scrollTimeout)
 			this.scrollTimeout = setTimeout(() => {
 				this.invalidateZones()
+				this.controller.recomputeDropPreview()
 				this.scrollTimeout = null
 			}, 10)
 		}
@@ -204,19 +206,29 @@ export class Droppable {
 
 	private setupScrollListeners() {
 		if (!isBrowser) return
-		let parent = this.element?.parentElement
+		let parent: HTMLElement | null | undefined = this.element
 		while (parent) {
 			const style = window.getComputedStyle(parent)
 			if (
 				['auto', 'scroll', 'overlay'].includes(style.overflowY) ||
 				['auto', 'scroll', 'overlay'].includes(style.overflowX)
 			) {
-				parent.addEventListener('scroll', this.handleScroll, { passive: true })
-				this.scrollListeners.push(parent)
+				this.addScrollListener(parent)
 			}
 			parent = parent.parentElement
 		}
+		// Virtualizers delegate scrolling to a nested `data-dnd-scroll` viewport;
+		// scroll events don't bubble, so listen on it directly.
+		this.element
+			?.querySelectorAll<HTMLElement>('[data-dnd-scroll]')
+			.forEach((el) => this.addScrollListener(el))
 		window.addEventListener('scroll', this.handleScroll, { passive: true })
+	}
+
+	private addScrollListener(el: HTMLElement) {
+		if (this.scrollListeners.includes(el)) return
+		el.addEventListener('scroll', this.handleScroll, { passive: true })
+		this.scrollListeners.push(el)
 	}
 
 	private cleanupScrollListeners() {

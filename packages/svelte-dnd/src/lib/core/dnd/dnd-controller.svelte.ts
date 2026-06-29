@@ -89,6 +89,7 @@ export class DndController {
 	private simulator: DndSimulator
 	private modifiers: Modifier[]
 	private keyboardFlight: KeyboardFlight | null = null
+	private lastPointer: { x: number; y: number } | null = null
 
 	// --- Entity maps ---
 	// Reactive maps so $derived computations (TranslationEngine, dropPreviewSize)
@@ -399,8 +400,21 @@ export class DndController {
 	}
 
 	updateMousePosition(mouseX: number, mouseY: number) {
+		this.lastPointer = { x: mouseX, y: mouseY }
 		if (this.state.dragging && !this.state.performingDrop) {
 			this.animationCoordinator.updateDropPreview({ x: mouseX, y: mouseY })
+		}
+	}
+
+	/**
+	 * Re-resolve the drop preview against the last known pointer position without
+	 * a new pointer event. Used when zones shift under a stationary cursor, such
+	 * as scrolling the container mid-drag.
+	 */
+	recomputeDropPreview() {
+		if (!this.lastPointer) return
+		if (this.state.dragging && !this.state.performingDrop) {
+			this.animationCoordinator.updateDropPreview(this.lastPointer)
 		}
 	}
 
