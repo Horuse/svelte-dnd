@@ -2,6 +2,8 @@ import type {
 	DragStartCallback,
 	DragEndCallback,
 	DropCallback,
+	BeforeDropCallback,
+	DropCommitCallback,
 	DragOverCallback,
 	DropCancelledCallback,
 	ZonesInvalidatedCallback,
@@ -16,6 +18,8 @@ export class DndEventEmitter {
 	private dragStartCallbacks = new Set<DragStartCallback>()
 	private dragEndCallbacks = new Set<DragEndCallback>()
 	private dropCallbacks = new Set<DropCallback>()
+	private beforeDropCallbacks = new Set<BeforeDropCallback>()
+	private dropCommitCallbacks = new Set<DropCommitCallback>()
 	private dragOverCallbacks = new Set<DragOverCallback>()
 	private dropCancelledCallbacks = new Set<DropCancelledCallback>()
 	private zonesInvalidatedCallbacks = new Set<ZonesInvalidatedCallback>()
@@ -39,6 +43,16 @@ export class DndEventEmitter {
 		return () => {
 			this.dropCallbacks.delete(cb)
 		}
+	}
+
+	onBeforeDrop(cb: BeforeDropCallback): () => void {
+		this.beforeDropCallbacks.add(cb)
+		return () => this.beforeDropCallbacks.delete(cb)
+	}
+
+	onDropCommit(cb: DropCommitCallback): () => void {
+		this.dropCommitCallbacks.add(cb)
+		return () => this.dropCommitCallbacks.delete(cb)
 	}
 
 	onDragOver(cb: DragOverCallback): () => void {
@@ -67,6 +81,14 @@ export class DndEventEmitter {
 		this.dropCallbacks.forEach((cb) => cb(event))
 	}
 
+	notifyBeforeDrop(event: DropEvent) {
+		this.beforeDropCallbacks.forEach((cb) => cb(event))
+	}
+
+	notifyDropCommit(event: DropEvent) {
+		this.dropCommitCallbacks.forEach((cb) => cb(event))
+	}
+
 	notifyDragOver(event: DragOverEvent) {
 		this.dragOverCallbacks.forEach((cb) => cb(event))
 	}
@@ -90,6 +112,8 @@ export class DndEventEmitter {
 		this.dragStartCallbacks.clear()
 		this.dragEndCallbacks.clear()
 		this.dropCallbacks.clear()
+		this.beforeDropCallbacks.clear()
+		this.dropCommitCallbacks.clear()
 		this.dragOverCallbacks.clear()
 		this.dropCancelledCallbacks.clear()
 		this.zonesInvalidatedCallbacks.clear()

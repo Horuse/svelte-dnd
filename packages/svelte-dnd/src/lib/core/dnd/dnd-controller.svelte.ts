@@ -16,6 +16,8 @@ import type {
 	DragStartCallback,
 	DragEndCallback,
 	DropCallback,
+	BeforeDropCallback,
+	DropCommitCallback,
 	DragOverCallback,
 	DropCancelledCallback,
 	ZonesInvalidatedCallback,
@@ -60,6 +62,8 @@ export type {
 	DragStartCallback,
 	DragEndCallback,
 	DropCallback,
+	BeforeDropCallback,
+	DropCommitCallback,
 	DragOverCallback,
 	DropCancelledCallback,
 	ZonesInvalidatedCallback
@@ -360,6 +364,25 @@ export class DndController {
 	/** Fired when an item is successfully dropped into a container. */
 	onDrop(cb: DropCallback) {
 		return this.eventEmitter.onDrop(cb)
+	}
+
+	/**
+	 * Fired the moment a drop is accepted — before the ghost starts flying to the
+	 * target. The item is still rendered in its source container, so handlers must
+	 * not move it between containers here (that would unmount the element the ghost
+	 * animates from). Use it for projections that don't touch the item itself:
+	 * counters, badges, placeholder state.
+	 */
+	onBeforeDrop(cb: BeforeDropCallback) {
+		return this.eventEmitter.onBeforeDrop(cb)
+	}
+
+	/**
+	 * Fired when the ghost has landed, immediately before {@link onDrop} — the point
+	 * where the item may safely be moved in your data model.
+	 */
+	onDropCommit(cb: DropCommitCallback) {
+		return this.eventEmitter.onDropCommit(cb)
 	}
 
 	/** Fired each time the drag-over target (container + position) changes. */

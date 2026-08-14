@@ -165,6 +165,32 @@ controller.onDrop(({ item, source, target }) => {
 
 > **`position` semantics** — `position` is an **insertion index**, not an index into your data array. `0` means before all items, `items.length` means after all items. For a `target`/`current` position, it's the slot between items where the dragged item would be inserted.
 
+### onBeforeDrop
+
+Fired when a valid drop is accepted, before the drop animation reaches the target. Use it for preparation or optimistic metadata that does not move the active draggable between containers.
+
+```ts
+controller.onBeforeDrop(({ item, source, target }) => {
+    console.log("Preparing drop:", item.id, "from", source.id, "to", target.id);
+});
+```
+
+### onDropCommit
+
+Fired when the drop animation reaches the target, immediately before the drag session is cleaned up. Use this event when the application state must change at the same moment the ghost lands, for example when assigning a group or status.
+
+```ts
+controller.onDropCommit(({ item, target }) => {
+    // The ghost has reached the target. Apply the visual state now.
+    applyGroup(item.id, target.id);
+});
+
+controller.onDrop(({ item, target }) => {
+    // Persist the final position in application data.
+    persistMove(item.id, target.id, target.position);
+});
+```
+
 ### onDragOver
 
 Fired each time the drag-over target (container + position) changes. Useful for highlighting the active drop zone in custom UIs.
