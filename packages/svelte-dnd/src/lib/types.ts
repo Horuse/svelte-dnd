@@ -62,6 +62,8 @@ export interface DropCancelledEvent {
 export type DragStartCallback = (event: DragStartEvent) => void
 export type DragEndCallback = (event: DragEndEvent) => void
 export type DropCallback = (event: DropEvent) => void
+export type BeforeDropCallback = (event: DropEvent) => void
+export type DropCommitCallback = (event: DropEvent) => void
 export type DragOverCallback = (event: DragOverEvent) => void
 export type DropCancelledCallback = (event: DropCancelledEvent) => void
 export type ZonesInvalidatedCallback = () => void

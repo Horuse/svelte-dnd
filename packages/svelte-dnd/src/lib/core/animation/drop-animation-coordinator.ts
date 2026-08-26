@@ -187,6 +187,15 @@ export class DropAnimationCoordinator {
 
 		const isCrossContainer = targetContainerId !== originContainerId
 
+		if (element && sourceDroppable && targetDroppable) {
+			const dropEvent: DropEvent = {
+				item: { id: sourceId, data: sourceData, type, element },
+				source: sourceDroppable.toContainerInfo(originPosition),
+				target: targetDroppable.toContainerInfo(position)
+			}
+			this.eventEmitter.notifyBeforeDrop(dropEvent)
+		}
+
 		// Smooth source-slot collapse runs in parallel with the ghost flight so
 		// items below the dragged source move up smoothly while the ghost flies.
 		const collapsePromise =
@@ -227,6 +236,7 @@ export class DropAnimationCoordinator {
 				const srcScroll = srcScrollTarget?.scrollTop
 				const tgtScroll = tgtScrollTarget?.scrollTop
 
+				this.eventEmitter.notifyDropCommit(dropEvent)
 				this.eventEmitter.notifyDrop(dropEvent)
 				this.finalizeDragEnd(dragEndEvent)
 
